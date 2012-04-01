@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# 02.0.filtering_SNPs_by_pos_based_on_pepes_2.pl
+# 02.0.filtering_SNPs_by_pos.pl
 # Mike Covington
 # created: 2011-12-12
 #

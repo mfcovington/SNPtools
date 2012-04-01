@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# FILE_NAME.pl
+# 01.0.call_SNPs_parallel.pl
 # Mike Covington
 # created: 2012-01-07
 #
@@ -7,7 +7,7 @@
 # - Moved all parameters to be set to one location
 # - Enabled customization of output directory
 # - Changed to specify --fa --bam and --out at CLI
-# - Calls 01.1.SNP_calling_homo_based_on_pepes_cigar_update.pl instead of 01.1.SNP_calling_homos.pl
+# - Calls 01.1.SNP_calling_homos.pl (formerly named: 01.1.SNP_calling_homo_based_on_pepes_cigar_update.pl)
 #
 use strict; use warnings;
 use POSIX qw(ceil floor);
@@ -30,7 +30,7 @@ my $options = GetOptions (
 	"out=s"	=>	\$out_dir
 );
 
-die "USAGE: 01.0.call_SNPs_parallel_based_on_pepes.v2.pl --bam </path/to/align.bam> --out </path/to/output/directory/>\n" unless ($bam_file && $out_dir);
+die "USAGE: 01.0.call_SNPs_parallel.pl --bam </path/to/align.bam> --out </path/to/output/directory/>\n" unless ($bam_file && $out_dir);
 
 ################################################
 my $step = ceil(($number_of_chrms-$chrm_start)/$number_of_threads);
@@ -40,14 +40,14 @@ for (my $i=$chrm_start;$i<$number_of_chrms;$i += $step){
 		my $end = ($number_of_chrms-1);
 		my $basename = basename($bam_file,(".bam"));
 		my $out = $out_dir . "/01.2.SNP_table.$basename." . ($i+1) . "." . ($end+1);
-		system("perl 01.1.SNP_calling_homo_based_on_pepes_cigar_update.pl -fasta_ref $ref_fasta -chrm_start $i -chrm_end $end -n_reads $threshold_number_of_reads -ref_freq $threshold_fraction_of_reads_matching_ref -indel_freq $threshold_fraction_of_reads_matching_ref_for_indels -o $out -bam_file $bam_file &");
-# 		print "A - 01.1.SNP_calling_homo_based_on_pepes_cigar_update.pl -fasta_ref $ref_fasta -chrm_start $i -chrm_end $end -n_reads $threshold_number_of_reads -ref_freq $threshold_fraction_of_reads_matching_ref -indel_freq $threshold_fraction_of_reads_matching_ref_for_indels -o $out -bam_file $bam_file &\n";
+		system("perl 01.1.SNP_calling_homos.pl -fasta_ref $ref_fasta -chrm_start $i -chrm_end $end -n_reads $threshold_number_of_reads -ref_freq $threshold_fraction_of_reads_matching_ref -indel_freq $threshold_fraction_of_reads_matching_ref_for_indels -o $out -bam_file $bam_file &");
+# 		print "A - 01.1.SNP_calling_homos.pl -fasta_ref $ref_fasta -chrm_start $i -chrm_end $end -n_reads $threshold_number_of_reads -ref_freq $threshold_fraction_of_reads_matching_ref -indel_freq $threshold_fraction_of_reads_matching_ref_for_indels -o $out -bam_file $bam_file &\n";
 	}else{
 		my $end = ($i+$step-1);
 		my $basename = basename($bam_file,(".bam"));
 		my $out = $out_dir . "/01.2.SNP_table.$basename." . ($i+1) . "." . ($end+1);
-		system("perl 01.1.SNP_calling_homo_based_on_pepes_cigar_update.pl -fasta_ref $ref_fasta -chrm_start $i -chrm_end $end -n_reads $threshold_number_of_reads -ref_freq $threshold_fraction_of_reads_matching_ref -indel_freq $threshold_fraction_of_reads_matching_ref_for_indels -o $out -bam_file $bam_file &");
-# 		print "B - 01.1.SNP_calling_homo_based_on_pepes_cigar_update.pl -fasta_ref $ref_fasta -chrm_start $i -chrm_end $end -n_reads $threshold_number_of_reads -ref_freq $threshold_fraction_of_reads_matching_ref -indel_freq $threshold_fraction_of_reads_matching_ref_for_indels -o $out -bam_file $bam_file &\n";
+		system("perl 01.1.SNP_calling_homos.pl -fasta_ref $ref_fasta -chrm_start $i -chrm_end $end -n_reads $threshold_number_of_reads -ref_freq $threshold_fraction_of_reads_matching_ref -indel_freq $threshold_fraction_of_reads_matching_ref_for_indels -o $out -bam_file $bam_file &");
+# 		print "B - 01.1.SNP_calling_homos.pl -fasta_ref $ref_fasta -chrm_start $i -chrm_end $end -n_reads $threshold_number_of_reads -ref_freq $threshold_fraction_of_reads_matching_ref -indel_freq $threshold_fraction_of_reads_matching_ref_for_indels -o $out -bam_file $bam_file &\n";
 	}
 }
 
