@@ -1,7 +1,6 @@
 #!/usr/bin/perl 
 #perl 01.1.SNP_calling_homos.pl -fasta_ref /Volumes/SolexaRAID/Solexa_runs_Data/00.Downloaded_references_and_others/S_lycopersicum_chromosomes.2.40.fa -chrm_start 0 -chrm_end 0 -n_reads 4 -ref_freq 0.66 -indel_freq 0.33 -o SNP_table.PEN.final.Picard_and_GATK.1.1 -bam_file ../2.40.Chromosomes_alignments/BWA_merged_files/PEN.final.Picard_and_GATK.bam
 #adapted from Pepe's script by mfc
-#2012-01-06: CIGAR subroutine altered per Pepe's suggestion
 
 use strict;
 use warnings;
@@ -384,18 +383,39 @@ sub do_quantification_loop{
 	return ($nt_line,$most_abundant_base,$most_abundant_base_reads,$total);
 }
 
+#OLD CIGAR SUBROUTINE:
+# sub CIGAR_parsing {
+# 	my $cigar_tr = 	shift;
+# 	my @parts = split /\d+N/,$cigar_tr;
+# 	my @bad_pos;
+# 	my $cum_sum = 1;
+# 	foreach(@parts){
+# 		$_ =~ s/M//g;
+# 		$cum_sum += $_;
+# 		push @bad_pos, $cum_sum;
+# 	}
+# 	pop @bad_pos;
+# #	print "@bad_pos";
+# 	return @bad_pos;
+# }
+
+#NEW CIGAR SUBROUTINE FROM PEPE ON 2011-12-20:
 sub CIGAR_parsing {
-	my $cigar_tr = 	shift;
-	my @parts = split /\d+N/,$cigar_tr;
-	my @bad_pos;
-	my $cum_sum = 1;
-	foreach(@parts){
-		$_ =~ s/M//g;
-		$cum_sum += $_;
-		push @bad_pos, $cum_sum;
-	}
-	pop @bad_pos;
-#	print "@bad_pos";
-	return @bad_pos;
+    my $cigar_tr = shift;
+    my @parts = split /\d*N/,$cigar_tr;
+    pop @parts;
+    my @bad_pos;
+    my $cum_sum = 1;
+    foreach my $sub_cigar (@parts){
+        my @numbers = split (/[A-Z]/,$sub_cigar);
+        my @letters = split (/\d*/,$sub_cigar);
+        shift @letters;
+        for(my $i=0;$i<@numbers;$i++){
+            $cum_sum += $numbers[$i] if($letters[$i] =~ /(M|I)/);
+            push @bad_pos, $cum_sum;
+        }
+    }
+    return @bad_pos;
 }
+
 
