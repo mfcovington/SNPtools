@@ -1,53 +1,23 @@
-#!/usr/bin/perl 
-use strict;
-use warnings;
+#!/usr/bin/perl
+# 02.0.filtering_SNPs_by_pos_based_on_pepes_2.pl
+# Mike Covington
+# created: 2011-12-12
+#
+# Description: 
+#
+use strict; use warnings;
 use Bio::DB::Sam;
 use Data::Dumper;
 use List::Util qw(max sum);
+use File::Basename;
 
 my $ratio_threshold = 2; ##MFC
 
-#THIS SCRIPT REMOVES SNPS WITH LOW COVERAGE AND SUPORTED ONLY BY ON SEGMENT OF THE READS
-# my %files = (
-# 		'chr0' =>	{'snp_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.csv",
-# 					'out_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.FILTERED2.csv"},
-# 		'chr1' =>	{'snp_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.2.2.csv.nogap.gap.csv",
-# 					'out_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.2.2.csv.nogap.gap.FILTERED2.csv"},
-# 		'chr0' =>	{'snp_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.csv",
-# 					'out_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.FILTERED2.csv"},
-# 		'chr0' =>	{'snp_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.csv",
-# 					'out_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.FILTERED2.csv"},
-# 		'chr0' =>	{'snp_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.csv",
-# 					'out_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.FILTERED2.csv"},
-# 		'chr0' =>	{'snp_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.csv",
-# 					'out_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.FILTERED2.csv"},
-# 		'chr0' =>	{'snp_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.csv",
-# 					'out_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.FILTERED2.csv"},
-# 		'chr0' =>	{'snp_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.csv",
-# 					'out_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.FILTERED2.csv"},
-# 		'chr0' =>	{'snp_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.csv",
-# 					'out_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.FILTERED2.csv"},
-# 		'chr0' =>	{'snp_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.csv",
-# 					'out_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.FILTERED2.csv"},
-# 		'chr0' =>	{'snp_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.csv",
-# 					'out_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.FILTERED2.csv"},
-# 		'chr0' =>	{'snp_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.csv",
-# 					'out_file' => "01.2.SNP_table.PEN.final.Picard_and_GATK.1.1.csv.nogap.gap.FILTERED2.csv"},
-# 
-# 		'het' =>	{'snp_file' => "SNP_table.PEN.final.Picard_and_GATK.hets.1.1.csv",
-# 					'out_file' => "02.2.SNP_table.PEN.final.Picard_and_GATK.hets.1.1.filtered.csv"},
-# 			);
-
-
-
-# foreach my $sp (keys %files){
 my @files = @ARGV;
 foreach my $file (@files) {
-#OPEN SNP FILE AND GET HEADER AND HASH WTH SP => ARRAY OF POSITIONS OF THE COLUMNS WITH THE NUM OF READS FOR TAH SP IN THE FILE
-# 	my $SNP_file = $files{$sp}->{'snp_file'};
-# 	my $out_file = $files{$sp}->{'out_file'};
 	my $SNP_file = $file;
-	my $out_file = "$SNP_file.FILTERED.csv";
+	my ($filename, $directories, $suffix) = fileparse($SNP_file, ".csv");
+	my $out_file = "$directories$filename.FILTERED.csv";
 	
 
 	print "\nNumber of SNPs to look at:\n";
@@ -117,7 +87,7 @@ foreach my $file (@files) {
 			print OUT join ",", @elements;
 			$counter_passed++;
 			$counter_keep++;
-		} elsif (($elements[27]/$elements[26]>$ratio_threshold && $elements[30]/$elements[29]<$ratio_threshold) || ($elements[25]/$elements[26]>$ratio_threshold && $elements[28]/$elements[29]<$ratio_threshold)) { ## Kick if the SNPs are in a terminal quintile and don't pass the flanking coverage test
+		} elsif (($elements[26] == 0) || ($elements[27]/$elements[26]>$ratio_threshold && $elements[30]/$elements[29]<$ratio_threshold) || ($elements[25]/$elements[26]>$ratio_threshold && $elements[28]/$elements[29]<$ratio_threshold)) { ## Kick if the SNPs are in a terminal quintile and don't pass the flanking coverage test  ## 2011-12-12: added $elements[26] == 0 part to avoid illegal division by zero
 			print OUT_KICK "threshold,",join(",", @elements);
 			$counter_kick++;
 		} elsif (($elements[8] eq "del") && ($elements[7] < 4)) {
