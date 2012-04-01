@@ -1,6 +1,7 @@
 #!/usr/bin/perl 
 #perl 01.1.SNP_calling_homos.pl -fasta_ref /Volumes/SolexaRAID/Solexa_runs_Data/00.Downloaded_references_and_others/S_lycopersicum_chromosomes.2.40.fa -chrm_start 0 -chrm_end 0 -n_reads 4 -ref_freq 0.66 -indel_freq 0.33 -o SNP_table.PEN.final.Picard_and_GATK.1.1 -bam_file ../2.40.Chromosomes_alignments/BWA_merged_files/PEN.final.Picard_and_GATK.bam
 #adapted from Pepe's script by mfc
+#2012-01-06: CIGAR subroutine altered per Pepe's suggestion
 
 use strict;
 use warnings;
@@ -24,7 +25,7 @@ GetOptions(
 
 print "Look for SNPs in : $sps_bam_file\n";
 ##OPEN OUTPUT FILE
-my $out_filename = ">./$outputfile.csv";
+my $out_filename = ">$outputfile.csv";
 open (SNP_OUTFILE, $out_filename) or die "Could not open $out_filename\n";
 
 #MAKE HEADER LINE AND PRINT IT TO THE OUTPUT FILE
@@ -280,6 +281,7 @@ foreach my $chromosome (@targets[$chrm_start..$chrm_end]){
 	#CAPITALIZE FOR COLOMA!!!
 #	substr($chromosome,0,2,"SL");
 	print "$chromosome_counter. $chromosome\tlength: $chr_lengths{$chromosome}\n";
+	`sleep 1`;
 	$sam->fast_pileup("$chromosome",$snp_caller);
 #	$sam->fast_pileup("$chromosome:55900..56900",$snp_caller);
 }
