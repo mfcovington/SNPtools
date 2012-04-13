@@ -10,9 +10,9 @@
 # - Calls 01.1.SNP_calling_homos.pl (formerly named: 01.1.SNP_calling_homo_based_on_pepes_cigar_update.pl)
 #
 # 2012-04-02: cleaned up, expanded getoptions and usage statement
+# 2012-04-13: Re-work the way the thresholds work.  Want it to be >= instead of >
 #
 # To-do:
-#	Re-work the way the thresholds work.  Want it to be >= instead of >
 #	Change naming of output files
 #	Change from system calls?
 #	Incorporate auto-parallelization (script determines # of chromosomes in file and processors available)
