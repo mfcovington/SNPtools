@@ -11,16 +11,17 @@ use Bio::DB::Sam;
 use List::Util qw(sum);
 
 ##COLLECT ARGUMENTS FROM CLI
-my ($chrm_start,$chrm_end,$outputfile,$threshold_fraction_of_reads_matching_ref,$threshold_fraction_of_reads_matching_ref_for_indels,$threshold_number_of_reads,$fasta_ref,$sps_bam_file);
+my ($chrm_start, $chrm_end, $outputfile, $threshold_fraction_of_reads_matching_ref, $threshold_fraction_of_reads_matching_ref_for_indels, $threshold_number_of_reads, $fasta_ref, $sps_bam_file);
+
 GetOptions(
-	'chrm_start:i' => \$chrm_start,
-	'chrm_end:i' => \$chrm_end,
-	'o:s' => \$outputfile,
-	'n_reads:i' => \$threshold_number_of_reads,
-	'ref_freq:f' => \$threshold_fraction_of_reads_matching_ref,
-	'indel_freq:f' => \$threshold_fraction_of_reads_matching_ref_for_indels,
-	'fasta_ref:s' => \$fasta_ref,
-	'bam_file:s' => \$sps_bam_file
+	'chrm_start:i'	=> \$chrm_start,
+	'chrm_end:i'	=> \$chrm_end,
+	'o:s'			=> \$outputfile,
+	'n_reads:i'		=> \$threshold_number_of_reads,
+	'ref_freq:f'	=> \$threshold_fraction_of_reads_matching_ref,
+	'indel_freq:f'	=> \$threshold_fraction_of_reads_matching_ref_for_indels,
+	'fasta_ref:s'	=> \$fasta_ref,
+	'bam_file:s'	=> \$sps_bam_file
 ); #GetOptions
 
 print "Look for SNPs in : $sps_bam_file\n";
@@ -197,7 +198,11 @@ my $snp_caller = sub {
 	
 		#I CHECK FIRST IF IT IS AN INSERTION< THE AN DELETION AND THEN A SNP
 	#	print "$refbase\t$ref_reads\tall reads: $all_reads\tins: $insert_reads\tdel: $deletion_reads\n";
-		if ($insert_reads>1 && ($insert_reads > round($ref_reads*$threshold_fraction_of_reads_matching_ref_for_indels)) && ($insert_reads > round($all_reads*($threshold_fraction_of_reads_matching_ref/2)))){
+		if (
+			$insert_reads > 1 &&
+			($insert_reads >= round($ref_reads * $threshold_fraction_of_reads_matching_ref_for_indels)) &&
+			($insert_reads >= round($all_reads * ($threshold_fraction_of_reads_matching_ref/2)))
+		) {
 			#FIRST CHECK IF THERE IS A SNP IN THE BASE BEFORE THE INS
 			#FOR THIS I"VE MADE A FUNCTION THAT CALCULATES THE BASES, POSITIONS ETC
 			my ($preins_line,$preins_pos_in_reads_seen,$preins_most_abundant_base_reads,$preins_most_abundant_base,$preins_total) = caculate_snp_in_pre_insertion(\%positions_in_reads_seen,$refbase);
@@ -205,7 +210,11 @@ my $snp_caller = sub {
 	#		print "$pos: $refbase\ttotal: $preins_total\tref: $ref_reads\tins: $insert_reads > ".round($ref_reads*$threshold_fraction_of_reads_matching_ref_for_indels)."\t\n$preins_line\n$rpreins_line\n";
 	
 			#THEN CHECK AS ALWAYS FOR SNPS...
-			if($preins_most_abundant_base ne $refbase && $preins_most_abundant_base_reads> ($preins_total*$threshold_fraction_of_reads_matching_ref) && $preins_most_abundant_base_reads >= $threshold_number_of_reads){
+			if(
+				$preins_most_abundant_base ne $refbase &&
+				$preins_most_abundant_base_reads >= ($preins_total*$threshold_fraction_of_reads_matching_ref) &&
+				$preins_most_abundant_base_reads >= $threshold_number_of_reads
+			) {
 				my $line = "$seqid,$pos,$refbase,$preins_line,$preins_most_abundant_base," . calculate_attributes($preins_pos_in_reads_seen).",".calculate_attributes($rpreins_pos_in_reads_seen);
 				print SNP_OUTFILE "$line\n";
 				#print "SNP: $line\n";
@@ -247,7 +256,10 @@ my $snp_caller = sub {
 	#			print "INS: $line\n";
 			}
 	
-		}elsif($deletion_reads>1 && ($deletion_reads > round($ref_reads*$threshold_fraction_of_reads_matching_ref_for_indels))){
+		}elsif(
+			$deletion_reads > 1 &&
+			($deletion_reads >= round($ref_reads * $threshold_fraction_of_reads_matching_ref_for_indels))
+		) {
 			my($nt_line,$most_abundant_base,$most_abundant_base_reads,$total) = do_quantification_loop(\%positions_in_reads_seen);
 			my $line = "$seqid,$pos,$refbase,$nt_line,del,";
 			$line .= calculate_attributes(\%{$positions_in_reads_seen{'del'}}) .",". calculate_attributes(\%{$distances_in_reads_seen{'del'}});
@@ -257,7 +269,11 @@ my $snp_caller = sub {
 			
 			my($nt_line,$most_abundant_base,$most_abundant_base_reads,$total) = do_quantification_loop(\%positions_in_reads_seen);
 	#		print "$most_abundant_base ne $refbase && $most_abundant_base_reads > ($alignment_size*$threshold_fraction_of_reads_matching_ref) && $most_abundant_base_reads >= $threshold_number_of_reads\n";
-			if($most_abundant_base ne $refbase && $most_abundant_base_reads > ($alignment_size*$threshold_fraction_of_reads_matching_ref) && $most_abundant_base_reads >= $threshold_number_of_reads){
+			if(
+				$most_abundant_base ne $refbase &&
+				$most_abundant_base_reads >= ($alignment_size * $threshold_fraction_of_reads_matching_ref) &&
+				$most_abundant_base_reads >= $threshold_number_of_reads
+			) {
 				my $line = "$seqid,$pos,$refbase,$nt_line,$most_abundant_base,";
 				$line .= calculate_attributes(\%{$positions_in_reads_seen{$most_abundant_base}}) .",". calculate_attributes(\%{$distances_in_reads_seen{$most_abundant_base}});
 				print SNP_OUTFILE "$line\n";

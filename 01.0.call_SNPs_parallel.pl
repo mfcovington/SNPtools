@@ -15,6 +15,7 @@
 #	Re-work the way the thresholds work.  Want it to be >= instead of >
 #	Change naming of output files
 #	Change from system calls?
+#	Incorporate auto-parallelization (script determines # of chromosomes in file and processors available)
 #
 use strict; use warnings;
 use POSIX qw(ceil floor);
@@ -26,8 +27,8 @@ my $chrm_start = 0;
 my $number_of_chrms = 13;
 my $number_of_threads = 13;
 my $threshold_number_of_reads = 4; #threshold of coverage to call snps (only look at sites with this number or more reads)
-my $threshold_fraction_of_reads_matching_ref = 0.66; ##0.66 is good because when there are 3 bases only, all three have to be snps to be called a snp(sites with this fraction of bases matching reference bases or less will be counted)
-my $threshold_fraction_of_reads_matching_ref_for_indels = 0.33; ##0.33 is good for indels (sites with this fraction of bases matching reference bases or less will be counted)
+my $threshold_fraction_of_reads_matching_ref = 0.66;
+my $threshold_fraction_of_reads_matching_ref_for_indels = 0.33;
 my $ref_fasta = "/Volumes/SolexaRAID/Solexa_runs_Data/00.Downloaded_references_and_others/S_lycopersicum_chromosomes.2.40.fa"; #reference fasta file
 my ($bam_file, $out_dir, $help);
 
