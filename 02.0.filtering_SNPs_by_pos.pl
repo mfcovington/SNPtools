@@ -108,7 +108,7 @@ foreach my $file (@files) {
 	# 		$counter_keep++;
 	# 	}
 
-	# }
+	}
 
 close OUT;
 close OUT_KEEP;
