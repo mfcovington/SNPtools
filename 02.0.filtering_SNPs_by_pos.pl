@@ -30,10 +30,10 @@ foreach my $file (@files) {
 	chomp $head;
 	open(OUT, ">$out_file") or die "Can't open >$out_file for output: $!";
 	print OUT "$head\n";
-	open(OUT_KEEP, ">$out_file.quint_keep.csv") or die "Can't open >$out_file.quint_keep.csv for output: $!";
-	open(OUT_KICK, ">$out_file.quint_kick.csv") or die "Can't open >$out_file.quint_kick.csv for output: $!";
-	print OUT_KEEP "internal.terminal", $head, "\n";
-	print OUT_KICK "low_del.threshold", $head, "\n";
+	# open(OUT_KEEP, ">$out_file.quint_keep.csv") or die "Can't open >$out_file.quint_keep.csv for output: $!";
+	# open(OUT_KICK, ">$out_file.quint_kick.csv") or die "Can't open >$out_file.quint_kick.csv for output: $!";
+	# print OUT_KEEP "internal.terminal", $head, "\n";
+	# print OUT_KICK "low_del.threshold", $head, "\n";
 
 
 
@@ -111,11 +111,11 @@ foreach my $file (@files) {
 	}
 
 close OUT;
-close OUT_KEEP;
-close OUT_KICK;
-print "Filtered down to $counter_passed (",$unfilt_reads_number-$counter_passed ," reads filtered (",($unfilt_reads_number-$counter_passed)*100/$unfilt_reads_number," %)) \n---Done!;\n";
-print "Kept: $counter_keep\nKicked: $counter_kick\n";
-print "Saved: $counter_keep/",$unfilt_reads_number-$counter_passed+$counter_keep, " (", $counter_keep/($unfilt_reads_number-$counter_passed+$counter_keep)*100, " %)\n";
+# close OUT_KEEP;
+# close OUT_KICK;
+# print "Filtered down to $counter_passed (",$unfilt_reads_number-$counter_passed ," reads filtered (",($unfilt_reads_number-$counter_passed)*100/$unfilt_reads_number," %)) \n---Done!;\n";
+# print "Kept: $counter_keep\nKicked: $counter_kick\n";
+# print "Saved: $counter_keep/",$unfilt_reads_number-$counter_passed+$counter_keep, " (", $counter_keep/($unfilt_reads_number-$counter_passed+$counter_keep)*100, " %)\n";
 }
 
 #
