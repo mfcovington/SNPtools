@@ -79,28 +79,36 @@ foreach my $file (@files) {
 		#############################
 	#	#FILTER 2 REDONE BY MFC
 	#	#SKIP SNPs FOR WHICH ALL THE READS HAVE THE SNP IN THE SAME "TERMINAL" FIFTH (COUNTING FROM BOTH DIRECTIONS) AND DON'T PASS FLANKING COVERAGE TEST
-		if($elements[15]!=1 && $elements[23]!=1){ ## Keep if the SNPs are not all in one fifth of the reads
+		unless (
+				( $elements[26] == 0 )
+				|| ( $elements[27] / $elements[26] > $ratio_threshold && $elements[30] / $elements[29] < $ratio_threshold )
+				|| ( $elements[25] / $elements[26] > $ratio_threshold && $elements[28] / $elements[29] < $ratio_threshold )
+			) { ## Kick if the SNPs are in a terminal quintile and don't pass the flanking coverage test  ## 2011-12-12: added $elements[26] == 0 part to avoid illegal division by zero
 			print OUT join ",", @elements;
-			$counter_passed++;
-		} elsif (($elements[15]==1 && $elements[10]+$elements[11]+$elements[12] > 0) || ($elements[23]==1 && $elements[18]+$elements[19]+$elements[20] > 0)) { ## Keep if the SNPs are all in one fifth of the reads, but it is an internal quintile
-			print OUT_KEEP "internal,",join(",", @elements);
-			print OUT join ",", @elements;
-			$counter_passed++;
-			$counter_keep++;
-		} elsif (($elements[26] == 0) || ($elements[27]/$elements[26]>$ratio_threshold && $elements[30]/$elements[29]<$ratio_threshold) || ($elements[25]/$elements[26]>$ratio_threshold && $elements[28]/$elements[29]<$ratio_threshold)) { ## Kick if the SNPs are in a terminal quintile and don't pass the flanking coverage test  ## 2011-12-12: added $elements[26] == 0 part to avoid illegal division by zero
-			print OUT_KICK "threshold,",join(",", @elements);
-			$counter_kick++;
-		} elsif (($elements[8] eq "del") && ($elements[7] < 4)) {
-			print OUT_KICK "low_del,",join(",", @elements);
-			$counter_kick++;
-		} else {
-			print OUT_KEEP "terminal,",join(",", @elements);
-			print OUT join ",", @elements;
-			$counter_passed++;
-			$counter_keep++;
 		}
 
-	}
+	# 	if($elements[15]!=1 && $elements[23]!=1){ ## Keep if the SNPs are not all in one fifth of the reads
+	# 		print OUT join ",", @elements;
+	# 		$counter_passed++;
+	# 	} elsif (($elements[15]==1 && $elements[10]+$elements[11]+$elements[12] > 0) || ($elements[23]==1 && $elements[18]+$elements[19]+$elements[20] > 0)) { ## Keep if the SNPs are all in one fifth of the reads, but it is an internal quintile
+	# 		print OUT_KEEP "internal,",join(",", @elements);
+	# 		print OUT join ",", @elements;
+	# 		$counter_passed++;
+	# 		$counter_keep++;
+	# 	} elsif (($elements[26] == 0) || ($elements[27]/$elements[26]>$ratio_threshold && $elements[30]/$elements[29]<$ratio_threshold) || ($elements[25]/$elements[26]>$ratio_threshold && $elements[28]/$elements[29]<$ratio_threshold)) { ## Kick if the SNPs are in a terminal quintile and don't pass the flanking coverage test  ## 2011-12-12: added $elements[26] == 0 part to avoid illegal division by zero
+	# 		print OUT_KICK "threshold,",join(",", @elements);
+	# 		$counter_kick++;
+	# 	} elsif (($elements[8] eq "del") && ($elements[7] < 4)) {
+	# 		print OUT_KICK "low_del,",join(",", @elements);
+	# 		$counter_kick++;
+	# 	} else {
+	# 		print OUT_KEEP "terminal,",join(",", @elements);
+	# 		print OUT join ",", @elements;
+	# 		$counter_passed++;
+	# 		$counter_keep++;
+	# 	}
+
+	# }
 
 close OUT;
 close OUT_KEEP;
