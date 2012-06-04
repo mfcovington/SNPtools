@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # 02.0.filtering_SNPs_by_pos.pl
 # Mike Covington
 # created: 2011-12-12
@@ -38,8 +38,8 @@ foreach my $file (@files) {
 		$short_snp_pos =~ s/\..*//;
 	
         # skip SNPs/indels supported by fewer than $coverage_threshold
-        if ( sum @elements[ 3 .. 6 ] < $coverage_threshold 
-            &&   $elements[7]        < $coverage_threshold
+        if ( sum @elements[ 3 .. 6 ] < $coverage_threshold    #ACGT
+            &&   $elements[7]        < $coverage_threshold    #deletion
         ) {
             next;
         }

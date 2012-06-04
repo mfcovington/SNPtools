@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/env perl
 #perl 01.1.SNP_calling_homos.pl -fasta_ref /Volumes/SolexaRAID/Solexa_runs_Data/00.Downloaded_references_and_others/S_lycopersicum_chromosomes.2.40.fa -chrm_start 0 -chrm_end 0 -n_reads 4 -ref_freq 0.66 -indel_freq 0.33 -o SNP_table.PEN.final.Picard_and_GATK.1.1 -bam_file ../2.40.Chromosomes_alignments/BWA_merged_files/PEN.final.Picard_and_GATK.bam
 #adapted from Pepe's script by mfc
 #2012-01-06: CIGAR subroutine altered per Pepe's suggestion

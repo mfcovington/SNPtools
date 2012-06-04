@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # 01.0.call_SNPs_parallel.pl
 # Mike Covington
 # created: 2012-01-07
