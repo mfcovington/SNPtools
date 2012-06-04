@@ -29,16 +29,8 @@ my $out_filename = ">$outputfile.csv";
 open (SNP_OUTFILE, $out_filename) or die "Could not open $out_filename\n";
 
 #MAKE HEADER LINE AND PRINT IT TO THE OUTPUT FILE
-my $head_line_ouput = "seq_id,pos,ref,";
-foreach my $tag ("nt"){
-	foreach my $nt ("A","C","G","T","del"){
-		$head_line_ouput .= $nt."_".$tag.",";
-	} #foreach $nt
-} #foreach $tag
-$head_line_ouput .= "snp_base,fq1,fq2,fq3,fq4,fq5,fsum_reads,fq_seen,fdiff_pos,rq1,rq2,rq3,rq4,rq5,rsum_reads,rq_seen,rdiff_pos\n";
-print SNP_OUTFILE "$head_line_ouput";
-
-
+my $snp_header = "seq_id,pos,ref,a,c,g,t,del";
+print SNP_OUTFILE "$snp_header";
 
 my $sam = Bio::DB::Sam->new(
 	-bam  => "$sps_bam_file",
