@@ -31,7 +31,7 @@ open (SNP_OUTFILE, $out_filename) or die "Could not open $out_filename\n";
 
 #MAKE HEADER LINE AND PRINT IT TO THE OUTPUT FILE
 my $snp_header = "seq_id,pos,ref,a,c,g,t,del";
-print SNP_OUTFILE "$snp_header";
+print SNP_OUTFILE "$snp_header\n";
 
 my $sam = Bio::DB::Sam->new(
 	-bam  => "$sps_bam_file",
