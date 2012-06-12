@@ -60,7 +60,7 @@ foreach my $file (@files) {
 
 	}
 close OUT;
-print "Filtered down to $counter_passed (" . $unfilt_reads_number-$counter_passed . " reads filtered (" . ($unfilt_reads_number-$counter_passed)*100/$unfilt_reads_number . " %)) \n---Done!;\n";
+print "Filtered down to $counter_passed (" . $counter-$counter_passed . " reads filtered (" . ($counter-$counter_passed)*100/$counter . " %)) \n---Done!;\n";
 }
 exit;
 
