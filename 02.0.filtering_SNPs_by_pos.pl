@@ -15,7 +15,7 @@ use File::Basename;
 
 my $ratio_threshold = 2;
 my $coverage_threshold = 4;
-my ( $counter, $counter_passed )
+my ( $counter, $counter_passed );
 
 my @files = @ARGV;
 foreach my $file (@files) {
