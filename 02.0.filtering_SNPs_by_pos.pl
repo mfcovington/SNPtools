@@ -15,13 +15,14 @@ use File::Basename;
 
 my $ratio_threshold = 2;
 my $coverage_threshold = 4;
+my ( $counter, $counter_passed )
 
 my @files = @ARGV;
 foreach my $file (@files) {
 	my $SNP_file = $file;
     my ( $filename, $directories, $suffix ) = fileparse( $SNP_file, ".csv" );
 	my $out_file = "$directories$filename.FILTERED.csv";
-    my ( $counter, $counter_passed, %bases_n );
+    my %bases_n;
 	
     open SNPs, "<", $SNP_file;
     open OUT,  ">", $out_file;
@@ -60,7 +61,12 @@ foreach my $file (@files) {
 
 	}
 close OUT;
-print "Filtered down to $counter_passed (" . $counter-$counter_passed . " reads filtered (" . ($counter-$counter_passed)*100/$counter . " %)) \n---Done!;\n";
+print "Filtered down to $counter_passed ("
+  . $counter - $counter_passed
+  . " reads filtered ("
+  . ( $counter - $counter_passed ) * 100 / $counter
+  . " %)) \n---Done!;\n";
+
 }
 exit;
 
