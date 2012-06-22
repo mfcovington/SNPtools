@@ -8,8 +8,8 @@
 use strict;
 use warnings;
 use autodie;
-use Bio::DB::Sam;
-use Data::Dumper;
+# use Bio::DB::Sam;
+# use Data::Dumper;
 use List::Util qw( sum );
 use File::Basename;
 
@@ -27,7 +27,8 @@ foreach my $file (@files) {
     open SNPs, "<", $SNP_file;
     open OUT,  ">", $out_file;
 
-	print OUT <SNPs>;
+    my $header = <SNPs>;
+    print OUT $header;
 	
 	while (<SNPs>){
 		$counter++;
@@ -39,13 +40,11 @@ foreach my $file (@files) {
 		$short_snp_pos =~ s/\..*//;
 	
         # skip SNPs/indels supported by fewer than $coverage_threshold
-        if ( sum @elements[ 3 .. 6 ] < $coverage_threshold    #ACGT
-            &&   $elements[7]        < $coverage_threshold    #deletion
+        if ( sum( @elements[ 3 .. 6 ] ) < $coverage_threshold    #ACGT
+            &&    $elements[7]          < $coverage_threshold    #deletion
         ) {
             next;
         }
-
-
 
 		# print SNPs/indels to output unless they don't pass the flanking coverage test
         unless (   $elements[26] == 0                                        #avoid illegal division by zero
@@ -61,9 +60,11 @@ foreach my $file (@files) {
 
 	}
 close OUT;
-print "Filtered down to $counter_passed ("
-  . $counter - $counter_passed
-  . " reads filtered ("
+
+my $counter_diff = $counter - $counter_passed;
+print "Filtered from $counter down to $counter_passed ("
+  . $counter_diff
+  . " SNPs/indels removed ("
   . ( $counter - $counter_passed ) * 100 / $counter
   . " %)) \n---Done!;\n";
 
