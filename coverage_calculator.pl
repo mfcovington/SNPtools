@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # coverage_calculator.v2.pl
 # Mike Covington
 # created: 2011-12-05
