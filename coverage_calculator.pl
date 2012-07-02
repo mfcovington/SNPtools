@@ -10,6 +10,7 @@ use Data::Dumper;
 use Getopt::Long;
 use Bio::DB::Sam;
 use List::Util qw(sum);
+use IO::File;
 
 my ($ref_fa, $bam_file, $machine, $col, $whit, $id);
 my $out_dir = "./";
@@ -44,9 +45,11 @@ my $sam = Bio::DB::Sam->new(
 
 my @chromosomes = $sam->seq_ids;
 open (LOG, ">$out_dir/$id.$machine.log") or die "Cannot open >$out_dir/$id.$machine.log";
+LOG->autoflush(1);
 foreach my $chr (@chromosomes) {
 # 	$chr =~ tr/sl/SL/; # caps in chr names aren't consisent
 	open (COVERAGE_OUT,	 ">$out_dir/$id.$chr.coverage.$machine") or die "Cannot open >$out_dir/$id.$chr.coverage.$machine";
+	COVERAGE_OUT->autoflush(1);
 	my $cov_pos = 1;
 	my $chr_length = $sam->length($chr);
 	print LOG "Getting $id coverage data for $chr (length = $chr_length)\n";
