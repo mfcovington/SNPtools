@@ -3,15 +3,14 @@ use Moose;
 use Modern::Perl;
 use File::Basename;
 
-#TODO: check for presence of bam file and region!!!!
-#TODO: check samtools version!!!!
+#TODO: check for presence of valid region!!!!
 
 has 'bam' => (
     is  => 'ro',
     isa => 'Str',
 );
 
-sub valid_bam {
+sub _valid_bam {
     my $self = shift;
 
     if ( -e $self->bam and $self->bam =~ m/.bam$/i ) {
@@ -21,6 +20,39 @@ sub valid_bam {
     else {
         die "  Can't find valid bam file: " . $self->bam;
     }
+}
+
+sub _valid_samtools_path {
+    my $self = shift;
+
+    my $sam_status = `which samtools`;
+    die "  Samtools not found in PATH" unless $sam_status =~ m/samtools/i;
+    say "  Samtools looks good!" if $self->verbose;
+}
+
+sub _valid_samtools_version {
+    my $self = shift;
+
+    my @usage = `samtools 2>&1`; #change to samtools
+    my $version;
+    for (@usage) {
+        $_ =~ m/Version: ([\d\.].*) /i;
+        $version = $1 and last if $1;
+    }
+    my @version_parsed = $version =~ m/ (\d*) \. (\d*) \. (\d*) /x;
+    say "  Samtools is version $version" if $self->verbose;
+    die "  Need samtools version 0.1.XX+"
+      unless ( $version_parsed[0] >= 1
+        or $version_parsed[1] >= 2
+        or $version_parsed[1] == 1 and $version_parsed[2] >= 18 );
+}
+
+sub _validity_tests {
+    my $self = shift;
+
+    $self->_valid_bam;
+    $self->_valid_samtools_path;
+    $self->_valid_samtools_version;
 }
 
 has 'chromosome' => (
@@ -50,7 +82,7 @@ has 'verbose' => (
     default => 0,
 );
 
-sub region {
+sub _region {
     my $self = shift;
 
     my $region;
@@ -79,7 +111,7 @@ sub samtools_cmd {
     else {
         $samtools_prefix .= "depth";
     }
-    my $samtools_cmd = $samtools_prefix . $self->region . $self->bam . $samtools_suffix;
+    my $samtools_cmd = $samtools_prefix . $self->_region . $self->bam . $samtools_suffix;
 
     return $samtools_cmd;
 }
@@ -87,10 +119,9 @@ sub samtools_cmd {
 sub get_coverage {
     my $self = shift;
 
-    if ( $self->valid_bam() ) {
-        say "  Running: " . $self->samtools_cmd() if $self->verbose();
-        system( $self->samtools_cmd );
-    }
+    $self->_validity_tests();
+    say "  Running: " . $self->samtools_cmd() if $self->verbose();
+    system( $self->samtools_cmd );
 }
 
 no Moose;
