@@ -4,21 +4,22 @@ use Modern::Perl;
 use File::Basename;
 
 #TODO: check for presence of valid region!!!!
+#TODO: mkdir if necessary, check for success
+#TODO: require certain arguments to be defined
+#TODO: generate log files??
+#will it cause a problem if i look up a region that has no coverage?  will it return empty string, undef or 0?....looks like empty or undef
 
-sub samtools_cmd {
+sub samtools_cmd_gaps {
     my $self = shift;
 
-    my $samtools_prefix = "samtools ";
-    my $samtools_suffix = "";
-    if ( $self->include_intron_gaps ) {
-        $samtools_prefix .= "mpileup";
-        $samtools_suffix  = " | cut -f1-2,4"; #watch memory usage. if this causes a significant increase in memory reqs, change it. 
-    }
-    else {
-        $samtools_prefix .= "depth";
-    }
-    my $samtools_cmd = $samtools_prefix . $self->_region . $self->bam . $samtools_suffix;
+    my $samtools_cmd = "samtools mpileup" . $self->_region . $self->bam . " | cut -f1-2,4 > " . $self->out_file . ".gaps";
+    return $samtools_cmd;
+}
 
+sub samtools_cmd_nogaps {
+    my $self = shift;
+
+    my $samtools_cmd = "samtools depth" . $self->_region . $self->bam . " > " . $self->out_file . ".nogaps";
     return $samtools_cmd;
 }
 
@@ -26,15 +27,21 @@ sub get_coverage {
     my $self = shift;
 
     $self->_validity_tests();
-    say "  Running: " . $self->samtools_cmd() if $self->verbose();
-    system( $self->samtools_cmd );
+
+    if ( $self->gap ) {
+        say "  Running: " . $self->samtools_cmd_gaps() if $self->verbose();
+        system( $self->samtools_cmd_gaps );
+    }
+    if ( $self->nogap ) {
+        say "  Running: " . $self->samtools_cmd_nogaps() if $self->verbose();
+        system( $self->samtools_cmd_nogaps );
+    }
 }
 
 has 'bam' => (
     is  => 'ro',
     isa => 'Str',
 );
-
 
 has 'chromosome' => (
     is  => 'ro',
@@ -51,10 +58,21 @@ has 'pos_end' => (
     isa => 'Int',
 );
 
-has 'include_intron_gaps' => (
+has 'out_file' => (
+    is  => 'ro',
+    isa => 'Str',
+);
+
+has 'gap' => (
     is      => 'ro',
     isa     => 'Bool',
-    default => 0,
+    default => 1,
+);
+
+has 'nogap' => (
+    is      => 'ro',
+    isa     => 'Bool',
+    default => 1,
 );
 
 has 'verbose' => (
@@ -73,7 +91,7 @@ sub _region {
             and defined $self->pos_start
             and defined $self->pos_end
             and $self->pos_start < $self->pos_end;
-        $region = " -r $self->chromosome " when defined;
+        $region = " -r " . $self->chromosome . " " when defined;
         default { $region = " " }
     }
 
