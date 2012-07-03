@@ -2,9 +2,10 @@ package coverage_commander;
 use Moose;
 use Modern::Perl;
 use File::Basename;
+use File::Path 'make_path';
+use autodie;
 
 #TODO: check for presence of valid region!!!!
-#TODO: mkdir if necessary, check for success
 #TODO: require certain arguments to be defined
 #TODO: generate log files??
 #will it cause a problem if i look up a region that has no coverage?  will it return empty string, undef or 0?....looks like empty or undef
@@ -27,6 +28,7 @@ sub get_coverage {
     my $self = shift;
 
     $self->_validity_tests();
+    $self->_make_dir();
 
     if ( $self->gap ) {
         say "  Running: " . $self->samtools_cmd_gaps() if $self->verbose();
@@ -96,6 +98,13 @@ sub _region {
     }
 
     return $region;
+}
+
+sub _make_dir {
+    my $self = shift;
+
+    my ( $filename, $dir_name ) = fileparse( $self->out_file );
+    make_path( $dir_name );
 }
 
 sub _validity_tests {
