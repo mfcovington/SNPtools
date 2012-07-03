@@ -4,6 +4,7 @@ use Modern::Perl;
 use File::Basename;
 use File::Path 'make_path';
 use autodie;
+use Data::Printer;
 
 #TODO: check for presence of valid region!!!!
 #TODO: require certain arguments to be defined
@@ -22,6 +23,24 @@ sub samtools_cmd_nogaps {
 
     my $samtools_cmd = "samtools depth" . $self->_region . $self->bam . " > " . $self->out_file . ".nogaps";
     return $samtools_cmd;
+}
+
+sub get_seq_names {
+    my $self = shift;
+
+    say "  Getting sequence names from bam file" if $self->verbose;
+    my @header = $self->_get_header;
+    my @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
+    return @seq_names;
+}
+
+sub get_seq_lengths {
+    my $self = shift;
+
+    say "  Getting sequence lengths from bam file" if $self->verbose;
+    my @header = $self->_get_header;
+    my @seq_lengths = map { $_ =~ m/\t SN: .* \t LN: (.*)/x } @header;
+    return @seq_lengths;
 }
 
 sub get_coverage {
@@ -113,6 +132,22 @@ sub _validity_tests {
     $self->_valid_bam;
     $self->_valid_samtools_path;
     $self->_valid_samtools_version;
+}
+
+sub samtools_cmd_header {
+    my $self = shift;
+
+    my $samtools_cmd = "`samtools view -H " . $self->bam . "`";
+    return $samtools_cmd;
+}
+
+sub _get_header {
+    my $self = shift;
+
+    $self->_validity_tests();
+    my $get_header_cmd = "samtools view -H " . $self->bam;
+    my @header = `$get_header_cmd`;
+    return @header;
 }
 
 sub _valid_bam {

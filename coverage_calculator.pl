@@ -10,7 +10,6 @@ use warnings;
 use autodie;
 use feature 'say';
 use Getopt::Long;
-use Bio::DB::Sam;
 use IO::File;
 use coverage_commander;
 
@@ -38,20 +37,11 @@ my $options = GetOptions(
 die $usage if $help;
 die $usage unless defined $bam_file && defined $id;
 
-my $sam = Bio::DB::Sam->new(
-    -bam   => $bam_file,
-    # -fasta => $ref_fa
-);
-my @chromosomes = $sam->seq_ids;
-
-# open my $log_fh, ">", "$out_dir/$id.log";
-# $log_fh->autoflush(1);
-
 my $coverage = coverage_commander->new(
     bam     => "/Users/mfc/sandbox/genotyping/bwa_tophat_M82-Slyc.sorted.dupl_rm.bam",
     verbose => 1,
-    # log     => "$out_dir/$id.log",
 );
+my @chromosomes = $coverage->get_seq_names;
 
 foreach my $chr (@chromosomes) {
     my $cov_out = "$out_dir/$id.$chr.coverage";
@@ -59,6 +49,5 @@ foreach my $chr (@chromosomes) {
     $coverage->{out_file}   = $cov_out;
     $coverage->get_coverage();
 }
-# close $log_fh;
 exit;
 
