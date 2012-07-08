@@ -45,8 +45,8 @@ my @chromosomes = $coverage->get_seq_names;
 
 foreach my $chr (@chromosomes) {
     my $cov_out = "$out_dir/$id.$chr.coverage";
-    $coverage->{chromosome} = $chr;
-    $coverage->{out_file}   = $cov_out;
+    $coverage->chromosome($chr);
+    $coverage->out_file($cov_out);
     $coverage->get_coverage();
 }
 exit;

@@ -37,7 +37,7 @@ sub get_seq_names {
 sub get_seq_lengths {
     my $self = shift;
 
-    say "  Getting sequence lengths from bam file" if $self->verbose;
+    say "  Getting sequence names from bam file" if $self->verbose;
     my @header = $self->_get_header;
     my @seq_lengths = map { $_ =~ m/\t SN: .* \t LN: (.*)/x } @header;
     return @seq_lengths;
@@ -65,33 +65,33 @@ has 'bam' => (
 );
 
 has 'chromosome' => (
-    is  => 'ro',
+    is  => 'rw',
     isa => 'Str',
 );
 
 has 'pos_start' => (
-    is  => 'ro',
+    is  => 'rw',
     isa => 'Int',
 );
 
 has 'pos_end' => (
-    is  => 'ro',
+    is  => 'rw',
     isa => 'Int',
 );
 
 has 'out_file' => (
-    is  => 'ro',
+    is  => 'rw',
     isa => 'Str',
 );
 
 has 'gap' => (
-    is      => 'ro',
+    is      => 'rw',
     isa     => 'Bool',
     default => 1,
 );
 
 has 'nogap' => (
-    is      => 'ro',
+    is      => 'rw',
     isa     => 'Bool',
     default => 1,
 );
