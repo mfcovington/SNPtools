@@ -43,10 +43,10 @@ my ( $filename, $directories, $suffix ) = fileparse( $snp_in, ".csv" );
 my $snp_out = $directories . $filename . ".nogap.gap.csv";
 
 #open files
-open $snp_in_fh,     "<", $snp_in;
-open $snp_out_fh,    ">", $snp_out;
-open $cov_nogaps_fh, "<", $cov_nogaps_file;
-open $cov_gaps_fh,   "<", $cov_gaps_file;
+open my $snp_in_fh,     "<", $snp_in;
+open my $snp_out_fh,    ">", $snp_out;
+open my $cov_nogaps_fh, "<", $cov_nogaps_file;
+open my $cov_gaps_fh,   "<", $cov_gaps_file;
 
 #build coverage hashes
 my ( %nogaps, %gaps );
