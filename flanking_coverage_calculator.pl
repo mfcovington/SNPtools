@@ -19,20 +19,26 @@ USAGE:
 flanking_coverage_calculator.pl
   --snp_file   </PATH/TO/snp_file.csv>
   --cov_prefix </PATH/TO/cov_file_prefix_only -- w/o .cov_(no)gap>
+  --flank_dist <flanking distance to use [8]>
   --help
 
 USAGE_END
 
 my ( $snp_in, $cov_prefix, $help );
+my $snp_idx = 8;    # default
 my $out_dir = "./";
 my $options = GetOptions(
     "snp_file=s"   => \$snp_in,
     "cov_prefix=s" => \$cov_prefix,
+    "flank_dist=i" => \$snp_idx,
     "help"         => \$help,
 );
 
 die $usage if $help;
 die $usage unless defined $snp_in && defined $cov_prefix;
+
+my $lt_idx = 0;
+my $rt_idx = $snp_idx * 2;
 
 my ( $cov_nogaps, $cov_gaps ) = ( $cov_prefix ) x 2 ;
 $cov_nogaps .= ".cov_nogaps";
@@ -47,14 +53,14 @@ open $cov_nogaps_fh, "<", $cov_nogaps;
 open $cov_gaps_fh,   "<", $cov_gaps;
 
 
-#read in first 17 lines
+#read in first 17 lines (because interested in cov at snp pos [8] and 8 nts before [0] and after [16])
 my (@nogaps_chr, @nogaps_pos, @nogaps_cov, @gaps_chr, @gaps_pos, @gaps_cov, $nogaps_line, $gaps_line);
-for my $count ( 0 .. 16 ) {
+for my $idx ( 0 .. 16 ) {
     $nogaps_line  = <$cov_nogaps_fh>;
     $gaps_line = <$cov_gaps_fh>;
     chomp( $nogaps_line, $gaps_line );
-    ( $nogaps_chr[$count], $nogaps_pos[$count], $nogaps_cov[$count] )    = split( /\t/, $nogaps_line );
-    ( $gaps_chr[$count], $gaps_pos[$count], $gaps_cov[$count] ) = split( /\t/, $gaps_line );
+    ( $nogaps_chr[$idx], $nogaps_pos[$idx], $nogaps_cov[$idx] ) = split( /\t/, $nogaps_line );
+    ( $gaps_chr[$idx], $gaps_pos[$idx], $gaps_cov[$idx] )       = split( /\t/, $gaps_line );
 }
 
 
@@ -65,7 +71,7 @@ while ( my $snp_line = <$snp_in_fh> ) {
     chomp $snp_line;
     my ( $snp_chr, $snp_pos_unsplit, $snp_remainder ) = split( /,/, $snp_line, 3 );
     my ( $snp_pos, $snp_pos_index ) = split( /\./, $snp_pos_unsplit );
-    while ( $snp_pos > $nogaps_pos[8] ) {
+    while ( $snp_pos > $nogaps_pos[$snp_idx] ) {
         shift @nogaps_chr;
         shift @nogaps_pos;
         shift @nogaps_cov;
@@ -85,8 +91,11 @@ while ( my $snp_line = <$snp_in_fh> ) {
         push @gaps_cov,   $gaps_line_elements[2];
     }
 
-    if ( $snp_chr eq $nogaps_chr[8] && $snp_pos == $nogaps_pos[8] ) {
-        say $snp_out_fh join ( ",", $snp_chr, $snp_pos_unsplit, $snp_remainder, $nogaps_cov[0], $nogaps_cov[8], $nogaps_cov[16], $gaps_cov[0], $gaps_cov[8], $gaps_cov[16] );
+    if ( $snp_chr eq $nogaps_chr[$snp_idx] && $snp_pos == $nogaps_pos[$snp_idx] ) {
+        say $snp_out_fh join( ",",
+            $snp_chr,             $snp_pos_unsplit,      $snp_remainder,
+            $nogaps_cov[$lt_idx], $nogaps_cov[$snp_idx], $nogaps_cov[$rt_idx],
+            $gaps_cov[$lt_idx],   $gaps_cov[$snp_idx],   $gaps_cov[$rt_idx] );
     }
     else {
         die "Something strange going on here...";
