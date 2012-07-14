@@ -25,11 +25,11 @@ USAGE_END
 
 #get options
 my ( $snp_in, $cov_prefix, $help );
-my $snp_idx = 8;    # default
+my $flank_dist = 8;    # default
 my $options = GetOptions(
     "snp_file=s"   => \$snp_in,
     "cov_prefix=s" => \$cov_prefix,
-    "flank_dist=i" => \$snp_idx,
+    "flank_dist=i" => \$flank_dist,
     "help"         => \$help,
 );
 die $usage if $help;
@@ -50,16 +50,16 @@ open my $cov_gaps_fh,   "<", $cov_gaps_file;
 
 #build coverage hashes
 my ( %nogaps, %gaps );
-%nogaps = map { chomp, @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_nogaps_fh>;
-%gaps   = map { chomp, @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_gaps_fh>;
+%nogaps = map { chomp; @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_nogaps_fh>;
+%gaps   = map { chomp; @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_gaps_fh>;
 
 #write header
 my $header = <$snp_in_fh>;
 chomp $header;
 say $snp_out_fh join( ",",
     $header,
-    "nogap_pos-$snp_idx", "nogap_pos", "nogap_pos+$snp_idx",
-    "gap_pos-$snp_idx",   "gap_pos",   "gap_pos+$snp_idx" );
+    "nogap_pos-$flank_dist", "nogap_pos", "nogap_pos+$flank_dist",
+    "gap_pos-$flank_dist",   "gap_pos",   "gap_pos+$flank_dist" );
 
 #write coverage
 while ( my $snp_line = <$snp_in_fh> ) {
@@ -67,8 +67,8 @@ while ( my $snp_line = <$snp_in_fh> ) {
     my ( $snp_chr, $snp_pos_unsplit, $snp_remainder ) = split( /,/, $snp_line, 3 );
     my ( $snp_pos, $snp_pos_index ) = split( /\./, $snp_pos_unsplit );
 
-    my $lt_pos = $snp_pos - $snp_idx;
-    my $rt_pos = $snp_pos + $snp_idx;
+    my $lt_pos = $snp_pos - $flank_dist;
+    my $rt_pos = $snp_pos + $flank_dist;
 
     say $snp_out_fh join( ",",
         $snp_chr,                $snp_pos_unsplit,         $snp_remainder,
