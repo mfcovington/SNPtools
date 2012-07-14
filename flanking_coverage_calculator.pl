@@ -10,11 +10,7 @@ use warnings;
 use autodie;
 use feature 'say';
 use File::Basename;
-
-# new version of coverage data is tab-delimited and only has data for regions with coverage
-# the earlier approach won't work for non-contiguous cov data. 2 main choices:
-#       1- fill in missing cov data (waste of space/time)
-#       2- read entire coverage file into hash: key = pos, value = coverage; for each snp, lookup cov data
+use Getopt::Long;
 
 my $usage = <<USAGE_END;
 
@@ -27,46 +23,37 @@ flanking_coverage_calculator.pl
 
 USAGE_END
 
+#get options
 my ( $snp_in, $cov_prefix, $help );
 my $snp_idx = 8;    # default
-my $out_dir = "./";
 my $options = GetOptions(
     "snp_file=s"   => \$snp_in,
     "cov_prefix=s" => \$cov_prefix,
     "flank_dist=i" => \$snp_idx,
     "help"         => \$help,
 );
-
 die $usage if $help;
 die $usage unless defined $snp_in && defined $cov_prefix;
 
-my $lt_idx = 0;
-my $rt_idx = $snp_idx * 2;
-
-my ( $cov_nogaps, $cov_gaps ) = ( $cov_prefix ) x 2 ;
-$cov_nogaps .= ".cov_nogaps";
-$cov_gaps   .= ".cov_gaps";
+#generate filenames
+my ( $cov_nogaps_file, $cov_gaps_file ) = ( $cov_prefix ) x 2 ;
+$cov_nogaps_file .= ".cov_nogaps";
+$cov_gaps_file   .= ".cov_gaps";
 my ( $filename, $directories, $suffix ) = fileparse( $snp_in, ".csv" );
 my $snp_out = $directories . $filename . ".nogap.gap.csv";
 
 #open files
 open $snp_in_fh,     "<", $snp_in;
 open $snp_out_fh,    ">", $snp_out;
-open $cov_nogaps_fh, "<", $cov_nogaps;
-open $cov_gaps_fh,   "<", $cov_gaps;
+open $cov_nogaps_fh, "<", $cov_nogaps_file;
+open $cov_gaps_fh,   "<", $cov_gaps_file;
 
+#build coverage hashes
+my ( %nogaps, %gaps );
+%nogaps = map { chomp, @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_nogaps_fh>;
+%gaps   = map { chomp, @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_gaps_fh>;
 
-#read in first 17 lines (because interested in cov at snp pos [8] and 8 nts before [0] and after [16])
-my (@nogaps_chr, @nogaps_pos, @nogaps_cov, @gaps_chr, @gaps_pos, @gaps_cov, $nogaps_line, $gaps_line);
-for my $idx ( 0 .. 16 ) {
-    $nogaps_line  = <$cov_nogaps_fh>;
-    $gaps_line = <$cov_gaps_fh>;
-    chomp( $nogaps_line, $gaps_line );
-    ( $nogaps_chr[$idx], $nogaps_pos[$idx], $nogaps_cov[$idx] ) = split( /\t/, $nogaps_line );
-    ( $gaps_chr[$idx], $gaps_pos[$idx], $gaps_cov[$idx] )       = split( /\t/, $gaps_line );
-}
-
-
+#write header
 my $header = <$snp_in_fh>;
 chomp $header;
 say $snp_out_fh join( ",",
@@ -74,44 +61,24 @@ say $snp_out_fh join( ",",
     "nogap_pos-$snp_idx", "nogap_pos", "nogap_pos+$snp_idx",
     "gap_pos-$snp_idx",   "gap_pos",   "gap_pos+$snp_idx" );
 
+#write coverage
 while ( my $snp_line = <$snp_in_fh> ) {
     chomp $snp_line;
     my ( $snp_chr, $snp_pos_unsplit, $snp_remainder ) = split( /,/, $snp_line, 3 );
     my ( $snp_pos, $snp_pos_index ) = split( /\./, $snp_pos_unsplit );
-    while ( $snp_pos > $nogaps_pos[$snp_idx] ) {
-        shift @nogaps_chr;
-        shift @nogaps_pos;
-        shift @nogaps_cov;
-        shift @gaps_chr;
-        shift @gaps_pos;
-        shift @gaps_cov;
-        $nogaps_line = <$cov_nogaps_fh>;
-        $gaps_line   = <$cov_gaps_fh>;
-        chomp( $nogaps_line, $gaps_line );
-        my @nogaps_line_elements = split( /\t/, $nogaps_line );
-        my @gaps_line_elements   = split( /\t/, $gaps_line );
-        push @nogaps_chr, $nogaps_line_elements[0];
-        push @nogaps_pos, $nogaps_line_elements[1];
-        push @nogaps_cov, $nogaps_line_elements[2];
-        push @gaps_chr,   $gaps_line_elements[0];
-        push @gaps_pos,   $gaps_line_elements[1];
-        push @gaps_cov,   $gaps_line_elements[2];
-    }
 
-    if ( $snp_chr eq $nogaps_chr[$snp_idx] && $snp_pos == $nogaps_pos[$snp_idx] ) {
-        say $snp_out_fh join( ",",
-            $snp_chr,             $snp_pos_unsplit,      $snp_remainder,
-            $nogaps_cov[$lt_idx], $nogaps_cov[$snp_idx], $nogaps_cov[$rt_idx],
-            $gaps_cov[$lt_idx],   $gaps_cov[$snp_idx],   $gaps_cov[$rt_idx] );
-    }
-    else {
-        die "Something strange going on here...";
-    }
+    my $lt_pos = $snp_pos - $snp_idx;
+    my $rt_pos = $snp_pos + $snp_idx;
+
+    say $snp_out_fh join( ",",
+        $snp_chr,                $snp_pos_unsplit,         $snp_remainder,
+        $nogaps{ $lt_pos } || 0, $nogaps{ $snp_pos } || 0, $nogaps{ $rt_pos } || 0,
+        $gaps{ $lt_pos }   || 0, $gaps{ $snp_pos }   || 0, $gaps{ $rt_pos }   || 0 );
 }
 
+#close shop
 close $snp_in_fh;
 close $cov_nogaps_fh;
 close $cov_gaps_fh;
 close $snp_out_fh;
-
-
+exit;
