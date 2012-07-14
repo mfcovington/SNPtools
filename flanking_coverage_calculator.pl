@@ -12,6 +12,9 @@ use feature 'say';
 use File::Basename;
 
 # new version of coverage data is tab-delimited and only has data for regions with coverage
+# the earlier approach won't work for non-contiguous cov data. 2 main choices:
+#       1- fill in missing cov data (waste of space/time)
+#       2- read entire coverage file into hash: key = pos, value = coverage; for each snp, lookup cov data
 
 my $usage = <<USAGE_END;
 
