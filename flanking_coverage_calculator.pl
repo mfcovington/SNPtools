@@ -67,13 +67,15 @@ while ( my $snp_line = <$snp_in_fh> ) {
     my ( $snp_chr, $snp_pos_unsplit, $snp_remainder ) = split( /,/, $snp_line, 3 );
     my ( $snp_pos, $snp_pos_index ) = split( /\./, $snp_pos_unsplit );
 
+    my ( $del_cov ) = ${ [ split /,/ $snp_remainder ] }[5]    #nogaps doesn't see deletions, must compensate
+
     my $lt_pos = $snp_pos - $flank_dist;
     my $rt_pos = $snp_pos + $flank_dist;
 
     say $snp_out_fh join( ",",
         $snp_chr,                $snp_pos_unsplit,         $snp_remainder,
-        $nogaps{ $lt_pos } || 0, $nogaps{ $snp_pos } || 0, $nogaps{ $rt_pos } || 0,
-        $gaps{ $lt_pos }   || 0, $gaps{ $snp_pos }   || 0, $gaps{ $rt_pos }   || 0 );
+        $nogaps{ $lt_pos } || 0, $nogaps{ $snp_pos } + $del_cov || 0, $nogaps{ $rt_pos } || 0,
+        $gaps{ $lt_pos }   || 0, $gaps{ $snp_pos }              || 0, $gaps{ $rt_pos }   || 0 );
 }
 
 #close shop
