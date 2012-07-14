@@ -8,6 +8,7 @@
 use strict;
 use warnings;
 use autodie;
+use feature 'say';
 use File::Basename;
 
 # new version of coverage data is tab-delimited and only has data for regions with coverage
@@ -33,58 +34,63 @@ my $options = GetOptions(
 die $usage if $help;
 die $usage unless defined $snp_in && defined $cov_prefix;
 
-my ( $cov_gaps, $cov_nogaps ) = ( $cov_prefix, $cov_prefix );
-$cov_gaps .= ".cov_gaps";
+my ( $cov_nogaps, $cov_gaps ) = ( $cov_prefix ) x 2 ;
 $cov_nogaps .= ".cov_nogaps";
-my ($filename, $directories, $suffix) = fileparse($snp_in, ".csv");
+$cov_gaps   .= ".cov_gaps";
+my ( $filename, $directories, $suffix ) = fileparse( $snp_in, ".csv" );
 my $snp_out = $directories . $filename . ".nogap.gap.csv";
+
 #open files
 open $snp_in_fh,     "<", $snp_in;
 open $snp_out_fh,    ">", $snp_out;
 open $cov_nogaps_fh, "<", $cov_nogaps;
 open $cov_gaps_fh,   "<", $cov_gaps;
 
+
 #read in first 17 lines
-my (@COL_cov_chr, @COL_cov_pos, @COL_cov, @WHIT_cov_chr, @WHIT_cov_pos, @WHIT_cov, $COL_line, $WHIT_line);
-for (my $count = 0; $count < 17; $count++) {
-	$COL_line = <$cov_nogaps_fh>;
-	$WHIT_line = <$cov_gaps_fh>;
-	chomp ($COL_line, $WHIT_line);
- 	($COL_cov_chr[$count], $COL_cov_pos[$count], $COL_cov[$count]) = split(/,/, $COL_line);
- 	($WHIT_cov_chr[$count], $WHIT_cov_pos[$count], $WHIT_cov[$count]) = split(/,/, $WHIT_line);
+my (@nogaps_chr, @nogaps_pos, @nogaps_cov, @gaps_chr, @gaps_pos, @gaps_cov, $nogaps_line, $gaps_line);
+for my $count ( 0 .. 16 ) {
+    $nogaps_line  = <$cov_nogaps_fh>;
+    $gaps_line = <$cov_gaps_fh>;
+    chomp( $nogaps_line, $gaps_line );
+    ( $nogaps_chr[$count], $nogaps_pos[$count], $nogaps_cov[$count] )    = split( /\t/, $nogaps_line );
+    ( $gaps_chr[$count], $gaps_pos[$count], $gaps_cov[$count] ) = split( /\t/, $gaps_line );
 }
+
 
 my $header = <$snp_in_fh>;
 chomp $header;
-print $snp_out_fh join(",",$header, "nogap_cov_pos-8","nogap_cov_pos","nogap_cov_pos+8", "gap_cov_pos-8","gap_cov_pos","gap_cov_pos+8"), "\n";
-while (my $snp_line = <$snp_in_fh>) {
-	chomp $snp_line;
-	my ($snp_chr, $snp_pos_unsplit, $snp_remainder) = split(/,/, $snp_line, 3); #read in CSV line
-	my ($snp_pos, $snp_pos_index) = split(/\./, $snp_pos_unsplit);
-	while ($snp_pos > $COL_cov_pos[8]) {
-		shift @COL_cov_chr;
-		shift @COL_cov_pos;
-		shift @COL_cov;
-		shift @WHIT_cov_chr;
-		shift @WHIT_cov_pos;
-		shift @WHIT_cov;
-		$COL_line = <$cov_nogaps_fh>;
-		$WHIT_line = <$cov_gaps_fh>;
-		chomp ($COL_line, $WHIT_line);
- 		my @COL_line_elements = split(/,/, $COL_line);
- 		my @WHIT_line_elements = split(/,/, $WHIT_line);
-		push @COL_cov_chr, $COL_line_elements[0];
-		push @COL_cov_pos, $COL_line_elements[1];
-		push @COL_cov, $COL_line_elements[2];
-		push @WHIT_cov_chr, $WHIT_line_elements[0];
-		push @WHIT_cov_pos, $WHIT_line_elements[1];
-		push @WHIT_cov, $WHIT_line_elements[2];
-	}
-	if ($snp_chr eq $COL_cov_chr[8] && $snp_pos == $COL_cov_pos[8]) {
-		print $snp_out_fh join (",", $snp_chr, $snp_pos_unsplit, $snp_remainder, $COL_cov[0], $COL_cov[8], $COL_cov[16], $WHIT_cov[0], $WHIT_cov[8], $WHIT_cov[16]), "\n";
-	}else{
-		die "Something strange going on here...";
-	}
+say $snp_out_fh join( ",", $header, "nogap_pos-8", "nogap_pos", "nogap_pos+8", "gap_pos-8", "gap_pos", "gap_pos+8" );
+while ( my $snp_line = <$snp_in_fh> ) {
+    chomp $snp_line;
+    my ( $snp_chr, $snp_pos_unsplit, $snp_remainder ) = split( /,/, $snp_line, 3 );
+    my ( $snp_pos, $snp_pos_index ) = split( /\./, $snp_pos_unsplit );
+    while ( $snp_pos > $nogaps_pos[8] ) {
+        shift @nogaps_chr;
+        shift @nogaps_pos;
+        shift @nogaps_cov;
+        shift @gaps_chr;
+        shift @gaps_pos;
+        shift @gaps_cov;
+        $nogaps_line = <$cov_nogaps_fh>;
+        $gaps_line   = <$cov_gaps_fh>;
+        chomp( $nogaps_line, $gaps_line );
+        my @nogaps_line_elements = split( /\t/, $nogaps_line );
+        my @gaps_line_elements   = split( /\t/, $gaps_line );
+        push @nogaps_chr, $nogaps_line_elements[0];
+        push @nogaps_pos, $nogaps_line_elements[1];
+        push @nogaps_cov, $nogaps_line_elements[2];
+        push @gaps_chr,   $gaps_line_elements[0];
+        push @gaps_pos,   $gaps_line_elements[1];
+        push @gaps_cov,   $gaps_line_elements[2];
+    }
+
+    if ( $snp_chr eq $nogaps_chr[8] && $snp_pos == $nogaps_pos[8] ) {
+        say $snp_out_fh join ( ",", $snp_chr, $snp_pos_unsplit, $snp_remainder, $nogaps_cov[0], $nogaps_cov[8], $nogaps_cov[16], $gaps_cov[0], $gaps_cov[8], $gaps_cov[16] );
+    }
+    else {
+        die "Something strange going on here...";
+    }
 }
 
 close $snp_in_fh;
