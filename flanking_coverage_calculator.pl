@@ -66,7 +66,11 @@ for my $idx ( 0 .. 16 ) {
 
 my $header = <$snp_in_fh>;
 chomp $header;
-say $snp_out_fh join( ",", $header, "nogap_pos-8", "nogap_pos", "nogap_pos+8", "gap_pos-8", "gap_pos", "gap_pos+8" );
+say $snp_out_fh join( ",",
+    $header,
+    "nogap_pos-$snp_idx", "nogap_pos", "nogap_pos+$snp_idx",
+    "gap_pos-$snp_idx",   "gap_pos",   "gap_pos+$snp_idx" );
+
 while ( my $snp_line = <$snp_in_fh> ) {
     chomp $snp_line;
     my ( $snp_chr, $snp_pos_unsplit, $snp_remainder ) = split( /,/, $snp_line, 3 );
