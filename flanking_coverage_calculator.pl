@@ -67,7 +67,7 @@ while ( my $snp_line = <$snp_in_fh> ) {
     my ( $snp_chr, $snp_pos_unsplit, $snp_remainder ) = split( /,/, $snp_line, 3 );
     my ( $snp_pos, $snp_pos_index ) = split( /\./, $snp_pos_unsplit );
 
-    my ( $del_cov ) = ${ [ split /,/ $snp_remainder ] }[5]    #nogaps doesn't see deletions, must compensate
+    my ( $del_cov ) = ${ [ split /,/ $snp_remainder ] }[5];    #nogaps doesn't see deletions, must compensate
 
     my $lt_pos = $snp_pos - $flank_dist;
     my $rt_pos = $snp_pos + $flank_dist;
