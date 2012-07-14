@@ -10,18 +10,21 @@ use Data::Printer;
 #TODO: require certain arguments to be defined
 #TODO: generate log files??
 #will it cause a problem if i look up a region that has no coverage?  will it return empty string, undef or 0?....looks like empty or undef
+# TODO: the following gets printed (to STDERR) even when not using verbose (BUT DO I EVEN CARE?)
+# [mpileup] 1 samples in 1 input files
+# <mpileup> Set max per-file depth to 8000
 
 sub samtools_cmd_gaps {
     my $self = shift;
 
-    my $samtools_cmd = "samtools mpileup" . $self->_region . $self->bam . " | cut -f1-2,4 > " . $self->out_file . ".gaps";
+    my $samtools_cmd = "samtools mpileup" . $self->_region . $self->bam . " | cut -f1-2,4 > " . $self->out_file . ".cov_gaps";
     return $samtools_cmd;
 }
 
 sub samtools_cmd_nogaps {
     my $self = shift;
 
-    my $samtools_cmd = "samtools depth" . $self->_region . $self->bam . " > " . $self->out_file . ".nogaps";
+    my $samtools_cmd = "samtools depth" . $self->_region . $self->bam . " > " . $self->out_file . ".cov_nogaps";
     return $samtools_cmd;
 }
 
