@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# parental_genome_builder_rnaseq_only_pt1_v2.pl
+# parental_genome_builder_pt1.rnaseq.pl
 # Mike Covington
 # created: 2012-01-03
 #
@@ -17,21 +17,39 @@ use autodie;
 use feature 'say';
 use Getopt::Long;
 
+my $usage = <<USAGE_END;
+
+USAGE:                                         #this usage statement doesn't reflect reality, yet
+parental_genome_builder_pt1.rnaseq.pl
+  --chr    <chromosome number>                 #need to change this to chr id eventually!!
+  --snp1 <parent #1 snp file>                  #currently, everything is pointing to directories
+  --snp2 <parent #2 snp file>
+  --cov1 <parent #1 coverage.cov_nogap file>
+  --cov2 <parent #2 coverage.cov_nogap file>
+  --out  <output directory>
+  --help
+
+USAGE_END
+
+#defaults
 my $chr_num         = -1;
 my $m82_rna_snp_dir = "/Volumes/Runner_3B/Mike_temp_SolRAID/Mike_SNPs/M82_SNPS";
 my $pen_rna_snp_dir = "/Volumes/Runner_3B/Mike_temp_SolRAID/Mike_SNPs/PENN_SNPS";
 my $cov_dir         = "/Volumes/Runner_3B/Mike_temp_SolRAID/Mike_SNPs/coverage_out";
 my $output_dir      = "./";
+my $help;
 
 GetOptions(
     "chr=i"  => \$chr_num,
     "msnp=s" => \$m82_rna_snp_dir,
     "psnp=s" => \$pen_rna_snp_dir,
     "cov=s"  => \$cov_dir,
-    "out=s"  => \$output_dir
+    "out=s"  => \$output_dir,
+    "help"   => \$help,
 );
 
-die "USAGE: parental_genome_builder_rnaseq_only_pt1_v2.pl --chr <> --msnp <> --psnp <> --cov <> --out <>\n" unless $chr_num >= 0;
+die $usage if $help;
+die $usage unless $chr_num >= 0;
 
 my $chr_offset = $chr_num + 1;
 my $chr_format;
