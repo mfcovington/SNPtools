@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # parental_genome_builder_pt1.rnaseq.pl
 # Mike Covington
 # created: 2012-01-03
