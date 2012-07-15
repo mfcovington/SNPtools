@@ -8,7 +8,7 @@
 use strict; use warnings;
 use Getopt::Long;
 
-my $chr_num;
+my $chr_num = -1;
 my $m82_rna_snp_dir = "/Volumes/Runner_3B/Mike_temp_SolRAID/Mike_SNPs/M82_SNPS";
 my $pen_rna_snp_dir = "/Volumes/Runner_3B/Mike_temp_SolRAID/Mike_SNPs/PENN_SNPS";
 my $m82_rescan_snps = "/Volumes/Runner_3B/Mike_temp_SolRAID/Mike_SNPs/M82_RESCAN/M82vsHz_repeat_frequency_filtered_uniqueSNP.txt";
@@ -59,117 +59,137 @@ open (PEN_RE_COV, $pen_rescan_cov_file) or die "Can't open $pen_rescan_cov_file"
 `mkdir $output_dir`;
 my $master_snp_file = ">$output_dir/master_snp_list.chr$chr_format";
 open (MASTER, $master_snp_file) or die "Can't open $master_snp_file";
-print MASTER join("\t", "chr", "pos", "ref_base", "snp_base", "genotype", "RESCANvsRNAseq");
+print MASTER join("\t", "chr", "pos", "ref_base", "snp_base", "genotype", "RESCANvsRNAseq"), "\n";
 
 #discard headers
 <M82_RNA_SNPS>;
 <PEN_RNA_SNPS>;
 
-my $temp_line;
-
 #read in first line of each SNP file; for RNAseq, need to skip if insertion/decimal in position (at least for now); for RESCAN SNPs, need to skip to correct chromosome and skip SNPs where ref_base eq "N"
 my (@m82_rna_snp, @pen_rna_snp, @m82_rescan_snp, @pen_rescan_snp);
-foreach my $line (<M82_RNA_SNPS>) {
-	chomp $line;
+while (my $line = <M82_RNA_SNPS>) {
 	@m82_rna_snp = split(/,/, $line); # 0=chr, 1=pos, 2=ref_base , 8=snp_base
 	last unless (split(/\./, $m82_rna_snp[1]))[1]; #keep unless there is a decimal in position (and is, therefore, an insertion)
 }
-foreach my $line (<PEN_RNA_SNPS>) {
-	chomp $line;
+while (my $line = <PEN_RNA_SNPS>) {
 	@pen_rna_snp = split(/,/, $line); # 0=chr, 1=pos, 2=ref_base , 8=snp_base
 	last unless (split(/\./, $pen_rna_snp[1]))[1]; #keep unless there is a decimal in position (and is, therefore, an insertion)
 }
-foreach my $line (<M82_RE_SNPS>) {
-	chomp $line;
+while (my $line = <M82_RE_SNPS>) {
 	@m82_rescan_snp = split(/\t/, $line); # 0=chr, 1=pos, 2=ref_base , 3=snp_base
 	last if $m82_rescan_snp[0] eq "SL2.40ch" . $chr_format;
 }
 while ($m82_rescan_snp[2] eq "N") {
-	chomp($temp_line = <M82_RE_SNPS>);
-	@m82_rescan_snp = split(/\t/, $temp_line);
+	@m82_rescan_snp = split(/\t/, <M82_RE_SNPS>);
 }
-foreach my $line (<PEN_RE_SNPS>) {
-	chomp $line;
+while (my $line = <PEN_RE_SNPS>) {
 	@pen_rescan_snp = split(/\t/, $line);
 	last if $pen_rescan_snp[0] eq "SL2.40ch" . $chr_format;
 }
 while ($pen_rescan_snp[2] eq "N") {
-	chomp($temp_line = <PEN_RE_SNPS>);
-	@pen_rescan_snp = split(/\t/, $temp_line);
+	@pen_rescan_snp = split(/\t/, <PEN_RE_SNPS>);
 }
 
 #read in cov files until at correct chromosome
 my (@m82_rna_cov, @pen_rna_cov, @m82_rescan_cov, @pen_rescan_cov);
-foreach my $line (<M82_RNA_COV>) {
-	chomp $line;
-	@m82_rna_cov = split(/,/, $line); # 0=chr, 1=pos, 2=coverage
-	chomp($temp_line = <PEN_RNA_COV>);
-	@pen_rna_cov = split(/,/, $temp_line);
-	chomp($temp_line = <M82_RE_COV>);
-	@m82_rescan_cov = split(/,/, $temp_line);
-	chomp($temp_line = <PEN_RE_COV>);
-	@pen_rescan_cov = split(/,/, $temp_line);
-	last if $m82_rna_cov[0] eq "SL2.40ch" . $chr_format;
-}
-
+# foreach my $line (<M82_RNA_COV>) {
+# 	@m82_rna_cov = split(/,/, $line); # 0=chr, 1=pos, 2=coverage
+	@m82_rna_cov = split(/,/, <M82_RNA_COV>); # 0=chr, 1=pos, 2=coverage
+	@pen_rna_cov = split(/,/, <PEN_RNA_COV>);
+	@m82_rescan_cov = split(/,/, <M82_RE_COV>);
+	@pen_rescan_cov = split(/,/, <PEN_RE_COV>);
+# 	last if $m82_rna_cov[0] eq "SL2.40ch" . $chr_format;
+# }
+# print "OK\n\t";
+# print join("\t", @m82_rna_cov, @pen_rna_cov, @m82_rescan_cov, @pen_rescan_cov);
+# exit;
 #advance through coverage lines one at a time.  for each position, check against SNP positions.  if there is a match, confirm sufficient coverage in corresponding partner.  if sufficient coverage, confirm SNP and not indel.  If SNP, write to master SNP file (include chr, pos, ref_base, snp_base, genotype and RESCANvsRNAseq).  Advance SNP file that was used to next SNP position.  Make sure to allow for multiple SNPs at same position. (Can compare later)
 until ($m82_rna_cov[0] ne "SL2.40ch" . $chr_format) { ##what about at EOF? Do I also need to check for defined/exists?
 	my $pos = $m82_rna_cov[1];
-	
+# 	print "11:", @m82_rna_cov, "\n"; ##TEMP
 	if ($m82_rna_snp[1] == $pos) {
+# 		print "A\n"; ##TEMP
+		chomp $pen_rna_cov[2];
 		if ($pen_rna_cov[2] >=4 && $m82_rna_snp[8] ne "del") {
-			print MASTER join("\t", @m82_rna_snp[0,1,2,8], "M82", "RNAseq");
+# 			print "B\n"; ##TEMP
+			print MASTER join("\t", @m82_rna_snp[0,1,2,8], "M82", "RNAseq"), "\n";
 		}
-		foreach my $line (<M82_RNA_SNPS>) {
-			chomp $line;
+		while (my $line = <M82_RNA_SNPS>) {
+# 			print "C\n"; ##TEMP
 			@m82_rna_snp = split(/,/, $line); # 0=chr, 1=pos, 2=ref_base , 8=snp_base
 			last unless (split(/\./, $m82_rna_snp[1]))[1]; #keep unless there is a decimal in position (and is, therefore, an insertion)
 		}
 	}
-	
+# 	print "22:", @m82_rna_cov, "\n"; ##TEMP
+
 	if ($pen_rna_snp[1] == $pos) {
+# 		print "D\n"; ##TEMP
+		chomp $m82_rna_cov[2];
 		if ($m82_rna_cov[2] >=4 && $pen_rna_snp[8] ne "del") {
-			print MASTER join("\t", @pen_rna_snp[0,1,2,8], "PEN", "RNAseq");
+# 			print "E\n"; ##TEMP
+			print MASTER join("\t", @pen_rna_snp[0,1,2,8], "PEN", "RNAseq"), "\n";
+# 			exit;
 		}
-		foreach my $line (<PEN_RNA_SNPS>) {
-			chomp $line;
+		while (my $line = <PEN_RNA_SNPS>) {
+# 			print "F\n"; ##TEMP
 			@pen_rna_snp = split(/,/, $line); # 0=chr, 1=pos, 2=ref_base , 8=snp_base
 			last unless (split(/\./, $pen_rna_snp[1]))[1]; #keep unless there is a decimal in position (and is, therefore, an insertion)
 		}
 	}
-	
+# 	print "33:", @m82_rna_cov, "\n"; ##TEMP
 	if ($m82_rescan_snp[1] == $pos) {
+# 		print "G\n"; ##TEMP
+# 		exit;
+
+		last unless $m82_rescan_snp[0] eq "SL2.40ch" . $chr_format;
+		chomp $pen_rescan_cov[2];
 		if ($pen_rescan_cov[2] >=4) {
-			print MASTER join("\t", @m82_rescan_snp, "M82", "RESCAN");
+# 			print "H\n"; ##TEMP
+			chomp @m82_rescan_snp;
+			print MASTER join("\t", @m82_rescan_snp[0..3], "M82", "RESCAN"), "\n";
 		}
-		foreach my $line (<M82_RE_SNPS>) {
-			chomp $line;
-			@m82_rescan_snp = split(/,/, $line); # 0=chr, 1=pos, 2=ref_base , 8=snp_base
+		while (my $line = <M82_RE_SNPS>) {
+# 			print "I\n"; ##TEMP
+			@m82_rescan_snp = split(/\t/, $line); # 0=chr, 1=pos, 2=ref_base , 3=snp_base
 			last unless $m82_rescan_snp[2] eq "N"; #keep unless ref_base eq "N"
 		}
 	}
-	
+# 	print "44:", @m82_rna_cov, "\n"; ##TEMP
 	if ($pen_rescan_snp[1] == $pos) {
+# 		print "J\n"; ##TEMP
+		last unless $pen_rescan_snp[0] eq "SL2.40ch" . $chr_format;
+		chomp $m82_rescan_cov[2];
 		if ($m82_rescan_cov[2] >=4) {
-			print MASTER join("\t", @pen_rescan_snp, "PEN", "RESCAN");
+# 			print "K\n"; ##TEMP
+			chomp @pen_rescan_snp;
+			print MASTER join("\t", @pen_rescan_snp[0..3], "PEN", "RESCAN"), "\n";
 		}
-		foreach my $line (<PEN_RE_SNPS>) {
-			chomp $line;
-			@pen_rescan_snp = split(/,/, $line); # 0=chr, 1=pos, 2=ref_base , 8=snp_base
+		while (my $line = <PEN_RE_SNPS>) {
+# 			print "L\n"; ##TEMP
+			@pen_rescan_snp = split(/\t/, $line); # 0=chr, 1=pos, 2=ref_base , 3=snp_base
 			last unless $pen_rescan_snp[2] eq "N"; #keep unless ref_base eq "N"
 		}
 	}
+# 	print "55:", @m82_rna_cov, "\n"; ##TEMP
+# 	foreach my $line (<M82_RNA_COV>) { ##TEMP
+# 		print $line, "\n";
+# 		last;
+# 	}
+	last if eof(M82_RNA_COV);
+	@m82_rna_cov = split(/,/, <M82_RNA_COV>); # 0=chr, 1=pos, 2=coverage
+	@pen_rna_cov = split(/,/, <PEN_RNA_COV>);
+	@m82_rescan_cov = split(/,/, <M82_RE_COV>);
+	@pen_rescan_cov = split(/,/, <PEN_RE_COV>);
+# 	print MASTER "1:", join("\t", @m82_rna_cov);
+# 	print MASTER "2:", join("\t", @pen_rna_cov);
+# 	print MASTER "3:", join("\t", @m82_rescan_cov);
+# 	print MASTER "4:", join("\t", @pen_rescan_cov);
+# 	print "66:", @m82_rna_cov, "\n"; ##TEMP
 
-	chomp($temp_line = <M82_RNA_COV>);	
-	@m82_rna_cov = split(/,/, $temp_line); # 0=chr, 1=pos, 2=coverage
-	chomp($temp_line = <PEN_RNA_COV>);	
-	@pen_rna_cov = split(/,/, $temp_line);
-	chomp($temp_line = <M82_RE_COV>);	
-	@m82_rescan_cov = split(/,/, $temp_line);
-	chomp($temp_line = <PEN_RE_COV>);	
-	@pen_rescan_cov = split(/,/, $temp_line);
+# 	last;
+
 }
-
+print "YAY!\n";
 # close (M82_RNA_SNPS, PEN_RNA_SNPS, M82_RE_SNPS, PEN_RE_SNPS, M82_RNA_COV, PEN_RNA_COV, M82_RE_COV, PEN_RE_COV);
 close (M82_RNA_SNPS);
 close (PEN_RNA_SNPS);
