@@ -88,11 +88,11 @@ for my $pos (@good_cov_pos) {
         if ($insert_length) {
             for my $insert_idx ( 1 .. $insert_length ) {
                 $insert_idx = "0$insert_idx" if $insert_idx < 10;
-                say $master_fh join "\t", "insert chr here", $pos, @{ $par1_snps{$pos}{$insert_idx} }[ 0, 1 ], $par1_name, $insert_idx;
+                say $master_fh join "\t", $chr_id, $pos, @{ $par1_snps{$pos}{$insert_idx} }[ 0, 1 ], $par1_name, $insert_idx;
             }
         }
         else{
-            say $master_fh join "\t", "insert chr here", $pos, @{ $par1_snps{$pos}{snp_del} }[ 0, 1 ], $par1_name, "NA";
+            say $master_fh join "\t", $chr_id, $pos, @{ $par1_snps{$pos}{snp_del} }[ 0, 1 ], $par1_name, "NA";
         }
     }
     if ( defined $par2_snps{$pos} ) {
@@ -100,11 +100,11 @@ for my $pos (@good_cov_pos) {
         if ($insert_length) {
             for my $insert_idx ( 1 .. $insert_length ) {
                 $insert_idx = "0$insert_idx" if $insert_idx < 10;
-                say $master_fh join "\t", "insert chr here", $pos, @{ $par2_snps{$pos}{$insert_idx} }[ 0, 1 ], $par2_name, $insert_idx;
+                say $master_fh join "\t", $chr_id, $pos, @{ $par2_snps{$pos}{$insert_idx} }[ 0, 1 ], $par2_name, $insert_idx;
             }
         }
         else{
-            say $master_fh join "\t", "insert chr here", $pos, @{ $par2_snps{$pos}{snp_del} }[ 0, 1 ], $par2_name, "NA";
+            say $master_fh join "\t", $chr_id, $pos, @{ $par2_snps{$pos}{snp_del} }[ 0, 1 ], $par2_name, "NA";
         }
     }
 }
