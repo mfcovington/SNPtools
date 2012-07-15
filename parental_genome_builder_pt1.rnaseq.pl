@@ -35,16 +35,16 @@ USAGE_END
 # defaults/options
 my $output_dir = "./";
 my $par1_name  = "PAR1";
-my $par1_name  = "PAR2";
+my $par2_name  = "PAR2";
 my $min_cov    = 4;
 my ( $chr_id, $par1_snp_file, $par2_snp_file, $par1_cov_file, $par2_cov_file, $help );
 
 GetOptions(
     "chr_id=s"  => \$chr_id,
     "snp1=s"    => \$par1_snp_file,
-    "snp2=s"    => \$par2_snp_dir,
+    "snp2=s"    => \$par2_snp_file,
     "cov1=s"    => \$par1_cov_file,
-    "cov2=s"    => \$par1_cov_file,
+    "cov2=s"    => \$par2_cov_file,
     "name1=s"   => \$par1_name,
     "name2=s"   => \$par2_name,
     "out=s"     => \$output_dir,
@@ -61,8 +61,8 @@ die $usage
       && defined $par2_cov_file;
 
 # snp/cov build hashes
-my %par1_snps = snp_hash_builder($par1_snps_file);
-my %par2_snps = snp_hash_builder($par2_snps_file);
+my %par1_snps = snp_hash_builder($par1_snp_file);
+my %par2_snps = snp_hash_builder($par2_snp_file);
 my %par1_cov  = cov_hash_builder($par1_cov_file);
 my %par2_cov  = cov_hash_builder($par2_cov_file);
 
@@ -79,7 +79,7 @@ for my $pos (@all_snp_pos) {
 # write master snp file
 make_path($output_dir);
 my $master_snp_file = "$output_dir/master_snp_list.$par1_name.vs.$par2_name.$chr_id";
-open $master_fh, ">", $master_snp_file;
+open my $master_fh, ">", $master_snp_file;
 say $master_fh join "\t", "chr", "pos", "ref_base", "snp_base", "genotype", "insert_position";
 
 for my $pos (@good_cov_pos) {
