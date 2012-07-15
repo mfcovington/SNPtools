@@ -18,8 +18,6 @@ use feature 'say';
 use Getopt::Long;
 
 # TODO:
-    # get rid of references to rna
-    # change m82/pen to par1/par2
     # transition from chr # to chr ID
     # make write_to_master_snp subroutine
 
@@ -41,19 +39,19 @@ parental_genome_builder_pt1.rnaseq.pl
 USAGE_END
 
 #defaults
-my $m82_rna_snp_dir = "/Volumes/Runner_3B/Mike_temp_SolRAID/Mike_SNPs/M82_SNPS";
-my $pen_rna_snp_dir = "/Volumes/Runner_3B/Mike_temp_SolRAID/Mike_SNPs/PENN_SNPS";
-my $cov_dir         = "/Volumes/Runner_3B/Mike_temp_SolRAID/Mike_SNPs/coverage_out";
-my $output_dir      = "./";
-my $par1_name       = "PAR1"
-my $par1_name       = "PAR2"
-my $min_cov         = 4;
+my $par1_snp_dir = "/Volumes/Runner_3B/Mike_temp_SolRAID/Mike_SNPs/M82_SNPS";
+my $par2_snp_dir = "/Volumes/Runner_3B/Mike_temp_SolRAID/Mike_SNPs/PENN_SNPS";
+my $cov_dir      = "/Volumes/Runner_3B/Mike_temp_SolRAID/Mike_SNPs/coverage_out";
+my $output_dir   = "./";
+my $par1_name    = "PAR1"
+my $par1_name    = "PAR2"
+my $min_cov      = 4;
 my ( $chr_num, $help );
 
 GetOptions(
     "chr=i"     => \$chr_num,
-    "msnp=s"    => \$m82_rna_snp_dir,
-    "psnp=s"    => \$pen_rna_snp_dir,
+    "msnp=s"    => \$par1_snp_dir,
+    "psnp=s"    => \$par2_snp_dir,
     "cov=s"     => \$cov_dir,
     "name1=s"   => \$par1_name,
     "name2=s"   => \$par2_name,
@@ -75,18 +73,18 @@ else {
 }
 
 # input files
-my $m82_rna_snps = glob($m82_rna_snp_dir . "/01.2.SNP_table.bwa_tophat_*.sorted.dupl_rm.$chr_offset.$chr_offset.nogap.gap.FILTERED.csv");
-my $pen_rna_snps = glob($pen_rna_snp_dir . "/01.2.SNP_table.bwa_tophat_*.sorted.dupl_rm.$chr_offset.$chr_offset.nogap.gap.FILTERED.csv");
-my $m82_rna_cov_file = $cov_dir . "/M82.SL2.40ch$chr_format.coverage.col";
-my $pen_rna_cov_file = $cov_dir . "/PEN.SL2.40ch$chr_format.coverage.col";
-open $m82_rna_cov_fh, "<", $m82_rna_cov_file;
-open $pen_rna_cov_fh, "<", $pen_rna_cov_file;
+my $par1_snps = glob($par1_snp_dir . "/01.2.SNP_table.bwa_tophat_*.sorted.dupl_rm.$chr_offset.$chr_offset.nogap.gap.FILTERED.csv");
+my $par2_snps = glob($par2_snp_dir . "/01.2.SNP_table.bwa_tophat_*.sorted.dupl_rm.$chr_offset.$chr_offset.nogap.gap.FILTERED.csv");
+my $par1_cov_file = $cov_dir . "/M82.SL2.40ch$chr_format.coverage.col";
+my $par2_cov_file = $cov_dir . "/PEN.SL2.40ch$chr_format.coverage.col";
+open $par1_cov_fh, "<", $par1_cov_file;
+open $par2_cov_fh, "<", $par2_cov_file;
 
 # snp/cov build hashes
-my %par1_snps = snp_hash_builder( $m82_rna_snps );
-my %par2_snps = snp_hash_builder( $pen_rna_snps );
-my %par1_cov  = cov_hash_builder( $m82_rna_cov_file );
-my %par2_cov  = cov_hash_builder( $pen_rna_cov_file );
+my %par1_snps = snp_hash_builder( $par1_snps );
+my %par2_snps = snp_hash_builder( $par2_snps );
+my %par1_cov  = cov_hash_builder( $par1_cov_file );
+my %par2_cov  = cov_hash_builder( $par2_cov_file );
 
 # get snp positions with good coverage
 my @all_snp_pos = sort { $a <=> $b } keys %{ { %par1_snps, %par2_snps } };
