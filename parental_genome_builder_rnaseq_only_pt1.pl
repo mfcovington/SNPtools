@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# parental_genome_builder_pt1.pl
+# parental_genome_builder_pt1_v2.pl
 # Mike Covington
 # created: 2012-01-03
 # 2012-01-15: adapted for use with RNAseq data only (SNPs + indels)
@@ -80,16 +80,17 @@ while ($line = <M82_RNA_COV>) {
 until ($m82_rna_cov[0] ne "SL2.40ch" . $chr_format) { 
 	my $pos = $m82_rna_cov[1];
 
-	if ($m82_rna_pos[0] == $pos) {
+	IFM82: if ($m82_rna_pos[0] == $pos) {
 		my $is_insert = 0;
-		my $insert_pos;
+# 		my $insert_pos;
+		my $insert_pos = $m82_rna_pos[0]; ###TEST
 		my $decimal = "NA";
 		my $sufficient_cov = 0;
 		chomp $pen_rna_cov[2];
 		
 		if ($m82_rna_pos[1]) {
 			$is_insert = 1;
-			$insert_pos = $m82_rna_pos[0];
+# 			$insert_pos = $m82_rna_pos[0];
 			$decimal = $m82_rna_pos[1];
 		}
 
@@ -101,7 +102,9 @@ until ($m82_rna_cov[0] ne "SL2.40ch" . $chr_format) {
 		while ($line = <M82_RNA_SNPS>) {
 			@m82_rna_snp = split(/,/, $line); # 0=chr, 1=pos, 2=ref_base , 8=snp_base
 			@m82_rna_pos = split(/\./, $m82_rna_snp[1]); 
-		
+			
+			goto IFM82 if ($is_insert == 0 && $insert_pos == $m82_rna_pos[0]); ###TEST
+			
 			if ($is_insert == 1 && $insert_pos == $m82_rna_pos[0]) {
 				next unless $sufficient_cov == 1;
 				$decimal = $m82_rna_pos[1];
@@ -113,16 +116,17 @@ until ($m82_rna_cov[0] ne "SL2.40ch" . $chr_format) {
 	}
 
 
-	if ($pen_rna_pos[0] == $pos) {
+	IFPEN: if ($pen_rna_pos[0] == $pos) {
 		my $is_insert = 0;
-		my $insert_pos;
+# 		my $insert_pos;
+		my $insert_pos = $pen_rna_pos[0]; ###TEST
 		my $decimal = "NA";
 		my $sufficient_cov = 0;
 		chomp $m82_rna_cov[2];
 		
 		if ($pen_rna_pos[1]) {
 			$is_insert = 1;
-			$insert_pos = $pen_rna_pos[0];
+# 			$insert_pos = $pen_rna_pos[0];
 			$decimal = $pen_rna_pos[1];
 		}
 
@@ -135,6 +139,8 @@ until ($m82_rna_cov[0] ne "SL2.40ch" . $chr_format) {
 			@pen_rna_snp = split(/,/, $line); # 0=chr, 1=pos, 2=ref_base , 8=snp_base
 			@pen_rna_pos = split(/\./, $pen_rna_snp[1]); 
 		
+			goto IFPEN if ($is_insert == 0 && $insert_pos == $pen_rna_pos[0]); ###TEST
+			
 			if ($is_insert == 1 && $insert_pos == $pen_rna_pos[0]) {
 				next unless $sufficient_cov == 1;
 				$decimal = $pen_rna_pos[1];
