@@ -21,6 +21,7 @@ use Getopt::Long;
     # get rid of references to rna
     # change m82/pen to par1/par2
     # transition from chr # to chr ID
+    # make write_to_master_snp subroutine
 
 my $usage = <<USAGE_END;
 
@@ -73,7 +74,7 @@ else {
     $chr_format = $chr_num;
 }
 
-#INPUT FILES
+# input files
 my $m82_rna_snps = glob($m82_rna_snp_dir . "/01.2.SNP_table.bwa_tophat_*.sorted.dupl_rm.$chr_offset.$chr_offset.nogap.gap.FILTERED.csv");
 my $pen_rna_snps = glob($pen_rna_snp_dir . "/01.2.SNP_table.bwa_tophat_*.sorted.dupl_rm.$chr_offset.$chr_offset.nogap.gap.FILTERED.csv");
 my $m82_rna_cov_file = $cov_dir . "/M82.SL2.40ch$chr_format.coverage.col";
@@ -81,13 +82,13 @@ my $pen_rna_cov_file = $cov_dir . "/PEN.SL2.40ch$chr_format.coverage.col";
 open $m82_rna_cov_fh, "<", $m82_rna_cov_file;
 open $pen_rna_cov_fh, "<", $pen_rna_cov_file;
 
-#BUILD HASHES
+# snp/cov build hashes
 my %par1_snps = snp_hash_builder( $m82_rna_snps );
 my %par2_snps = snp_hash_builder( $pen_rna_snps );
 my %par1_cov  = cov_hash_builder( $m82_rna_cov_file );
 my %par2_cov  = cov_hash_builder( $pen_rna_cov_file );
 
-#get snp positions with good coverage
+# get snp positions with good coverage
 my @all_snp_pos = sort { $a <=> $b } keys %{ { %par1_snps, %par2_snps } };
 my @good_cov_pos;
 for my $pos (@all_snp_pos) {
@@ -97,135 +98,45 @@ for my $pos (@all_snp_pos) {
     push @good_cov_pos, $pos;
 }
 
-#OPEN MASTER SNP FILE
+# write master snp file
 `mkdir -p $output_dir`;
 my $master_snp_file = "$output_dir/master_snp_list_rnaseq.chr$chr_format";
 open $master_fh, ">", $master_snp_file;
 say $master_fh join "\t", "chr", "pos", "ref_base", "snp_base", "genotype", "insert_position";    # insert_position will be decimal portion of position for insertions
 
-####
 for my $pos (@good_cov_pos) {
-
-# check whether position defined for both or single
-# if both, next if same??  check what i did in past
-# check whether insert
-
     if ( defined $par1_snps{$pos} ) {
-        ...
-
-        # if insert, loop through
-        if ( defined $par1_snps{$par_pos[0]}{insert} ) {
-            x
+        my $insert_length = $par1_snps{$pos}{insert} || 0;
+        if ( $insert_length ) {
+            for my $insert_idx ( 1 .. $insert_length ){
+                $insert_idx = "0$insert_idx" if $insert_idx < 10;
+                say $master_fh join "\t", "insert chr here", $pos, @{ $par1_snps{$pos}{$insert_idx} }[0,1], $par1_name, $insert_idx;
+            }
         }
         else{
-            say $master_fh join "\t", $chr????, $pos, @{ $par1_snps{$pos}{snp_del} }[0,1], $par1_name, "NA";
+            say $master_fh join "\t", "insert chr here", $pos, @{ $par1_snps{$pos}{snp_del} }[0,1], $par1_name, "NA";
         }
-
-        # my $decimal = $par1_snps{$pos} || "NA";
-        say $master_fh join "\t", $chr????, $pos, @{ $par1_snps{$pos}{snp_del} }[0,1], $par1_name, "NA";
     }
-
-    my ( $par1_ref_base, $par1_snp_base, $par1_ins_idx = @{ $par1_snps{$pos} };
-    my ( $par1_ref_base, $par1_snp_base, $par1_ins_idx = @{ $par1_snps{$pos} };
-}
-
-
-
-#read in first line of each SNP file
-my (@m82_rna_snp, @pen_rna_snp, @m82_rna_pos, @pen_rna_pos, $line);
-
-$line = <$m82_rna_snps_fh>;
-@m82_rna_snp = split /,/, $line;    # 0=chr, 1=pos, 2=ref_base , 8=snp_base
-@m82_rna_pos = split /\./, $m82_rna_snp[1];
-
-$line = <$pen_rna_snps_fh>;
-@pen_rna_snp = split /,/, $line;    # 0=chr, 1=pos, 2=ref_base , 8=snp_base
-@pen_rna_pos = split /\./, $pen_rna_snp[1];
-
-
-#read in cov files until at correct chromosome
-my ( @m82_rna_cov, @pen_rna_cov );
-while ( $line = <$m82_rna_cov_fh> ) {
-    @m82_rna_cov = split /,/, $line;    # 0=chr, 1=pos, 2=coverage
-    @pen_rna_cov = split /,/, <$pen_rna_cov_fh>;
-    last if $m82_rna_cov[0] eq "SL2.40ch" . $chr_format;
-}
-
-until ( $m82_rna_cov[0] ne "SL2.40ch" . $chr_format ) {
-    my $pos = $m82_rna_cov[1];    ###NEED TO CHANGE TO 
-
-  IFM82: if ( $m82_rna_pos[0] == $pos ) {
-        my $is_insert      = 0;
-        my $insert_pos     = $m82_rna_pos[0];    ###TEST
-        my $decimal        = "NA";
-        my $sufficient_cov = 0;
-        chomp $pen_rna_cov[2];
-
-        if ( $m82_rna_pos[1] ) {
-            $is_insert = 1;
-            $decimal   = $m82_rna_pos[1];
-        }
-
-        if ( $pen_rna_cov[2] >=4 ) {
-            say $master_fh join "\t", $m82_rna_snp[0], $m82_rna_pos[0], @m82_rna_snp[2,8], "M82", $decimal;
-            $sufficient_cov = 1;
-        }
-
-        while ( $line = <$m82_rna_snps_fh> ) {
-            @m82_rna_snp = split /,/, $line;    # 0=chr, 1=pos, 2=ref_base , 8=snp_base
-            @m82_rna_pos = split /\./, $m82_rna_snp[1]; 
-
-            goto IFM82 if ( $is_insert == 0 && $insert_pos == $m82_rna_pos[0] );    ###TEST
-
-            if ( $is_insert == 1 && $insert_pos == $m82_rna_pos[0] ) {
-                next unless $sufficient_cov == 1;
-                $decimal = $m82_rna_pos[1];
-                say $master_fh join "\t", $m82_rna_snp[0], $m82_rna_pos[0], @m82_rna_snp[2,8], "M82", $decimal;
+    if ( defined $par2_snps{$pos} ) {
+        my $insert_length = $par2_snps{$pos}{insert} || 0;
+        if ( $insert_length ) {
+            for my $insert_idx ( 1 .. $insert_length ){
+                $insert_idx = "0$insert_idx" if $insert_idx < 10;
+                say $master_fh join "\t", "insert chr here", $pos, @{ $par2_snps{$pos}{$insert_idx} }[0,1], $par2_name, $insert_idx;
             }
-            else { last; }
+        }
+        else{
+            say $master_fh join "\t", "insert chr here", $pos, @{ $par2_snps{$pos}{snp_del} }[0,1], $par2_name, "NA";
         }
     }
-
-
-  IFPEN: if ( $pen_rna_pos[0] == $pos ) {
-        my $is_insert      = 0;
-        my $insert_pos     = $pen_rna_pos[0];    ###TEST
-        my $decimal        = "NA";
-        my $sufficient_cov = 0;
-        chomp $m82_rna_cov[2];
-
-        if ( $pen_rna_pos[1] ) {
-            $is_insert = 1;
-            $decimal   = $pen_rna_pos[1];
-        }
-
-        if ( $m82_rna_cov[2] >=4 ) {
-            say $master_fh join "\t", $pen_rna_snp[0], $pen_rna_pos[0], @pen_rna_snp[2,8], "PEN", $decimal;
-            $sufficient_cov = 1;
-        }
-
-        while ( $line = <$pen_rna_snps_fh> ) {
-            @pen_rna_snp = split /,/, $line;    # 0=chr, 1=pos, 2=ref_base , 8=snp_base
-            @pen_rna_pos = split /\./, $pen_rna_snp[1];
-
-            goto IFPEN if ( $is_insert == 0 && $insert_pos == $pen_rna_pos[0] );    ###TEST
-
-            if ( $is_insert == 1 && $insert_pos == $pen_rna_pos[0] ) {
-                next unless $sufficient_cov == 1;
-                $decimal = $pen_rna_pos[1];
-                say $master_fh join "\t", $pen_rna_snp[0], $pen_rna_pos[0], @pen_rna_snp[2,8], "PEN", $decimal;
-            }
-            else { last; }
-        }
-    }
-
-
-    last if eof($m82_rna_cov_fh);
-    @m82_rna_cov = split /,/, <$m82_rna_cov_fh>;    # 0=chr, 1=pos, 2=coverage
-    @pen_rna_cov = split /,/, <$pen_rna_cov_fh>;
 }
 
 close ($master_fh);
+exit;
+
+###############
+# subroutines #
+###############
 
 sub snp_hash_builder {
     my $par_snps_file = shift;
@@ -255,10 +166,6 @@ sub cov_hash_builder {
     close $par_cov_fh;
     return %par_cov;
 }
-
-exit;
-## incorporate actual writing of parental genomes in until loop?  NO, I think having a separate script would be better.  Easier to filter out SNPs in common between m82 and pen.  also easier to filter out disagreements between RNAseq and RESCAN
-
 
 __DATA__
 
