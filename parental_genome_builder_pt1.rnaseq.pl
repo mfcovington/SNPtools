@@ -60,7 +60,7 @@ open $pen_rna_cov_fh, "<", $pen_rna_cov_file;
 `mkdir -p $output_dir`;
 my $master_snp_file = "$output_dir/master_snp_list_rnaseq.chr$chr_format";
 open $master_fh, ">", $master_snp_file;
-say $master_fh join( "\t", "chr", "pos", "ref_base", "snp_base", "genotype", "insert_position" ); # insert_position will be decimal portion of position for insertions
+say $master_fh join "\t", "chr", "pos", "ref_base", "snp_base", "genotype", "insert_position";    # insert_position will be decimal portion of position for insertions
 
 #discard headers
 <$m82_rna_snps_fh>;
@@ -79,7 +79,7 @@ $line = <$pen_rna_snps_fh>;
 
 
 #read in cov files until at correct chromosome
-my ( @m82_rna_cov, @pen_rna_cov, @m82_rescan_cov, @pen_rescan_cov );
+my ( @m82_rna_cov, @pen_rna_cov );
 while ( $line = <$m82_rna_cov_fh> ) {
     @m82_rna_cov = split /,/, $line;    # 0=chr, 1=pos, 2=coverage
     @pen_rna_cov = split /,/, <$pen_rna_cov_fh>;
@@ -87,10 +87,10 @@ while ( $line = <$m82_rna_cov_fh> ) {
 }
 
 until ( $m82_rna_cov[0] ne "SL2.40ch" . $chr_format ) {
-    my $pos = $m82_rna_cov[1];
+    my $pos = $m82_rna_cov[1];    ###NEED TO CHANGE TO 
 
   IFM82: if ( $m82_rna_pos[0] == $pos ) {
-        my $is_insert = 0;
+        my $is_insert      = 0;
         my $insert_pos     = $m82_rna_pos[0];    ###TEST
         my $decimal        = "NA";
         my $sufficient_cov = 0;
@@ -98,12 +98,11 @@ until ( $m82_rna_cov[0] ne "SL2.40ch" . $chr_format ) {
 
         if ( $m82_rna_pos[1] ) {
             $is_insert = 1;
-            $decimal = $m82_rna_pos[1];
+            $decimal   = $m82_rna_pos[1];
         }
 
-
         if ( $pen_rna_cov[2] >=4 ) {
-            say $master_fh join( "\t", $m82_rna_snp[0], $m82_rna_pos[0], @m82_rna_snp[2,8], "M82", $decimal );
+            say $master_fh join "\t", $m82_rna_snp[0], $m82_rna_pos[0], @m82_rna_snp[2,8], "M82", $decimal;
             $sufficient_cov = 1;
         }
 
@@ -116,7 +115,7 @@ until ( $m82_rna_cov[0] ne "SL2.40ch" . $chr_format ) {
             if ( $is_insert == 1 && $insert_pos == $m82_rna_pos[0] ) {
                 next unless $sufficient_cov == 1;
                 $decimal = $m82_rna_pos[1];
-                say $master_fh join( "\t", $m82_rna_snp[0], $m82_rna_pos[0], @m82_rna_snp[2,8], "M82", $decimal );
+                say $master_fh join "\t", $m82_rna_snp[0], $m82_rna_pos[0], @m82_rna_snp[2,8], "M82", $decimal;
             }
             else { last; }
         }
@@ -124,12 +123,11 @@ until ( $m82_rna_cov[0] ne "SL2.40ch" . $chr_format ) {
 
 
   IFPEN: if ( $pen_rna_pos[0] == $pos ) {
-        my $is_insert = 0;
+        my $is_insert      = 0;
         my $insert_pos     = $pen_rna_pos[0];    ###TEST
         my $decimal        = "NA";
         my $sufficient_cov = 0;
         chomp $m82_rna_cov[2];
-
 
         if ( $pen_rna_pos[1] ) {
             $is_insert = 1;
@@ -137,7 +135,7 @@ until ( $m82_rna_cov[0] ne "SL2.40ch" . $chr_format ) {
         }
 
         if ( $m82_rna_cov[2] >=4 ) {
-            say $master_fh join( "\t", $pen_rna_snp[0], $pen_rna_pos[0], @pen_rna_snp[2,8], "PEN", $decimal );
+            say $master_fh join "\t", $pen_rna_snp[0], $pen_rna_pos[0], @pen_rna_snp[2,8], "PEN", $decimal;
             $sufficient_cov = 1;
         }
 
@@ -147,10 +145,10 @@ until ( $m82_rna_cov[0] ne "SL2.40ch" . $chr_format ) {
 
             goto IFPEN if ( $is_insert == 0 && $insert_pos == $pen_rna_pos[0] );    ###TEST
 
-            if ($is_insert == 1 && $insert_pos == $pen_rna_pos[0]) {
+            if ( $is_insert == 1 && $insert_pos == $pen_rna_pos[0] ) {
                 next unless $sufficient_cov == 1;
                 $decimal = $pen_rna_pos[1];
-                say $master_fh join( "\t", $pen_rna_snp[0], $pen_rna_pos[0], @pen_rna_snp[2,8], "PEN", $decimal );
+                say $master_fh join "\t", $pen_rna_snp[0], $pen_rna_pos[0], @pen_rna_snp[2,8], "PEN", $decimal;
             }
             else { last; }
         }
