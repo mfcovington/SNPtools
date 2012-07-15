@@ -1,10 +1,15 @@
 #!/usr/bin/perl
-# parental_genome_builder_pt1_v2.pl
+# parental_genome_builder_rnaseq_only_pt1_v2.pl
 # Mike Covington
 # created: 2012-01-03
-# 2012-01-15: adapted for use with RNAseq data only (SNPs + indels)
 #
 # Description: 
+#
+# Change Log:
+#	2012-01-15: adapted for use with RNAseq data only (SNPs + indels)
+#	2012-02-23: Added wildcard to and altered structure of SNP files to account for difference caused by changing upstream scripts
+#	2012-02-23: Changed capitalization of coverage files to account for difference caused by changing upstream scripts
+#	2012-02-23: Changed `mkdir $output_dir` to `mkdir -p $output_dir`
 #
 use strict; use warnings;
 use Getopt::Long;
@@ -23,7 +28,7 @@ GetOptions (
 	"out=s"	=>	\$output_dir
 );
 
-die "USAGE: parental_genome_builder_pt1.pl --chr <> --msnp <> --psnp <> --cov <> --out <>\n" unless $chr_num >= 0;
+die "USAGE: parental_genome_builder_rnaseq_only_pt1_v2.pl --chr <> --msnp <> --psnp <> --cov <> --out <>\n" unless $chr_num >= 0;
 
 my $chr_offset = $chr_num + 1;
 my $chr_format;
@@ -35,19 +40,19 @@ if ($chr_num < 10) {
 
 
 #OPEN SNP FILES
-my $m82_rna_snps = $m82_rna_snp_dir . "/01.2.SNP_table.bwa_tophat_m82.sorted.dupl_rm.realigned.sorted.$chr_offset.$chr_offset.nogap.gap.FILTERED.csv";
-my $pen_rna_snps = $pen_rna_snp_dir . "/01.2.SNP_table.bwa_tophat_penn.sorted.dupl_rm.realigned.sorted.$chr_offset.$chr_offset.nogap.gap.FILTERED.csv";
+my $m82_rna_snps = glob($m82_rna_snp_dir . "/01.2.SNP_table.bwa_tophat_*.sorted.dupl_rm.$chr_offset.$chr_offset.nogap.gap.FILTERED.csv");
+my $pen_rna_snps = glob($pen_rna_snp_dir . "/01.2.SNP_table.bwa_tophat_*.sorted.dupl_rm.$chr_offset.$chr_offset.nogap.gap.FILTERED.csv");
 open (M82_RNA_SNPS, $m82_rna_snps) or die "Can't open $m82_rna_snps";
 open (PEN_RNA_SNPS, $pen_rna_snps) or die "Can't open $pen_rna_snps";
 
 #OPEN COVERAGE FILES
-my $m82_rna_cov_file = $cov_dir . "/m82.sl2.40ch$chr_format.coverage.col";
-my $pen_rna_cov_file = $cov_dir . "/penn.sl2.40ch$chr_format.coverage.col";
+my $m82_rna_cov_file = $cov_dir . "/M82.SL2.40ch$chr_format.coverage.col";
+my $pen_rna_cov_file = $cov_dir . "/PEN.SL2.40ch$chr_format.coverage.col";
 open (M82_RNA_COV, $m82_rna_cov_file) or die "Can't open $m82_rna_cov_file";
 open (PEN_RNA_COV, $pen_rna_cov_file) or die "Can't open $pen_rna_cov_file";
 
 #OPEN MASTER SNP FILE
-`mkdir $output_dir`;
+`mkdir -p $output_dir`;
 my $master_snp_file = ">$output_dir/master_snp_list_rnaseq.chr$chr_format";
 open (MASTER, $master_snp_file) or die "Can't open $master_snp_file";
 print MASTER join("\t", "chr", "pos", "ref_base", "snp_base", "genotype", "insert_position"), "\n"; # insert_position will be decimal portion of position for insertions
