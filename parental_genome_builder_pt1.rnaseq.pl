@@ -88,6 +88,7 @@ for my $pos (@good_cov_pos) {
         if ($insert_length) {
             for my $insert_idx ( 1 .. $insert_length ) {
                 $insert_idx = "0$insert_idx" if $insert_idx < 10;
+                next unless defined $par1_snps{$pos}{$insert_idx}[2];    # there are occasional gaps due to insufficient coverage
                 say $master_fh join "\t", $chr_id, $pos, @{ $par1_snps{$pos}{$insert_idx} }[ 0, 1 ], $par1_name, $insert_idx;
             }
         }
@@ -100,6 +101,7 @@ for my $pos (@good_cov_pos) {
         if ($insert_length) {
             for my $insert_idx ( 1 .. $insert_length ) {
                 $insert_idx = "0$insert_idx" if $insert_idx < 10;
+                next unless defined $par2_snps{$pos}{$insert_idx}[2];    # there are occasional gaps due to insufficient coverage
                 say $master_fh join "\t", $chr_id, $pos, @{ $par2_snps{$pos}{$insert_idx} }[ 0, 1 ], $par2_name, $insert_idx;
             }
         }
