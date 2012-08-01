@@ -11,11 +11,10 @@ use Bio::DB::Sam;
 use List::Util qw(sum);
 
 ##COLLECT ARGUMENTS FROM CLI
-my ($chrm_start, $chrm_end, $outputfile, $threshold_fraction_of_reads_matching_ref, $threshold_fraction_of_reads_matching_ref_for_indels, $threshold_number_of_reads, $fasta_ref, $sps_bam_file);
+my ($chromosome, $outputfile, $threshold_fraction_of_reads_matching_ref, $threshold_fraction_of_reads_matching_ref_for_indels, $threshold_number_of_reads, $fasta_ref, $sps_bam_file);
 
 GetOptions(
-	'chrm_start:i'	=> \$chrm_start,
-	'chrm_end:i'	=> \$chrm_end,
+	'chromosome:s'	=> \$chromosome,
 	'o:s'			=> \$outputfile,
 	'n_reads:i'		=> \$threshold_number_of_reads,
 	'ref_freq:f'	=> \$threshold_fraction_of_reads_matching_ref,
@@ -24,7 +23,7 @@ GetOptions(
 	'bam_file:s'	=> \$sps_bam_file
 ); #GetOptions
 
-print "Look for SNPs in : $sps_bam_file\n";
+print "Look for SNPs on $chromosome ($sps_bam_file)\n";
 ##OPEN OUTPUT FILE
 my $out_filename = ">$outputfile.csv";
 open (SNP_OUTFILE, $out_filename) or die "Could not open $out_filename\n";
@@ -280,19 +279,19 @@ my $snp_caller = sub {
 };
 
 
-my @targets = $sam->seq_ids;
-@targets = sort {$a cmp $b} @targets;
+# my @targets = $sam->seq_ids;
+# @targets = sort {$a cmp $b} @targets;
 #print "@targets\n";
-my $chromosome_counter=0;
-foreach my $chromosome (@targets[$chrm_start..$chrm_end]){
-	$chromosome_counter++;
+# my $chromosome_counter=0;
+# foreach my $chromosome (@targets[$chromosome..$chrm_end]){
+	# $chromosome_counter++;
 	#CAPITALIZE FOR COLOMA!!!
 #	substr($chromosome,0,2,"SL");
-	print "$chromosome_counter. $chromosome\tlength: $chr_lengths{$chromosome}\n";
-	`sleep 1`;
-	$sam->fast_pileup("$chromosome",$snp_caller);
+	# print "$chromosome_counter. $chromosome\tlength: $chr_lengths{$chromosome}\n";
+	# `sleep 1`;
+	$sam->fast_pileup($chromosome,$snp_caller);
 #	$sam->fast_pileup("$chromosome:55900..56900",$snp_caller);
-}
+# }
 close SNP_OUTFILE;
 
 exit;
