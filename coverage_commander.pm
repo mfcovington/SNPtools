@@ -4,7 +4,7 @@ use Modern::Perl;
 use File::Basename;
 use File::Path 'make_path';
 use autodie;
-use Data::Printer;
+# use Data::Printer;
 
 #TODO: check for presence of valid region!!!!
 #TODO: require certain arguments to be defined
@@ -40,7 +40,7 @@ sub get_seq_names {
 sub get_seq_lengths {
     my $self = shift;
 
-    say "  Getting sequence names from bam file" if $self->verbose;
+    say "  Getting sequence lengths from bam file" if $self->verbose;
     my @header = $self->_get_header;
     my @seq_lengths = map { $_ =~ m/\t SN: .* \t LN: (.*)/x } @header;
     return @seq_lengths;
@@ -137,13 +137,6 @@ sub _validity_tests {
     $self->_valid_samtools_version;
 }
 
-sub samtools_cmd_header {
-    my $self = shift;
-
-    my $samtools_cmd = "`samtools view -H " . $self->bam . "`";
-    return $samtools_cmd;
-}
-
 sub _get_header {
     my $self = shift;
 
@@ -156,7 +149,7 @@ sub _get_header {
 sub _valid_bam {
     my $self = shift;
 
-    if ( -e $self->bam and $self->bam =~ m/.bam$/i ) {
+    if ( -e $self->bam and $self->bam =~ m/ \.bam$ /ix ) {
         say "  Found valid bam file: " . $self->bam if $self->verbose;
         return 1;
     }
