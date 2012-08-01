@@ -9,6 +9,7 @@ use autodie;
 #TODO: move common subroutines elsewhere (validation, mkdir, bam header-related, etc.)
 #TODO: require certain arguments to be defined
 #TODO: generate log files??
+#TODO: verbose + very verbose
 
 sub get_seq_names {
     my $self = shift;

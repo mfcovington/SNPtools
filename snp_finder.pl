@@ -9,6 +9,7 @@ use strict;
 use warnings;
 use autodie;
 use Getopt::Long;
+use Parallel::ForkManager;
 
 use snp_commander;
 
@@ -36,7 +37,7 @@ my ( $id, $bam_file, $fasta_file, $cov_min, $snp_min, $indel_min, $verbose,
 my $options = GetOptions(
     "id=s"        => \$id,
     "bam=s"       => \$bam_file,
-    "fasta=s"       => \$fasta_file,
+    "fasta=s"     => \$fasta_file,
     "out_dir=s"   => \$out_dir,
     "cov_min=i"   => \$cov_min,
     "snp_min=f"   => \$snp_min,
@@ -64,13 +65,18 @@ $snps->snp_min($snp_min)     if defined $snp_min;
 $snps->indel_min($indel_min) if defined $indel_min;
 
 my @chromosomes = $snps->get_seq_names;
-# print @chromosomes;
-# exit;
-# put this inside module and incorporate threading/forking
+
+# put this inside module??
+my $pm = new Parallel::ForkManager($threads);
 foreach my $chr (@chromosomes) {
+    $pm->start and next;
+
     my $cov_out = "$out_dir/$id.$chr.snps";
     $snps->chromosome($chr);
     $snps->out_file($cov_out);
     $snps->identify_snps;
+
+    $pm->finish;
 }
+$pm->wait_all_children;
 exit;
