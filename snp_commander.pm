@@ -3,6 +3,7 @@ use Moose;
 use Modern::Perl;
 use File::Basename;
 use File::Path 'make_path';
+use Parallel::ForkManager;
 use autodie;
 # use Data::Printer;
 
@@ -10,6 +11,7 @@ use autodie;
 #TODO: require certain arguments to be defined
 #TODO: generate log files??
 #TODO: verbose + very verbose
+#TODO: make _out_dir_snp, etc. subs
 
 sub get_seq_names {
     my $self = shift;
@@ -35,8 +37,8 @@ sub identify_snps {
     $self->_validity_tests();
     $self->_make_dir();
 
-    my $identify_snps_cmd_cmd = 
-    "~/git.repos/snp_identification/01.1.SNP_calling_homos.pl \\
+    my $identify_snps_cmd =
+      "~/git.repos/snp_identification/01.1.SNP_calling_homos.pl \\
     --chromosome " . $self->chromosome . " \\
     --o " . $self->out_file . " \\
     --n_reads " . $self->cov_min . " \\
@@ -45,9 +47,36 @@ sub identify_snps {
     --fasta_ref " . $self->fasta . " \\
     --bam_file " . $self->bam;
 
-    say "  Running:\n  " . $identify_snps_cmd_cmd if $self->verbose();
-    system( $identify_snps_cmd_cmd );
+    say "  Running:\n  " . $identify_snps_cmd if $self->verbose();
+    system($identify_snps_cmd );
 }
+
+around 'identify_snps' => sub {
+    my $orig = shift;
+    my $self = shift;
+
+    my @chromosomes = $self->get_seq_names;
+    my $pm = new Parallel::ForkManager($threads);
+    foreach my $chr (@chromosomes) {
+        $pm->start and next;
+
+        $self->chromosome($chr);
+        # my $cov_out = $self->out_dir . "/" . $self->id . ".snps." . $self->chromosome;
+        # $self->out_file($cov_out);
+        $self->out_file( $self->out_dir . "/snps/" . $self->id . "." . $self->chromosome . ".snps" );
+        # $self->identify_snps;
+
+        $self->$orig(@_);
+
+        $pm->finish;
+    }
+    $pm->wait_all_children;
+};
+
+has 'id' => (
+    is  => 'ro',
+    isa => 'Str',
+);
 
 has 'bam' => (
     is  => 'ro',
@@ -85,6 +114,18 @@ has 'indel_min' => (
 has 'out_file' => (
     is  => 'rw',
     isa => 'Str',
+);
+
+has 'out_dir' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => "./",
+);
+
+has 'threads' => (
+    is      => 'rw',
+    isa     => 'Int',
+    default => 1,
 );
 
 has 'verbose' => (

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# coverage_calculator.v2.pl
+# snp_finder.pl
 # Mike Covington
 # created: 2011-12-05
 #
@@ -9,9 +9,14 @@ use strict;
 use warnings;
 use autodie;
 use Getopt::Long;
-use Parallel::ForkManager;
 
 use snp_commander;
+
+###TODO:
+#move looping through chromosomes into module - FINISHED, UNTESTED
+#add subsequent steps
+#make so out_dir contains several directories (one for each piece of analysis) (allow this to be over-riden)
+#port threading to coverage_commander
 
 my $usage = <<USAGE_END;
 
@@ -20,7 +25,7 @@ snp_finder.pl
   --id           Sample identifier
   --bam          Sample alignment file (.bam)
   --fasta        Reference file (.fasta/.fa)
-  --out_dir      Output directory
+  --out_dir      Output directory [current]
   --cov_min      Minimum coverage [4]
   --snp_min      Minimum fraction of reads matching reference (for snps) [0.33]
   --indel_min    Minimum fraction of reads matching reference (for indels) [0.66]
@@ -30,9 +35,7 @@ snp_finder.pl
 
 USAGE_END
 
-my $threads = 1;
-my $out_dir = "./";
-my ( $id, $bam_file, $fasta_file, $cov_min, $snp_min, $indel_min, $verbose,
+my ( $id, $bam_file, $fasta_file, $out_dir, $cov_min, $snp_min, $indel_min, $threads, $verbose,
     $help );
 my $options = GetOptions(
     "id=s"        => \$id,
@@ -55,28 +58,17 @@ die $usage
   && defined $fasta_file;
 
 my $snps = snp_commander->new(
+    id      => $id,
     bam     => $bam_file,
     fasta   => $fasta_file,
     verbose => $verbose,
 );
-
+$snps->out_dir($out_dir)     if defined $out_dir;
 $snps->cov_min($cov_min)     if defined $cov_min;
 $snps->snp_min($snp_min)     if defined $snp_min;
 $snps->indel_min($indel_min) if defined $indel_min;
+$snps->threads($threads)     if defined $threads;
 
-my @chromosomes = $snps->get_seq_names;
+$snps->identify_snps;
 
-# put this inside module??
-my $pm = new Parallel::ForkManager($threads);
-foreach my $chr (@chromosomes) {
-    $pm->start and next;
-
-    my $cov_out = "$out_dir/$id.$chr.snps";
-    $snps->chromosome($chr);
-    $snps->out_file($cov_out);
-    $snps->identify_snps;
-
-    $pm->finish;
-}
-$pm->wait_all_children;
 exit;
