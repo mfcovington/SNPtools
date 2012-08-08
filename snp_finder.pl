@@ -58,16 +58,16 @@ die $usage
   && defined $fasta_file;
 
 my $snps = snp_commander->new(
-    id      => $id,
-    bam     => $bam_file,
-    fasta   => $fasta_file,
-    verbose => $verbose,
+    id        => $id,
+    bam       => $bam_file,
+    fasta     => $fasta_file,
+    out_dir   => $out_dir,
+    cov_min   => $cov_min,
+    snp_min   => $snp_min,
+    indel_min => $indel_min,
+    threads   => $threads,
+    verbose   => $verbose,
 );
-$snps->out_dir($out_dir)     if defined $out_dir;
-$snps->cov_min($cov_min)     if defined $cov_min;
-$snps->snp_min($snp_min)     if defined $snp_min;
-$snps->indel_min($indel_min) if defined $indel_min;
-$snps->threads($threads)     if defined $threads;
 
 $snps->identify_snps;
 

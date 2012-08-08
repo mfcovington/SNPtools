@@ -1,5 +1,6 @@
 package snp_commander;
 use Moose;
+use MooseX::UndefTolerant;
 use Modern::Perl;
 use File::Basename;
 use File::Path 'make_path';
