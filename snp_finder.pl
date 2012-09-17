@@ -70,5 +70,6 @@ my $snps = snp_commander->new(
 );
 
 $snps->identify_snps;
+$snps->flanking_cov;
 
 exit;

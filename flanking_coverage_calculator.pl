@@ -12,6 +12,8 @@ use feature 'say';
 use File::Basename;
 use Getopt::Long;
 
+#TODO: gap and nogap one at a time to cut down on memory requirements
+
 my $usage = <<USAGE_END;
 
 USAGE:
