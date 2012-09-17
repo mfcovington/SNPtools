@@ -160,6 +160,7 @@ sub _validity_tests {
     my $self = shift;
 
     $self->_validity_tests_samtools;
+    $self->_valid_fasta
     $self->_valid_bam;
     $self->_valid_bam_index;
 }
