@@ -99,7 +99,7 @@ around 'get_coverage_all' => sub {
         $pm->start and next;
 
         $self->chromosome($chr);
-        $self->out_file( $self->out_dir . "/" . $self->id . "." . $self->chromosome . ".coverage" );
+        $self->out_file( $self->out_dir . "/coverage/" . $self->id . "." . $self->chromosome . ".coverage" );
         $self->_make_dir();
 
         $self->$orig(@_);
