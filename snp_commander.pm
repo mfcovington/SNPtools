@@ -14,6 +14,16 @@ use autodie;
 #TODO: verbose + very verbose
 #TODO: make _out_dir_snp, etc. subs
 
+sub bam_index {
+    my $self = shift;
+
+    $self->_validity_tests_samtools;
+    $self->_valid_bam;
+    say "  Building index for " . $self->bam if $self->verbose;
+    my $samtools_cmd = "samtools index " . $self->bam;
+    system( $samtools_cmd );
+}
+
 sub get_seq_names {
     my $self = shift;
 
@@ -145,11 +155,18 @@ sub _make_dir {
     make_path( $dir_name );
 }
 
+
 sub _validity_tests {
     my $self = shift;
 
+    $self->_validity_tests_samtools;
     $self->_valid_bam;
-    $self->_valid_fasta;
+    $self->_valid_bam_index;
+}
+
+sub _validity_tests_samtools {
+    my $self = shift;
+
     $self->_valid_samtools_path;
     $self->_valid_samtools_version;
 }
@@ -172,6 +189,20 @@ sub _valid_bam {
     }
     else {
         die "  Can't find valid bam file: " . $self->bam;
+    }
+}
+
+sub _valid_bam_index {
+    my $self = shift;
+
+    my ( $bam_prefix, $bam_dir ) = fileparse( $self->bam, ".bam" );
+    if ( -e "$bam_dir/$bam_prefix.bai" or -e "$bam_dir/$bam_prefix.bam.bai" ) {
+        say "  Found valid index for " . $self->bam if $self->verbose;
+        return 1;
+    }
+    else {
+        say "  Can't find valid index for " . $self->bam;
+        $self->bam_index;
     }
 }
 
