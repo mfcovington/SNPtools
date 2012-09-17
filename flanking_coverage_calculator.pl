@@ -54,6 +54,8 @@ open my $cov_gaps_fh,   "<", $cov_gaps_file;
 my ( %nogaps, %gaps );
 %nogaps = map { chomp; @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_nogaps_fh>;
 %gaps   = map { chomp; @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_gaps_fh>;
+close $cov_nogaps_fh;
+close $cov_gaps_fh;
 
 #write header
 my $header = <$snp_in_fh>;
@@ -82,7 +84,5 @@ while ( my $snp_line = <$snp_in_fh> ) {
 
 #close shop
 close $snp_in_fh;
-close $cov_nogaps_fh;
-close $cov_gaps_fh;
 close $snp_out_fh;
 exit;
