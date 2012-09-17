@@ -57,7 +57,7 @@ around 'identify_snps' => sub {
     my $self = shift;
 
     my @chromosomes = $self->get_seq_names;
-    my $pm = new Parallel::ForkManager($threads);
+    my $pm = new Parallel::ForkManager($self->threads);
     foreach my $chr (@chromosomes) {
         $pm->start and next;
 
@@ -98,18 +98,21 @@ has 'cov_min' => (
     is      => 'rw',
     isa     => 'Int',
     default => 4,
+    lazy    => 1,
 );
 
 has 'snp_min' => (
     is      => 'rw',
     isa     => 'Num',
     default => 0.33,
+    lazy    => 1,
 );
 
 has 'indel_min' => (
     is      => 'rw',
     isa     => 'Num',
     default => 0.66,
+    lazy    => 1,
 );
 
 has 'out_file' => (
