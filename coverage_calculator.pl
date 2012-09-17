@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# coverage_calculator.v2.pl
+# coverage_calculator.pl
 # Mike Covington
 # created: 2011-12-05
 #
@@ -8,29 +8,28 @@
 use strict;
 use warnings;
 use autodie;
-use feature 'say';
 use Getopt::Long;
-use IO::File;
 use coverage_commander;
 
 my $usage = <<USAGE_END;
 
 USAGE:
-coverage_calculator.v2.pl
-  --bam     </PATH/TO/file.bam>
-  --id      <sample identifier for file.bam>
-  --out_dir </PATH/TO/DESTINATION/DIRECTORY/>
+coverage_calculator.pl
+  --id         Sample identifier
+  --bam        Sample alignment file (.bam)
+  --out_dir    Output directory [current]
+  --threads    Number of threads [1]
   --verbose
   --help
 
 USAGE_END
 
-my ( $bam_file, $id, $verbose, $help );
-my $out_dir = "./";
+my ( $bam_file, $id, $out_dir, $threads, $verbose, $help );
 my $options = GetOptions(
     "bam=s"     => \$bam_file,
     "id=s"      => \$id,
     "out_dir=s" => \$out_dir,
+    "threads=i" => \$threads,
     "verbose"   => \$verbose,
     "help"      => \$help,
 );
@@ -40,15 +39,12 @@ die $usage unless defined $bam_file && defined $id;
 
 my $coverage = coverage_commander->new(
     bam     => $bam_file,
+    id      => $id,
+    out_dir => $out_dir || "./",
+    threads => $threads,
     verbose => $verbose,
 );
-my @chromosomes = $coverage->get_seq_names;
+$coverage->get_coverage_all;
 
-foreach my $chr (@chromosomes) {
-    my $cov_out = "$out_dir/$id.$chr.coverage";
-    $coverage->chromosome($chr);
-    $coverage->out_file($cov_out);
-    $coverage->get_coverage;
-}
 exit;
 
