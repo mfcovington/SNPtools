@@ -37,21 +37,13 @@ my $sam = Bio::DB::Sam->new(
 	-fasta => "$fasta_ref"
 ); #my $sam
 
-#GET THE HEADER WITH THE LENGTH OF EACH REFERENCE INTO HASH: %chr_lengths;
-my %chr_lengths;
-my $header = $sam->header;
-my $length_arrayref = $header->target_len;
-my $id_arrayref = $header->target_name;
-#print "@{$id_arrayref}\n";
-for (my $i=0;$i<@{$id_arrayref};$i++) {$chr_lengths{$id_arrayref->[$i]} = $length_arrayref->[$i];}
-#print Dumper %chr_lengths;
-#
-#SUB FOR SNP CALLING!!!!!
 my %deletion_reads_ids;
 my %spliced_reads_ids;
 my %positions_in_reads_seen;
 my %distances_in_reads_seen;
 my %ins_hash;
+
+
 my $snp_caller = sub {
 	my ($seqid,$pos,$p) = @_;
 #		print "$seqid,$pos,$p\n";
