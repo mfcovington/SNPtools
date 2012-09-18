@@ -17,7 +17,7 @@ sub samtools_cmd_mpileup {
       . join( '.', "polyDB", $self->chromosome ) . " -f "
       . $self->fasta . " > "
       . $self->mpileup_dir . "/"
-      . join( '.', $self->id, $self->chromosome, "mpileup" )
+      . join( '.', $self->id, $self->chromosome, "mpileup" );
 
     return $samtools_cmd;
 }
@@ -28,8 +28,6 @@ sub extract_mpileup {
     say "  Running: " . $self->samtools_cmd_mpileup() if $self->verbose();
     system( $self->samtools_cmd_mpileup );
 }
-
-around 'extract_mpileup' => $self->fork_by_chromosome;
 
 sub genotype {
     my $self = shift;
@@ -46,9 +44,7 @@ sub genotype {
     system( $genotyping_cmd );
 }
 
-around 'genotype' => $self->fork_by_chromosome;
-
-sub fork_by_chromosome {
+around [qw(extract_mpileup genotype)] => sub {
     my $orig = shift;
     my $self = shift;
 
@@ -64,7 +60,7 @@ sub fork_by_chromosome {
         $pm->finish;
     }
     $pm->wait_all_children;
-}
+};
 
 has 'id' => (
     is  => 'ro',
@@ -111,7 +107,7 @@ has 'out_dir' => (
 has 'genotyped_dir' => (
     is      => 'rw',
     isa     => 'Str',
-    default => {
+    default => sub {
         my $self = shift;
 
         return $self->out_dir . "/genotyped/";
@@ -122,7 +118,7 @@ has 'genotyped_dir' => (
 has 'mpileup_dir' => (
     is      => 'rw',
     isa     => 'Str',
-    default => {
+    default => sub {
         my $self = shift;
 
         return $self->out_dir . "/mpileup/";
@@ -133,7 +129,7 @@ has 'mpileup_dir' => (
 has 'snp_dir' => (
     is      => 'rw',
     isa     => 'Str',
-    default => {
+    default => sub {
         my $self = shift;
 
         return $self->out_dir . "/snp_master/";
