@@ -8,6 +8,11 @@ use Parallel::ForkManager;
 use autodie;
 # use Data::Printer;
 
+#TODO:
+# add relevant validity tests for extract_mpileup
+# make so that validity tests are done once and remembered
+# allow override of samtools version check
+
 sub samtools_cmd_mpileup {
     my $self = shift;
 
@@ -15,7 +20,8 @@ sub samtools_cmd_mpileup {
         "samtools mpileup -l "
       . $self->snp_dir . "/"
       . join( '.', "polyDB", $self->chromosome ) . " -f "
-      . $self->fasta . " > "
+      . $self->fasta . " "
+      . $self->bam . " > "
       . $self->mpileup_dir . "/"
       . join( '.', $self->id, $self->chromosome, "mpileup" );
 
@@ -52,15 +58,31 @@ around [qw(extract_mpileup genotype)] => sub {
     my $pm = new Parallel::ForkManager($self->threads);
     foreach my $chr (@chromosomes) {
         $pm->start and next;
-
         $self->chromosome($chr);
-
         $self->$orig(@_);
-
         $pm->finish;
     }
     $pm->wait_all_children;
 };
+
+sub bam_index {
+    my $self = shift;
+
+    $self->_validity_tests_samtools;
+    $self->_valid_bam;
+    say "  Building index for " . $self->bam if $self->verbose;
+    my $samtools_cmd = "samtools index " . $self->bam;
+    system( $samtools_cmd );
+}
+
+sub get_seq_names {
+    my $self = shift;
+
+    say "  Getting sequence names from bam file" if $self->verbose;
+    my @header = $self->_get_header;
+    my @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
+    return @seq_names;
+}
 
 has 'id' => (
     is  => 'ro',
