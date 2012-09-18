@@ -29,24 +29,7 @@ sub extract_mpileup {
     system( $self->samtools_cmd_mpileup );
 }
 
-around 'extract_mpileup' => sub {
-    my $orig = shift;
-    my $self = shift;
-
-    my @chromosomes = $self->get_seq_names;
-    my $pm = new Parallel::ForkManager($self->threads);
-    foreach my $chr (@chromosomes) {
-        $pm->start and next;
-
-        $self->chromosome($chr);
-
-        $self->$orig(@_);
-
-        $pm->finish;
-    }
-    $pm->wait_all_children;
-};
-
+around 'extract_mpileup' => $self->fork_by_chromosome;
 
 sub genotype {
     my $self = shift;
@@ -63,7 +46,9 @@ sub genotype {
     system( $genotyping_cmd );
 }
 
-around 'genotype' => sub {
+around 'genotype' => $self->fork_by_chromosome;
+
+sub fork_by_chromosome {
     my $orig = shift;
     my $self = shift;
 
@@ -79,7 +64,7 @@ around 'genotype' => sub {
         $pm->finish;
     }
     $pm->wait_all_children;
-};
+}
 
 has 'id' => (
     is  => 'ro',
