@@ -59,6 +59,6 @@ my $geno = genotyping_commander->new(
 );
 
 $geno->extract_mpileup;
-# $geno->genotype;
+$geno->genotype;
 
 exit;

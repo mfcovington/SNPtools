@@ -31,6 +31,8 @@ sub samtools_cmd_mpileup {
 sub extract_mpileup {
     my $self = shift;
 
+    $self->_make_dir( $self->mpileup_dir );
+
     say "  Running: " . $self->samtools_cmd_mpileup() if $self->verbose();
     system( $self->samtools_cmd_mpileup );
 }
@@ -38,8 +40,10 @@ sub extract_mpileup {
 sub genotype {
     my $self = shift;
 
+    $self->_make_dir( $self->genotyped_dir );
+
     my $genotyping_cmd =
-      "/Volumes/OuterColomaData/Mike/genotyping_pileups.custom_names.pl \\
+      "~/git.repos/snp_identification/genotyping_pileups.pl \\
     --pileup "  . $self->mpileup_dir . "/" . join( '.', $self->id, $self->chromosome, "mpileup" ) . " \\
     --snp "     . $self->snp_dir     . "/" . join( '.', "polyDB", $self->chromosome ) . " \\
     --out_dir " . $self->genotyped_dir . " \\
@@ -175,8 +179,9 @@ has 'verbose' => (
 
 sub _make_dir {
     my $self = shift;
+    my $dir_name = shift;
 
-    my ( $filename, $dir_name ) = fileparse( $self->out_file );
+    ( my $filename, $dir_name ) = fileparse( $self->out_file ) unless defined $dir_name;
     make_path( $dir_name );
 }
 
