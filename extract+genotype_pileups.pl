@@ -58,6 +58,12 @@ my $geno = genotyping_commander->new(
     verbose => $verbose,
 );
 
+$geno->before_noise_reduction(1);
+$geno->extract_mpileup;
+$geno->genotype;
+$geno->noise_reduction;
+
+$geno->before_noise_reduction(0);
 $geno->extract_mpileup;
 $geno->genotype;
 

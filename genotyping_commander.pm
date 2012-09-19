@@ -5,6 +5,7 @@ use Modern::Perl;
 use File::Basename;
 use File::Path 'make_path';
 use Parallel::ForkManager;
+use Statistics::R;
 use autodie;
 # use Data::Printer;
 
@@ -23,7 +24,7 @@ sub samtools_cmd_mpileup {
       . $self->fasta . " "
       . $self->bam . " > "
       . $self->mpileup_dir . "/"
-      . join( '.', $self->id, $self->chromosome, "mpileup" );
+      . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix );
 
     return $samtools_cmd;
 }
@@ -44,7 +45,7 @@ sub genotype {
 
     my $genotyping_cmd =
       "~/git.repos/snp_identification/genotyping_pileups.pl \\
-    --pileup "  . $self->mpileup_dir . "/" . join( '.', $self->id, $self->chromosome, "mpileup" ) . " \\
+    --pileup "  . $self->mpileup_dir . "/" . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix ) . " \\
     --snp "     . $self->snp_dir     . "/" . join( '.', "polyDB", $self->chromosome ) . " \\
     --out_dir " . $self->genotyped_dir . " \\
     --par1 "    . $self->par1 . " \\
@@ -54,7 +55,26 @@ sub genotype {
     system( $genotyping_cmd );
 }
 
-around [qw(extract_mpileup genotype)] => sub {
+sub noise_reduction {
+    my $self = shift;
+
+    my $R = Statistics::R->new();
+    my $par1_genotyped = $self->genotyped_dir . "/" . join( '.', $self->par1, $self->chromosome, "genotyped" );
+    my $par2_genotyped = $self->genotyped_dir . "/" . join( '.', $self->par2, $self->chromosome, "genotyped" );
+    $R->run(qq`PAR1 <- read.table("$par1_genotyped")`);
+    $R->run(qq`PAR2 <- read.table("$par2_genotyped")`);
+    $R->run(q`PAR1_ratio <- PAR1[ , 3 ]/PAR1[ , 5 ]`);
+    $R->run(q`PAR2_ratio <- PAR2[ , 4 ]/PAR2[ , 5 ]`);
+    my $min_ratio = 0.7;
+    $R->run(qq`pos_nr <- PAR1[ PAR1_ratio > $min_ratio & PAR2_ratio > $min_ratio , 2 ]`);
+    my $polymorphisms = $self->snp_dir . "/" . join( '.', "polyDB", $self->chromosome );
+    my $polymorphisms_nr = $polymorphisms . ".nr";
+    $R->run(qq`SNP <- read.table( "$polymorphisms", head = T )`);
+    $R->run(q`SNP_nr <- SNP[ is.element( SNP$pos, pos_nr) , ]`);
+    $R->run(qq`write.table( SNP_nr, file = "$polymorphisms_nr", quote = F, sep = "\t", row.names = F )`);
+};
+
+around [qw(extract_mpileup genotype noise_reduction)] => sub {
     my $orig = shift;
     my $self = shift;
 
@@ -176,6 +196,21 @@ has 'verbose' => (
     default => 0,
     lazy => 1,
 );
+
+has 'before_noise_reduction' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 0,
+    lazy    => 1,
+);
+
+sub _mpileup_suffix {
+    my $self = shift;
+
+    my $suffix = "mpileup";
+    $suffix .= ".nr" unless $self->before_noise_reduction;
+    return $suffix;
+}
 
 sub _make_dir {
     my $self = shift;
