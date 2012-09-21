@@ -109,7 +109,7 @@ sub get_seq_names {
 }
 
 has 'id' => (
-    is  => 'ro',
+    is  => 'rw',
     isa => 'Str',
 );
 
