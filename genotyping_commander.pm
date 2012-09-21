@@ -124,7 +124,7 @@ has 'par2' => (
 );
 
 has 'bam' => (
-    is  => 'ro',
+    is  => 'rw',
     isa => 'Str',
 );
 
