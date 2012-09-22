@@ -28,8 +28,6 @@ USAGE_END
 my ( $id, $par1, $par2, $bam_file, $fasta_file, $out_dir, $threads, $verbose, $help );
 my $options = GetOptions(
     "id=s"      => \$id,
-    "par1=s"    => \$par1,
-    "par2=s"    => \$par2,
     "bam=s"     => \$bam_file,
     "fasta=s"   => \$fasta_file,
     "out_dir=s" => \$out_dir,
@@ -47,8 +45,6 @@ die $usage
 
 my $geno = genotyping_commander->new(
     id      => $id,
-    par1    => $par1,
-    par2    => $par2,
     bam     => $bam_file,
     fasta   => $fasta_file,
     out_dir => $out_dir,
