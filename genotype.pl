@@ -25,7 +25,7 @@ genotype.pl
 
 USAGE_END
 
-my ( $id, $par1, $par2, $bam_file, $fasta_file, $out_dir, $threads, $verbose, $help );
+my ( $id, $bam_file, $fasta_file, $out_dir, $threads, $verbose, $help );
 my $options = GetOptions(
     "id=s"      => \$id,
     "bam=s"     => \$bam_file,
