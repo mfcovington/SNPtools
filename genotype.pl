@@ -14,10 +14,8 @@ use genotyping_commander;
 my $usage = <<USAGE_END;
 
 USAGE:
-snp_finder.pl
+genotype.pl
   --id           Sample identifier
-  --par1         Parent 1 ID
-  --par2         Parent 2 ID
   --bam          Sample alignment file (.bam)
   --fasta        Reference file (.fasta/.fa)
   --out_dir      Output directory [current]
