@@ -12,16 +12,6 @@ colnames(IL_filenames) <- c("filename", "IL", "data_chr", "IL_chr")
 
 valid_ILs <- unique(IL_filenames$IL)
 
-boundaries <- read.table("IL_boundaries", head = T)
-
-# > head (boundaries)
-#   chr      IL    start      end PEN
-# 1   1   IL1-1        1   303076  -1
-# 2   1   IL1-1   309021 77720421   1
-# 3   1   IL1-1 77721171 90304244  -1
-# 4   1 IL1-1-2        1   303076  -1
-# 5   1 IL1-1-2   309061  1137671   1
-# 6   1 IL1-1-2  1151331 90304244  -1
 
 ### Plot All relevant chromosome, 1 chr (all relevant ILs) per plot
 offset <- 1.05
