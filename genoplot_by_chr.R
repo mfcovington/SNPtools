@@ -6,7 +6,6 @@ library("ggplot2")
 # - add color customization
 # - add plot size customization
 # - add plot format customization
-# - make parents generic
 # - change chromosome
 # - 
 
@@ -52,14 +51,14 @@ for (j in 1:length(ILs_to_input)) {
         IL_df <- rbind(IL_df,IL_df_temp)
     }
 }
-colnames(IL_df) <- c("chr","pos","M", "P", "COV", "IL")
+colnames(IL_df) <- c("chr","pos","par1", "par2", "cov", "IL")
 
-IL_df$COV.plot <- IL_df$COV
-IL_df$COV.plot[(IL_df$P - IL_df$M) / IL_df$COV < 0 & IL_df$COV > 0] <- -IL_df$COV.plot[(IL_df$P - IL_df$M) / IL_df$COV < 0 & IL_df$COV > 0] #CHANGED
+IL_df$cov.plot <- IL_df$cov
+IL_df$cov.plot[(IL_df$par2 - IL_df$par1) / IL_df$cov < 0 & IL_df$cov > 0] <- -IL_df$cov.plot[(IL_df$par2 - IL_df$par1) / IL_df$cov < 0 & IL_df$cov > 0] #CHANGED
 chr_formatted <- paste("chr", substr(IL_df$chr,9,10), sep = "")
 IL_df$chr <- chr_formatted
-max_COV <- max(IL_df$COV)
-ylimits <- max_COV * offset
+max_cov <- max(IL_df$cov)
+ylimits <- max_cov * offset
 
 #added due to broken feature in ggplot 0.9.1:
 max_pos  <- max(IL_df$pos)
@@ -67,14 +66,14 @@ temp_max <- floor(max_pos / 10000000)
 max_pos_fixed <- temp_max * 10000000
 label_max <- temp_max * 10
 
-geno.plot <- ggplot(IL_df, aes(pos, COV.plot)) +
-  geom_point(size = 1, aes(color = (P - M) / COV)) + 
+geno.plot <- ggplot(IL_df, aes(pos, cov.plot)) +
+  geom_point(size = 1, aes(color = (par2 - par1) / cov)) + 
   facet_grid(IL ~ .) + 
   scale_color_gradient2(
     low = "magenta",
     mid = "black",
     high = "green",
-    name = expression((Pen - M82) / total)
+    name = expression((par2 - par1) / total)
   ) +
   guides(color = guide_legend(reverse = TRUE)) + 
   opts(
@@ -104,6 +103,7 @@ geno.plot <- ggplot(IL_df, aes(pos, COV.plot)) +
       yend = PEN * ylimits)
   )
 
-ggsave(paste("example.", chr_formatted, ".png", sep = ""), plot = geno.plot, width = 6, height = 5) #CHANGED
+geno.plot
+# ggsave(paste("example.", chr_formatted, ".png", sep = ""), plot = geno.plot, width = 6, height = 5) #CHANGED
 
 
