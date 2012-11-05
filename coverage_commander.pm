@@ -15,6 +15,7 @@ use autodie;
 # TODO: the following gets printed (to STDERR) even when not using verbose (BUT DO I EVEN CARE?)
 # [mpileup] 1 samples in 1 input files
 # <mpileup> Set max per-file depth to 8000
+#TODO: Do I need to make defaults lazy and uncomment UndefTolerant?
 
 sub samtools_cmd_gaps {
     my $self = shift;
