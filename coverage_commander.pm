@@ -1,8 +1,10 @@
 package coverage_commander;
 use Moose;
+# use MooseX::UndefTolerant;
 use Modern::Perl;
 use File::Basename;
 use File::Path 'make_path';
+use Parallel::ForkManager;
 use autodie;
 # use Data::Printer;
 
@@ -13,6 +15,7 @@ use autodie;
 # TODO: the following gets printed (to STDERR) even when not using verbose (BUT DO I EVEN CARE?)
 # [mpileup] 1 samples in 1 input files
 # <mpileup> Set max per-file depth to 8000
+#TODO: Do I need to make defaults lazy and uncomment UndefTolerant?
 
 sub samtools_cmd_gaps {
     my $self = shift;
@@ -72,6 +75,47 @@ sub get_coverage {
     }
 }
 
+sub get_coverage_all {
+    my $self = shift;
+
+    if ( $self->gap ) {
+        say "  Running: " . $self->samtools_cmd_gaps() if $self->verbose();
+        system( $self->samtools_cmd_gaps );
+    }
+    if ( $self->nogap ) {
+        say "  Running: " . $self->samtools_cmd_nogaps() if $self->verbose();
+        system( $self->samtools_cmd_nogaps );
+    }
+}
+
+around 'get_coverage_all' => sub {
+    my $orig = shift;
+    my $self = shift;
+
+    $self->_validity_tests();
+
+    my @chromosomes = $self->get_seq_names;
+    my $pm = new Parallel::ForkManager($self->threads);
+    foreach my $chr (@chromosomes) {
+        $pm->start and next;
+
+        $self->chromosome($chr);
+        $self->out_file( $self->out_dir . "/coverage/" . $self->id . "." . $self->chromosome . ".coverage" );
+        $self->_make_dir();
+
+        $self->$orig(@_);
+
+        $pm->finish;
+    }
+    $pm->wait_all_children;
+};
+
+has 'id' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => "unidentified",
+);
+
 has 'bam' => (
     is  => 'ro',
     isa => 'Str',
@@ -92,6 +136,12 @@ has 'pos_end' => (
     isa => 'Int',
 );
 
+has 'out_dir' => (
+    is  => 'rw',
+    isa => 'Str',
+    default => "./",
+);
+
 has 'out_file' => (
     is  => 'rw',
     isa => 'Str',
@@ -106,6 +156,12 @@ has 'gap' => (
 has 'nogap' => (
     is      => 'rw',
     isa     => 'Bool',
+    default => 1,
+);
+
+has 'threads' => (
+    is      => 'rw',
+    isa     => 'Int',
     default => 1,
 );
 
