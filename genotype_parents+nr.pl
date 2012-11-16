@@ -22,6 +22,7 @@ genotype_parents+nr.pl
   --fasta      Reference file (.fasta/.fa)
   --out_dir    Output directory [current]
   --threads    Number of threads [1]
+  --no_nr      Disable Noise Reduction
   --verbose
   --help
 
@@ -29,7 +30,7 @@ USAGE_END
 
 my (
     $par1,    $par2,    $par1_bam, $par2_bam, $fasta_file,
-    $out_dir, $threads, $verbose,  $help
+    $out_dir, $threads, $no_nr,    $verbose,  $help
 );
 
 my $options = GetOptions(
@@ -40,6 +41,7 @@ my $options = GetOptions(
     "fasta=s"   => \$fasta_file,
     "out_dir=s" => \$out_dir,
     "threads=i" => \$threads,
+    "no_nr"     => \$no_nr,
     "verbose"   => \$verbose,
     "help"      => \$help,
 );
@@ -81,6 +83,6 @@ for ( sort keys %parents ) {
     $geno->genotype;
 }
 
-$geno->noise_reduction;
+$geno->noise_reduction unless $no_nr;
 
 exit;
