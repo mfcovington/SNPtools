@@ -47,9 +47,7 @@ sub genotype {
       "~/git.repos/snp_identification/genotyping_pileups.pl \\
     --pileup "  . $self->mpileup_dir . "/" . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix ) . " \\
     --snp "     . $self->snp_dir     . "/" . join( '.', "polyDB", $self->chromosome ) . " \\
-    --out_dir " . $self->genotyped_dir . " \\
-    --par1 "    . $self->par1 . " \\
-    --par2 "    . $self->par2;
+    --out_dir " . $self->genotyped_dir;
 
     say "  Running:\n  " . $genotyping_cmd if $self->verbose();
     system( $genotyping_cmd );
