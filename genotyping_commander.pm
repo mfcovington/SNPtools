@@ -44,7 +44,7 @@ sub genotype {
     $self->_make_dir( $self->genotyped_dir );
 
     my $genotyping_cmd =
-      "~/git.repos/snp_identification/genotyping_pileups.pl \\
+      "./genotyping_pileups.pl \\
     --pileup "  . $self->mpileup_dir . "/" . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix ) . " \\
     --snp "     . $self->snp_dir     . "/" . join( '.', "polyDB", $self->chromosome ) . " \\
     --out_dir " . $self->genotyped_dir;
