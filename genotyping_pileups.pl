@@ -22,7 +22,7 @@ my $options = GetOptions(
 );
 
 my $out_file = fileparse($pileup_file);
-$out_file =~ s/snp\.pileup/genotyped/;
+$out_file =~ s/mpileup/genotyped/;
 
 open $pileup_fh, "<", $pileup_file;
 open $snp_fh,    "<", $snp_file;
@@ -137,16 +137,16 @@ while ( my $pileup_line = <$pileup_fh> ) {
         }
     }
 
-if ($skip) { #solve problem created by removing "NOT" snps that were actually "DIFF_SNPS" with Iinserts of varying size
-    $total_count = 0;
-    $m82_count   = 0;
-    $pen_count   = 0;
-}
+    if ($skip) { #solve problem created by removing "NOT" snps that were actually "DIFF_SNPS" with Iinserts of varying size
+        $total_count = 0;
+        $m82_count   = 0;
+        $pen_count   = 0;
+    }
 
-$m82_count = 0 unless $m82_count;
-$pen_count = 0 unless $pen_count;
+    $m82_count = 0 unless $m82_count;
+    $pen_count = 0 unless $pen_count;
 
-print $out_fh join( "\t", @pileup[0,1], $m82_count, $pen_count, $total_count ), "\n";
+    say $out_fh join( "\t", @pileup[0,1], $m82_count, $pen_count, $total_count );
 }
 
 close $pileup_fh;
