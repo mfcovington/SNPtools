@@ -14,28 +14,28 @@ use autodie;
 # make so that validity tests are done once and remembered
 # allow override of samtools version check
 
-sub samtools_cmd_mpileup {
-    my $self = shift;
-
-    my $samtools_cmd =
-        "samtools mpileup -l "
-      . $self->snp_dir . "/"
-      . join( '.', "polyDB", $self->chromosome ) . " -f "
-      . $self->fasta . " "
-      . $self->bam . " > "
-      . $self->mpileup_dir . "/"
-      . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix );
-
-    return $samtools_cmd;
-}
-
 sub extract_mpileup {
     my $self = shift;
 
     $self->_make_dir( $self->mpileup_dir );
 
-    say "  Running: " . $self->samtools_cmd_mpileup() if $self->verbose();
-    system( $self->samtools_cmd_mpileup );
+    my $pileup_path = $self->mpileup_dir . "/" . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix );
+    my $snp_path    = $self->snp_dir     . "/" . join( '.', "polyDB", $self->chromosome );
+
+    my $samtools_cmd =
+        "samtools mpileup -l $snp_path -f "
+      . $self->fasta . " "
+      . $self->bam
+      . " > $pileup_path";
+
+    if ( ! -e $snp_path ) {
+        say "  SNP file not found: $snp_path" if $self->verbose();
+        return;
+    }
+    else {
+        say "  Running: " . $self->samtools_cmd_mpileup() if $self->verbose();
+        system( $samtools_cmd );
+    }
 }
 
 sub genotype {
