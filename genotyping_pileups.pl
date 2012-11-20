@@ -59,8 +59,8 @@ while ( my $pileup_line = <$pileup_fh> ) {
     my $del_count = $pileup[4] =~ tr/*//;
     my $insert_count = scalar @insertions;
     my $total_count = $A_count + $C_count + $T_count + $G_count + $del_count + $insert_count;
-    my $m82_count = 0;
-    my $pen_count = 0;
+    my $par1_count = 0;
+    my $par2_count = 0;
 
     #read in snps until get a position match to the current pileup
     until ( $pileup[1] == $snp[1] ) { #read snps until position matches with pileup
@@ -108,47 +108,47 @@ while ( my $pileup_line = <$pileup_fh> ) {
             last if eof($snp_fh);
         }
 
-        $m82_count = 0;
-        $pen_count = 0;
+        $par1_count = 0;
+        $par2_count = 0;
         if ($is_insert) {
             $insert_seq = join( "", @insert_bases );
             my $pileup_inserts = join( " ", @insertions );
             my $matched_insert_count = $pileup_inserts =~ s/\b$insert_seq\b/\b$insert_seq\b/gi; ##added word boundaries so AA wouldn't match AAAA twice, for example
             if ( $insert_parent eq $par1_id ) {
-                $m82_count = $matched_insert_count;
-                $pen_count = max( $A_count, $C_count, $T_count, $G_count );
+                $par1_count = $matched_insert_count;
+                $par2_count = max( $A_count, $C_count, $T_count, $G_count );
             }
             else {    #$insert_parent eq $par2_id
-                $m82_count = max( $A_count, $C_count, $T_count, $G_count );
-                $pen_count = $matched_insert_count;
+                $par1_count = max( $A_count, $C_count, $T_count, $G_count );
+                $par2_count = $matched_insert_count;
             }
         }
         elsif ($is_del) {
             if ( $del_parent eq $par1_id ) {
-                $m82_count = $del_count;
-                $pen_count = $pileup[4] =~ s/$pen_base/$pen_base/gi;
+                $par1_count = $del_count;
+                $par2_count = $pileup[4] =~ s/$pen_base/$pen_base/gi;
             }
             else {    #$del_parent eq $par2_id
-                $m82_count = $pileup[4] =~ s/$m82_base/$m82_base/gi;
-                $pen_count = $del_count;
+                $par1_count = $pileup[4] =~ s/$m82_base/$m82_base/gi;
+                $par2_count = $del_count;
             }
         }
         else {
-            $m82_count = $pileup[4] =~ s/$m82_base/$m82_base/gi;
-            $pen_count = $pileup[4] =~ s/$pen_base/$pen_base/gi;
+            $par1_count = $pileup[4] =~ s/$m82_base/$m82_base/gi;
+            $par2_count = $pileup[4] =~ s/$pen_base/$pen_base/gi;
         }
     }
 
     if ($skip) { #solve problem created by removing "NOT" snps that were actually "DIFF_SNPS" with Iinserts of varying size
         $total_count = 0;
-        $m82_count   = 0;
-        $pen_count   = 0;
+        $par1_count   = 0;
+        $par2_count   = 0;
     }
 
-    $m82_count = 0 unless $m82_count;
-    $pen_count = 0 unless $pen_count;
+    $par1_count = 0 unless $par1_count;
+    $par2_count = 0 unless $par2_count;
 
-    say $out_fh join( "\t", @pileup[0,1], $m82_count, $pen_count, $total_count );
+    say $out_fh join( "\t", @pileup[0,1], $par1_count, $par2_count, $total_count );
 }
 
 close $pileup_fh;
