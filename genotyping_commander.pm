@@ -239,7 +239,7 @@ sub _make_dir {
     my $dir_name = shift;
 
     ( my $filename, $dir_name ) = fileparse( $self->out_file ) unless defined $dir_name;
-    make_path( $dir_name );
+    make_path( $dir_name ) unless -e $dir_name;
 }
 
 sub _validity_tests {
