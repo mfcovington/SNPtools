@@ -26,9 +26,9 @@ my $options = GetOptions(
 my $out_file = fileparse($pileup_file);
 $out_file =~ s/mpileup/genotyped/;
 
-open $pileup_fh, "<", $pileup_file;
-open $snp_fh,    "<", $snp_file;
-open $out_fh,    ">", "$out_dir/$out_file";
+open my $pileup_fh, "<", $pileup_file;
+open my $snp_fh,    "<", $snp_file;
+open my $out_fh,    ">", "$out_dir/$out_file";
 
 my $header = <$snp_fh>; # 0 = chr, 1 = pos, 2 = ref_base, 3 = snp_base, 4 = genotype, 5 = insert_position, 6 = SNP_CLASS
 my @snp = ( 0, 0 );    # sets = 0

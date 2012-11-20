@@ -33,7 +33,7 @@ sub extract_mpileup {
         return;
     }
     else {
-        say "  Running: " . $self->samtools_cmd_mpileup() if $self->verbose();
+        say "  Running: $samtools_cmd" if $self->verbose();
         system( $samtools_cmd );
     }
 }
