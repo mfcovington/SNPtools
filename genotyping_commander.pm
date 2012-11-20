@@ -52,11 +52,11 @@ sub genotype {
     --snp $snp_path \\
     --out_dir " . $self->genotyped_dir;
 
-    if ( !-e $pileup_path ) {
+    if ( ! -e $pileup_path ) {
         say "  Pileup file not found: $pileup_path" if $self->verbose();
         return;
     }
-    elsif ( !-e $snp_path ) {
+    elsif ( ! -e $snp_path ) {
         say "  SNP file not found: $snp_path" if $self->verbose();
         return;
     }
@@ -73,11 +73,11 @@ sub noise_reduction {
     my $par1_genotyped = $self->genotyped_dir . "/" . join( '.', $self->par1, $self->chromosome, "genotyped" );
     my $par2_genotyped = $self->genotyped_dir . "/" . join( '.', $self->par2, $self->chromosome, "genotyped" );
 
-    if ( !-e $par1_genotyped ) {
+    if ( ! -e $par1_genotyped ) {
         say "  Parent 1 genotype file not found: $par1_genotyped" if $self->verbose();
         return;
     }
-    elsif ( !-e $par2_genotyped ) {
+    elsif ( ! -e $par2_genotyped ) {
         say "  Parent 2 genotype file not found: $par2_genotyped" if $self->verbose();
         return;
     }
