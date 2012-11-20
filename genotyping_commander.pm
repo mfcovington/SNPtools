@@ -14,28 +14,28 @@ use autodie;
 # make so that validity tests are done once and remembered
 # allow override of samtools version check
 
-sub samtools_cmd_mpileup {
-    my $self = shift;
-
-    my $samtools_cmd =
-        "samtools mpileup -l "
-      . $self->snp_dir . "/"
-      . join( '.', "polyDB", $self->chromosome ) . " -f "
-      . $self->fasta . " "
-      . $self->bam . " > "
-      . $self->mpileup_dir . "/"
-      . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix );
-
-    return $samtools_cmd;
-}
-
 sub extract_mpileup {
     my $self = shift;
 
     $self->_make_dir( $self->mpileup_dir );
 
-    say "  Running: " . $self->samtools_cmd_mpileup() if $self->verbose();
-    system( $self->samtools_cmd_mpileup );
+    my $pileup_path = $self->mpileup_dir . "/" . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix );
+    my $snp_path    = $self->snp_dir     . "/" . join( '.', "polyDB", $self->chromosome );
+
+    my $samtools_cmd =
+        "samtools mpileup -l $snp_path -f "
+      . $self->fasta . " "
+      . $self->bam
+      . " > $pileup_path";
+
+    if ( ! -e $snp_path ) {
+        say "  SNP file not found: $snp_path" if $self->verbose();
+        return;
+    }
+    else {
+        say "  Running: " . $self->samtools_cmd_mpileup() if $self->verbose();
+        system( $samtools_cmd );
+    }
 }
 
 sub genotype {
@@ -43,14 +43,27 @@ sub genotype {
 
     $self->_make_dir( $self->genotyped_dir );
 
+    my $pileup_path = $self->mpileup_dir . "/" . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix );
+    my $snp_path    = $self->snp_dir     . "/" . join( '.', "polyDB", $self->chromosome );
+
     my $genotyping_cmd =
       "./genotyping_pileups.pl \\
-    --pileup "  . $self->mpileup_dir . "/" . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix ) . " \\
-    --snp "     . $self->snp_dir     . "/" . join( '.', "polyDB", $self->chromosome ) . " \\
+    --pileup $pileup_path \\
+    --snp $snp_path \\
     --out_dir " . $self->genotyped_dir;
 
-    say "  Running:\n  " . $genotyping_cmd if $self->verbose();
-    system( $genotyping_cmd );
+    if ( ! -e $pileup_path ) {
+        say "  Pileup file not found: $pileup_path" if $self->verbose();
+        return;
+    }
+    elsif ( ! -e $snp_path ) {
+        say "  SNP file not found: $snp_path" if $self->verbose();
+        return;
+    }
+    else {
+        say "  Running:\n  " . $genotyping_cmd if $self->verbose();
+        system( $genotyping_cmd );
+    }
 }
 
 sub noise_reduction {
@@ -59,17 +72,28 @@ sub noise_reduction {
     my $R = Statistics::R->new();
     my $par1_genotyped = $self->genotyped_dir . "/" . join( '.', $self->par1, $self->chromosome, "genotyped" );
     my $par2_genotyped = $self->genotyped_dir . "/" . join( '.', $self->par2, $self->chromosome, "genotyped" );
-    $R->run(qq`PAR1 <- read.table("$par1_genotyped")`);
-    $R->run(qq`PAR2 <- read.table("$par2_genotyped")`);
-    $R->run(q`PAR1_ratio <- PAR1[ , 3 ]/PAR1[ , 5 ]`);
-    $R->run(q`PAR2_ratio <- PAR2[ , 4 ]/PAR2[ , 5 ]`);
-    my $min_ratio = 0.7;
-    $R->run(qq`pos_nr <- PAR1[ PAR1_ratio > $min_ratio & PAR2_ratio > $min_ratio , 2 ]`);
-    my $polymorphisms = $self->snp_dir . "/" . join( '.', "polyDB", $self->chromosome );
-    my $polymorphisms_nr = $polymorphisms . ".nr";
-    $R->run(qq`SNP <- read.table( "$polymorphisms", head = T )`);
-    $R->run(q`SNP_nr <- SNP[ is.element( SNP$pos, pos_nr) , ]`);
-    $R->run(qq`write.table( SNP_nr, file = "$polymorphisms_nr", quote = F, sep = "\t", row.names = F )`);
+
+    if ( ! -e $par1_genotyped ) {
+        say "  Parent 1 genotype file not found: $par1_genotyped" if $self->verbose();
+        return;
+    }
+    elsif ( ! -e $par2_genotyped ) {
+        say "  Parent 2 genotype file not found: $par2_genotyped" if $self->verbose();
+        return;
+    }
+    else {
+        $R->run(qq`PAR1 <- read.table("$par1_genotyped")`);
+        $R->run(qq`PAR2 <- read.table("$par2_genotyped")`);
+        $R->run(q`PAR1_ratio <- PAR1[ , 3 ]/PAR1[ , 5 ]`);
+        $R->run(q`PAR2_ratio <- PAR2[ , 4 ]/PAR2[ , 5 ]`);
+        my $min_ratio = 0.7;
+        $R->run(qq`pos_nr <- PAR1[ PAR1_ratio > $min_ratio & PAR2_ratio > $min_ratio , 2 ]`);
+        my $polymorphisms = $self->snp_dir . "/" . join( '.', "polyDB", $self->chromosome );
+        my $polymorphisms_nr = $polymorphisms . ".nr";
+        $R->run(qq`SNP <- read.table( "$polymorphisms", head = T )`);
+        $R->run(q`SNP_nr <- SNP[ is.element( SNP$pos, pos_nr) , ]`);
+        $R->run(qq`write.table( SNP_nr, file = "$polymorphisms_nr", quote = F, sep = "\t", row.names = F )`);
+    }
 };
 
 around [qw(extract_mpileup genotype noise_reduction)] => sub {
@@ -215,7 +239,7 @@ sub _make_dir {
     my $dir_name = shift;
 
     ( my $filename, $dir_name ) = fileparse( $self->out_file ) unless defined $dir_name;
-    make_path( $dir_name );
+    make_path( $dir_name ) unless -e $dir_name;
 }
 
 sub _validity_tests {
