@@ -12,12 +12,14 @@ use List::Util qw[max];
 use Getopt::Long;
 use File::Basename;
 
-my ( $pileup_file, $snp_file );
+my ( $pileup_file, $snp_file, $par1_id, $par2_id );
 my $out_dir = "./";
 
 my $options = GetOptions(
     "pileup=s"  => \$pileup_file,
     "snp=s"     => \$snp_file,
+    "par1_id=s" => \$par1_id,
+    "par2_id=s" => \$par2_id,
     "out_dir=s" => \$out_dir        ### make output file
 );
 
@@ -75,8 +77,8 @@ while ( my $pileup_line = <$pileup_fh> ) {
     unless ( eof($snp_fh) ) {
         while ($pileup[1] == $snp[1]) { #while positions match
             if ( $snp[6] eq "DIFF_SNP" ) {
-                $m82_base = $snp[3] if $snp[4] eq "M82";
-                $pen_base = $snp[3] if $snp[4] eq "PEN";
+                $m82_base = $snp[3] if $snp[4] eq $par1_id;
+                $pen_base = $snp[3] if $snp[4] eq $par2_id;
             }
             elsif ( $snp[2] eq "INS" ) {
                 $insert_parent = $snp[4];
@@ -86,15 +88,15 @@ while ( my $pileup_line = <$pileup_fh> ) {
             elsif ( $snp[3] eq "del" ) {
                 $del_parent = $snp[4];
                 $is_del     = 1;
-                $m82_base   = $snp[2] if $del_parent eq "PEN";
-                $pen_base   = $snp[2] if $del_parent eq "M82";
+                $m82_base   = $snp[2] if $del_parent eq $par2_id;
+                $pen_base   = $snp[2] if $del_parent eq $par1_id;
             }
             else {
-                if ( $snp[4] eq "M82" ) {
+                if ( $snp[4] eq $par1_id ) {
                     $m82_base = $snp[3];
                     $pen_base = $snp[2];
                 }
-                else {    #$snp[4] eq "PEN"
+                else {    #$snp[4] eq $par2_id
                     $m82_base = $snp[2];
                     $pen_base = $snp[3];
                 }
@@ -112,21 +114,21 @@ while ( my $pileup_line = <$pileup_fh> ) {
             $insert_seq = join( "", @insert_bases );
             my $pileup_inserts = join( " ", @insertions );
             my $matched_insert_count = $pileup_inserts =~ s/\b$insert_seq\b/\b$insert_seq\b/gi; ##added word boundaries so AA wouldn't match AAAA twice, for example
-            if ( $insert_parent eq "M82" ) {
+            if ( $insert_parent eq $par1_id ) {
                 $m82_count = $matched_insert_count;
                 $pen_count = max( $A_count, $C_count, $T_count, $G_count );
             }
-            else {    #$insert_parent eq "PEN"
+            else {    #$insert_parent eq $par2_id
                 $m82_count = max( $A_count, $C_count, $T_count, $G_count );
                 $pen_count = $matched_insert_count;
             }
         }
         elsif ($is_del) {
-            if ( $del_parent eq "M82" ) {
+            if ( $del_parent eq $par1_id ) {
                 $m82_count = $del_count;
                 $pen_count = $pileup[4] =~ s/$pen_base/$pen_base/gi;
             }
-            else {    #$del_parent eq "PEN"
+            else {    #$del_parent eq $par2_id
                 $m82_count = $pileup[4] =~ s/$m82_base/$m82_base/gi;
                 $pen_count = $del_count;
             }

@@ -49,6 +49,8 @@ sub genotype {
     my $genotyping_cmd =
       "./genotyping_pileups.pl \\
     --pileup $pileup_path \\
+    --par1_id " . $self->par1 . "\\
+    --par2_id " . $self->par2 . "\\
     --snp $snp_path \\
     --out_dir " . $self->genotyped_dir;
 
