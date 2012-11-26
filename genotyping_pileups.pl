@@ -25,7 +25,7 @@ my $options = GetOptions(
 );
 
 #build mpileup hash
-open my $mpileup_fh, "<", $mpileup_file;
+opar2 my $mpileup_fh, "<", $mpileup_file;
 my %mpileups = map {
     chomp;
     my @delim = split /\t/;
@@ -38,7 +38,7 @@ my %mpileups = map {
 } <$mpileup_fh>;
 
 # build SNP/indel hash
-open my $snp_fh, "<", $snp_file;
+opar2 my $snp_fh, "<", $snp_file;
 my $header = <$snp_fh>; # 0 = chr, 1 = pos, 2 = ref_base, 3 = snp_base, 4 = genotype, 5 = insert_position, 6 = SNP_CLASS
 my %snps;
 my $chromosome;
@@ -54,7 +54,7 @@ while (<$snp_fh>) {
     $chromosome = $delim_snp[0] unless defined $chromosome;
 }
 
-open my $out_fh, ">", $out_file;
+opar2 my $out_fh, ">", $out_file;
 for my $position ( sort { $a <=> $b } keys %mpileups ) {
 
     # skip positions for which snp record does not exist
@@ -136,7 +136,7 @@ while ( my $mpileup_line = <$mpileup_fh> ) {
         chomp $snp_line;
         @snp = split( /\t/, $snp_line ); # 0 = chr, 1 = pos, 2 = ref_base, 3 = snp_base, 4 = genotype, 5 = insert_position, 6 = SNP_CLASS
     }
-    my ( $m82_base, $pen_base, @insert_bases, $insert_parent, $is_insert, $insert_seq, $del_parent, $is_del, $skip );
+    my ( $par1_base, $par2_base, @insert_bases, $insert_parent, $is_insert, $insert_seq, $del_parent, $is_del, $skip );
 
     if ( $snp[5] =~ /^[0-9]+$/ && $snp[5] > 1 ) { #solve problem created by removing "NOT" snps that were actually "DIFF_SNPS" with Iinserts of varying size  ###PART 1###
         $skip = 1;
@@ -145,8 +145,8 @@ while ( my $mpileup_line = <$mpileup_fh> ) {
     unless ( eof($snp_fh) ) {
         while ($mpileup[1] == $snp[1]) { #while positions match
             if ( $snp[6] eq "DIFF_SNP" ) {
-                $m82_base = $snp[3] if $snp[4] eq $par1_id;
-                $pen_base = $snp[3] if $snp[4] eq $par2_id;
+                $par1_base = $snp[3] if $snp[4] eq $par1_id;
+                $par2_base = $snp[3] if $snp[4] eq $par2_id;
             }
             elsif ( $snp[2] eq "INS" ) {
                 $insert_parent = $snp[4];
@@ -156,17 +156,17 @@ while ( my $mpileup_line = <$mpileup_fh> ) {
             elsif ( $snp[3] eq "del" ) {
                 $del_parent = $snp[4];
                 $is_del     = 1;
-                $m82_base   = $snp[2] if $del_parent eq $par2_id;
-                $pen_base   = $snp[2] if $del_parent eq $par1_id;
+                $par1_base   = $snp[2] if $del_parent eq $par2_id;
+                $par2_base   = $snp[2] if $del_parent eq $par1_id;
             }
             else {
                 if ( $snp[4] eq $par1_id ) {
-                    $m82_base = $snp[3];
-                    $pen_base = $snp[2];
+                    $par1_base = $snp[3];
+                    $par2_base = $snp[2];
                 }
                 else {    #$snp[4] eq $par2_id
-                    $m82_base = $snp[2];
-                    $pen_base = $snp[3];
+                    $par1_base = $snp[2];
+                    $par2_base = $snp[3];
                 }
             }
 
@@ -194,16 +194,16 @@ while ( my $mpileup_line = <$mpileup_fh> ) {
         elsif ($is_del) {
             if ( $del_parent eq $par1_id ) {
                 $par1_count = $del_count;
-                $par2_count = $mpileup[4] =~ s/$pen_base/$pen_base/gi;
+                $par2_count = $mpileup[4] =~ s/$par2_base/$par2_base/gi;
             }
             else {    #$del_parent eq $par2_id
-                $par1_count = $mpileup[4] =~ s/$m82_base/$m82_base/gi;
+                $par1_count = $mpileup[4] =~ s/$par1_base/$par1_base/gi;
                 $par2_count = $del_count;
             }
         }
         else {
-            $par1_count = $mpileup[4] =~ s/$m82_base/$m82_base/gi;
-            $par2_count = $mpileup[4] =~ s/$pen_base/$pen_base/gi;
+            $par1_count = $mpileup[4] =~ s/$par1_base/$par1_base/gi;
+            $par2_count = $mpileup[4] =~ s/$par2_base/$par2_base/gi;
         }
     }
 
