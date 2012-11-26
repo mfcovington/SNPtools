@@ -25,7 +25,7 @@ my $options = GetOptions(
 );
 
 #build mpileup hash
-opar2 my $mpileup_fh, "<", $mpileup_file;
+open my $mpileup_fh, "<", $mpileup_file;
 my %mpileups = map {
     chomp;
     my @delim = split /\t/;
@@ -38,7 +38,7 @@ my %mpileups = map {
 } <$mpileup_fh>;
 
 # build SNP/indel hash
-opar2 my $snp_fh, "<", $snp_file;
+open my $snp_fh, "<", $snp_file;
 my $header = <$snp_fh>; # 0 = chr, 1 = pos, 2 = ref_base, 3 = snp_base, 4 = genotype, 5 = insert_position, 6 = SNP_CLASS
 my %snps;
 my $chromosome;
@@ -54,7 +54,7 @@ while (<$snp_fh>) {
     $chromosome = $delim_snp[0] unless defined $chromosome;
 }
 
-opar2 my $out_fh, ">", $out_file;
+open my $out_fh, ">", $out_file;
 for my $position ( sort { $a <=> $b } keys %mpileups ) {
 
     # skip positions for which snp record does not exist
