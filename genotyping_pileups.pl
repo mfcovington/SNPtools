@@ -98,6 +98,22 @@ say "$position : @insertions : $mpileups{$position}->{'mpileup'}"; #TEMP
     my $par1_count = 0;
     my $par2_count = 0;
 
+
+    my ( $par1_base, $par2_base, @insert_bases, $insert_parent, $is_insert, $insert_seq, $del_parent, $is_del, $skip );
+
+    # at least for now, skip polymorphisms where
+    # one parent is a SNP and the other is an insertion
+    # (very rare and not labeled as DIFF_SNPs)
+    next
+      if scalar keys $snps{$position} > 1
+      && exists $snps{$position}{'NA'};
+
+    # (PART 1 of) solving problem created by removing "NOT" polymorphisms
+    # that were actually "DIFF_SNPS" with inserts of varying size
+    $skip = 1
+      if !exists $snps{$position}{'NA'}
+      && ( sort { $a <=> $b } keys $snps{$position} )[0] > 1;
+
     say $out_fh join( "\t", $chromosome, $position, $par1_count, $par2_count, $total_count );
 
 }
@@ -136,11 +152,11 @@ while ( my $mpileup_line = <$mpileup_fh> ) {
         chomp $snp_line;
         @snp = split( /\t/, $snp_line ); # 0 = chr, 1 = pos, 2 = ref_base, 3 = snp_base, 4 = genotype, 5 = insert_position, 6 = SNP_CLASS
     }
-    my ( $par1_base, $par2_base, @insert_bases, $insert_parent, $is_insert, $insert_seq, $del_parent, $is_del, $skip );
+                    my ( $par1_base, $par2_base, @insert_bases, $insert_parent, $is_insert, $insert_seq, $del_parent, $is_del, $skip );
 
-    if ( $snp[5] =~ /^[0-9]+$/ && $snp[5] > 1 ) { #solve problem created by removing "NOT" snps that were actually "DIFF_SNPS" with Iinserts of varying size  ###PART 1###
-        $skip = 1;
-    }
+                    if ( $snp[5] =~ /^[0-9]+$/ && $snp[5] > 1 ) { #solve problem created by removing "NOT" snps that were actually "DIFF_SNPS" with Iinserts of varying size  ###PART 1###
+                        $skip = 1;
+                    }
 
     unless ( eof($snp_fh) ) {
         while ($mpileup[1] == $snp[1]) { #while positions match
