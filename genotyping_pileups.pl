@@ -126,6 +126,42 @@ say "$position : @insertions : $mpileups{$position}->{'mpileup'}"; #TEMP
       if looks_like_number( ${ $snps{$position} }[0]->{'insert_pos'} )
       && ${ $snps{$position} }[0]->{'insert_pos'} > 1;
 
+
+    # separate snp classes and determine genotype of parents from snp hash
+    if ( ${ $snps{$position} }[0]->{'snp_class'} eq "DIFF_SNP" ) {
+        $par1_base = ${ $snps{$position} }[0]->{'snp_base'}
+          if ${ $snps{$position} }[0]->{'genotype'} eq $par1_id;
+        $par2_base = ${ $snps{$position} }[0]->{'snp_base'}
+          if ${ $snps{$position} }[0]->{'genotype'} eq $par2_id;
+    }
+    elsif ( ${ $snps{$position} }[0]->{'ref_base'} eq "INS" ) {
+        $is_insert     = 1;
+        $insert_parent = ${ $snps{$position} }[0]->{'genotype'};
+        push( @insert_bases, ${ $snps{$position} }[$_]->{'snp_base'} )
+          for ( 0 .. $#{ $snps{$position} } );
+    }
+    elsif ( ${ $snps{$position} }[0]->{'snp_base'} eq "del" ) {
+        $is_del     = 1;
+        $del_parent = ${ $snps{$position} }[0]->{'genotype'};
+        $par1_base  = ${ $snps{$position} }[0]->{'ref_base'}
+          if $del_parent eq $par2_id;
+        $par2_base = ${ $snps{$position} }[0]->{'ref_base'}
+          if $del_parent eq $par1_id;
+    }
+    elsif ( ${ $snps{$position} }[0]->{'genotype'} eq $par1_id ) {
+        $par1_base = ${ $snps{$position} }[0]->{'snp_base'};
+        $par2_base = ${ $snps{$position} }[0]->{'ref_base'};
+    }
+    elsif ( ${ $snps{$position} }[0]->{'genotype'} eq $par2_id ) {
+        $par1_base = ${ $snps{$position} }[0]->{'ref_base'};
+        $par2_base = ${ $snps{$position} }[0]->{'snp_base'};
+    }
+    else { die "SOMETHING IS WRONG!!!"; }
+
+
+
+
+
     say $out_fh join( "\t", $chromosome, $position, $par1_count, $par2_count, $total_count );
 
 }
@@ -171,38 +207,38 @@ while ( my $mpileup_line = <$mpileup_fh> ) {
                     }
 
     unless ( eof($snp_fh) ) {
-        while ($mpileup[1] == $snp[1]) { #while positions match
-            if ( $snp[6] eq "DIFF_SNP" ) {
-                $par1_base = $snp[3] if $snp[4] eq $par1_id;
-                $par2_base = $snp[3] if $snp[4] eq $par2_id;
-            }
-            elsif ( $snp[2] eq "INS" ) {
-                $insert_parent = $snp[4];
-                push( @insert_bases, $snp[3] );
-                $is_insert = 1;
-            }
-            elsif ( $snp[3] eq "del" ) {
-                $del_parent = $snp[4];
-                $is_del     = 1;
-                $par1_base   = $snp[2] if $del_parent eq $par2_id;
-                $par2_base   = $snp[2] if $del_parent eq $par1_id;
-            }
-            else {
-                if ( $snp[4] eq $par1_id ) {
-                    $par1_base = $snp[3];
-                    $par2_base = $snp[2];
-                }
-                else {    #$snp[4] eq $par2_id
-                    $par1_base = $snp[2];
-                    $par2_base = $snp[3];
-                }
-            }
+                    while ($mpileup[1] == $snp[1]) { #while positions match
+                        if ( $snp[6] eq "DIFF_SNP" ) {
+                            $par1_base = $snp[3] if $snp[4] eq $par1_id;
+                            $par2_base = $snp[3] if $snp[4] eq $par2_id;
+                        }
+                        elsif ( $snp[2] eq "INS" ) {
+                            $insert_parent = $snp[4];
+                            push( @insert_bases, $snp[3] );
+                            $is_insert = 1;
+                        }
+                        elsif ( $snp[3] eq "del" ) {
+                            $del_parent = $snp[4];
+                            $is_del     = 1;
+                            $par1_base   = $snp[2] if $del_parent eq $par2_id;
+                            $par2_base   = $snp[2] if $del_parent eq $par1_id;
+                        }
+                        else {
+                            if ( $snp[4] eq $par1_id ) {
+                                $par1_base = $snp[3];
+                                $par2_base = $snp[2];
+                            }
+                            else {    #$snp[4] eq $par2_id
+                                $par1_base = $snp[2];
+                                $par2_base = $snp[3];
+                            }
+                        }
 
-            $snp_line = <$snp_fh>;
-            chomp $snp_line;
-            @snp = split( /\t/, $snp_line );
-            last if eof($snp_fh);
-        }
+                        $snp_line = <$snp_fh>;
+                        chomp $snp_line;
+                        @snp = split( /\t/, $snp_line );
+                        last if eof($snp_fh);
+                    }
 
         $par1_count = 0;
         $par2_count = 0;
