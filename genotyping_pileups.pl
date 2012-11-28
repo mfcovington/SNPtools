@@ -126,7 +126,6 @@ say "$position : @insertions : $mpileups{$position}->{'mpileup'}"; #TEMP
       if looks_like_number( ${ $snps{$position} }[0]->{'insert_pos'} )
       && ${ $snps{$position} }[0]->{'insert_pos'} > 1;
 
-
     # separate snp classes and determine genotype of parents from snp hash
     if ( ${ $snps{$position} }[0]->{'snp_class'} eq "DIFF_SNP" ) {
         $par1_base = ${ $snps{$position} }[0]->{'snp_base'}
@@ -158,9 +157,46 @@ say "$position : @insertions : $mpileups{$position}->{'mpileup'}"; #TEMP
     }
     else { die "SOMETHING IS WRONG!!!"; }
 
+    # count stuff up
+    $par1_count = 0;
+    $par2_count = 0;
+    if ($is_insert) {
+        $insert_seq = join "", @insert_bases;
+        my $mpileup_inserts = join " ", @insertions;
+        my $matched_insert_count =
+          $mpileup_inserts =~ s/\b$insert_seq\b/\b$insert_seq\b/gi; ##added word boundaries so AA wouldn't match AAAA twice, for example
+        if ( $insert_parent eq $par1_id ) {
+            $par1_count = $matched_insert_count;
+            $par2_count = max( $A_count, $C_count, $T_count, $G_count );
+        }
+        elsif ( $insert_parent eq $par2_id ) {
+            $par1_count = max( $A_count, $C_count, $T_count, $G_count );
+            $par2_count = $matched_insert_count;
+        }
+        else { die "SOMETHING IS WRONG!!!"; }
+    }
+    elsif ($is_del) {
+        if ( $del_parent eq $par1_id ) {
+            $par1_count = $del_count;
+            $par2_count =
+              $mpileups{$position}->{'mpileup'} =~ s/$par2_base/$par2_base/gi;
+        }
+        elsif ( $del_parent eq $par2_id ) {
+            $par1_count =
+              $mpileups{$position}->{'mpileup'} =~ s/$par1_base/$par1_base/gi;
+            $par2_count = $del_count;
+        }
+        else { die "SOMETHING IS WRONG!!!"; }
+    }
+    else {
+        $par1_count =
+          $mpileups{$position}->{'mpileup'} =~ s/$par1_base/$par1_base/gi;
+        $par2_count =
+          $mpileups{$position}->{'mpileup'} =~ s/$par2_base/$par2_base/gi;
+    }
 
-
-
+    $par1_count = 0 unless $par1_count;
+    $par2_count = 0 unless $par2_count;
 
     say $out_fh join( "\t", $chromosome, $position, $par1_count, $par2_count, $total_count );
 
@@ -240,35 +276,35 @@ while ( my $mpileup_line = <$mpileup_fh> ) {
                         last if eof($snp_fh);
                     }
 
-        $par1_count = 0;
-        $par2_count = 0;
-        if ($is_insert) {
-            $insert_seq = join( "", @insert_bases );
-            my $mpileup_inserts = join( " ", @insertions );
-            my $matched_insert_count = $mpileup_inserts =~ s/\b$insert_seq\b/\b$insert_seq\b/gi; ##added word boundaries so AA wouldn't match AAAA twice, for example
-            if ( $insert_parent eq $par1_id ) {
-                $par1_count = $matched_insert_count;
-                $par2_count = max( $A_count, $C_count, $T_count, $G_count );
-            }
-            else {    #$insert_parent eq $par2_id
-                $par1_count = max( $A_count, $C_count, $T_count, $G_count );
-                $par2_count = $matched_insert_count;
-            }
-        }
-        elsif ($is_del) {
-            if ( $del_parent eq $par1_id ) {
-                $par1_count = $del_count;
-                $par2_count = $mpileup[4] =~ s/$par2_base/$par2_base/gi;
-            }
-            else {    #$del_parent eq $par2_id
-                $par1_count = $mpileup[4] =~ s/$par1_base/$par1_base/gi;
-                $par2_count = $del_count;
-            }
-        }
-        else {
-            $par1_count = $mpileup[4] =~ s/$par1_base/$par1_base/gi;
-            $par2_count = $mpileup[4] =~ s/$par2_base/$par2_base/gi;
-        }
+                    $par1_count = 0;
+                    $par2_count = 0;
+                    if ($is_insert) {
+                        $insert_seq = join( "", @insert_bases );
+                        my $mpileup_inserts = join( " ", @insertions );
+                        my $matched_insert_count = $mpileup_inserts =~ s/\b$insert_seq\b/\b$insert_seq\b/gi; ##added word boundaries so AA wouldn't match AAAA twice, for example
+                        if ( $insert_parent eq $par1_id ) {
+                            $par1_count = $matched_insert_count;
+                            $par2_count = max( $A_count, $C_count, $T_count, $G_count );
+                        }
+                        else {    #$insert_parent eq $par2_id
+                            $par1_count = max( $A_count, $C_count, $T_count, $G_count );
+                            $par2_count = $matched_insert_count;
+                        }
+                    }
+                    elsif ($is_del) {
+                        if ( $del_parent eq $par1_id ) {
+                            $par1_count = $del_count;
+                            $par2_count = $mpileup[4] =~ s/$par2_base/$par2_base/gi;
+                        }
+                        else {    #$del_parent eq $par2_id
+                            $par1_count = $mpileup[4] =~ s/$par1_base/$par1_base/gi;
+                            $par2_count = $del_count;
+                        }
+                    }
+                    else {
+                        $par1_count = $mpileup[4] =~ s/$par1_base/$par1_base/gi;
+                        $par2_count = $mpileup[4] =~ s/$par2_base/$par2_base/gi;
+                    }
     }
 
     if ($skip) { #solve problem created by removing "NOT" snps that were actually "DIFF_SNPS" with Iinserts of varying size
@@ -277,10 +313,10 @@ while ( my $mpileup_line = <$mpileup_fh> ) {
         $par2_count   = 0;
     }
 
-    $par1_count = 0 unless $par1_count;
-    $par2_count = 0 unless $par2_count;
+                    $par1_count = 0 unless $par1_count;
+                    $par2_count = 0 unless $par2_count;
 
-    say $out_fh join( "\t", @mpileup[0,1], $par1_count, $par2_count, $total_count );
+                    say $out_fh join( "\t", @mpileup[0,1], $par1_count, $par2_count, $total_count );
 }
 
 close $mpileup_fh;
