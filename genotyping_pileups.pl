@@ -9,6 +9,7 @@ use strict;
 use warnings;
 use autodie;
 use List::Util qw[max];
+use Scalar::Util 'looks_like_number';
 use Getopt::Long;
 use File::Basename;
 use Data::Printer; #TEMP
@@ -45,12 +46,20 @@ my $chromosome;
 while (<$snp_fh>) {
     chomp;
     my @delim_snp = split /\t/;
-    $snps{ $delim_snp[1] }{ $delim_snp[5] } = {
-        'ref_base'  => $delim_snp[2],
-        'snp_base'  => $delim_snp[3],
-        'genotype'  => $delim_snp[4],
-        'snp_class' => $delim_snp[6]
-    };
+    # $snps{ $delim_snp[1] }{ $delim_snp[5] } = {
+    #     'ref_base'  => $delim_snp[2],
+    #     'snp_base'  => $delim_snp[3],
+    #     'genotype'  => $delim_snp[4],
+    #     'snp_class' => $delim_snp[6]
+    # };
+    push @{ $snps{ $delim_snp[1] } },
+      {
+        'ref_base'   => $delim_snp[2],
+        'snp_base'   => $delim_snp[3],
+        'genotype'   => $delim_snp[4],
+        'insert_pos' => $delim_snp[5],
+        'snp_class'  => $delim_snp[6],
+      };
     $chromosome = $delim_snp[0] unless defined $chromosome;
 }
 
@@ -63,7 +72,10 @@ for my $position ( sort { $a <=> $b } keys %mpileups ) {
     next unless exists $snps{$position};
 
     # skip indels if ignoring indels
-    next if $no_indels && ( ! exists $snps{$position}{'NA'} || $snps{$position}{'NA'}->{'snp_base'} eq 'del' );
+    next
+      if $no_indels
+      && ( ${ $snps{$position} }[0]->{'ref_base'} eq 'INS'
+        || ${ $snps{$position} }[0]->{'snp_base'} eq 'del' );
 
     # remove "junk" characters from mpileups:
     # < and > are CIGAR Ns (or reference skips)
@@ -76,13 +88,13 @@ for my $position ( sort { $a <=> $b } keys %mpileups ) {
 
     # collect insertions
     my @insertions;
-    push ( @insertions, $1 ) while $mpileups{$position}->{'mpileup'} =~ m/ [\.,] \+ \d+ ([ACGT]+) /gi;
+    push ( @insertions, $1 ) while $mpileups{$position}->{'mpileup'} =~ m/ [\.,] \+ \d+ ([ACGT]+) /gix;
 
     # remove insertions
     $mpileups{$position}->{'mpileup'} =~ s/ [\.,] \+ \d+ [ACGT]+ //gix;
 
     # convert , and . to ref_base
-    $mpileups{$position}->{'mpileup'} =~ s/ \. | , / $mpileups{$position}->{'ref_base'} /gix;
+    $mpileups{$position}->{'mpileup'} =~ s/ \. | , /$mpileups{$position}->{'ref_base'}/gix;
 
 p @insertions; #TEMP
 say "$position : @insertions : $mpileups{$position}->{'mpileup'}"; #TEMP
@@ -105,14 +117,14 @@ say "$position : @insertions : $mpileups{$position}->{'mpileup'}"; #TEMP
     # one parent is a SNP and the other is an insertion
     # (very rare and not labeled as DIFF_SNPs)
     next
-      if scalar keys $snps{$position} > 1
-      && exists $snps{$position}{'NA'};
+      if scalar @{ $snps{$position} } > 1
+      && ${ $snps{$position} }[0]->{'insert_pos'} eq 'NA';
 
-    # (PART 1 of) solving problem created by removing "NOT" polymorphisms
+    # skip positions with problematic artifact created by removing "NOT" polymorphisms
     # that were actually "DIFF_SNPS" with inserts of varying size
-    $skip = 1
-      if !exists $snps{$position}{'NA'}
-      && ( sort { $a <=> $b } keys $snps{$position} )[0] > 1;
+    next
+      if looks_like_number( ${ $snps{$position} }[0]->{'insert_pos'} )
+      && ${ $snps{$position} }[0]->{'insert_pos'} > 1;
 
     say $out_fh join( "\t", $chromosome, $position, $par1_count, $par2_count, $total_count );
 
