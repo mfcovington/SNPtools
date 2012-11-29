@@ -90,7 +90,8 @@ sub noise_reduction {
         my $min_ratio = 0.7;
         $R->run(qq`pos_nr <- PAR1[ PAR1_ratio > $min_ratio & PAR2_ratio > $min_ratio , 2 ]`);
         my $polymorphisms    = $self->_snp_path;
-        my $polymorphisms_nr = $polymorphisms . ".nr";
+        $self->before_noise_reduction(0);
+        my $polymorphisms_nr = $self->_snp_path;
         $R->run(qq`SNP <- read.table( "$polymorphisms", head = T )`);
         $R->run(q`SNP_nr <- SNP[ is.element( SNP$pos, pos_nr) , ]`);
         $R->run(qq`write.table( SNP_nr, file = "$polymorphisms_nr", quote = F, sep = "\t", row.names = F )`);
@@ -237,7 +238,8 @@ sub _pileup_path {
 sub _snp_path {
     my $self = shift;
 
-    return $self->_snp_dir . "/" . join( '.', "polyDB", $self->chromosome );
+    return $self->_snp_dir . "/"
+      . join( '.', "polyDB", $self->chromosome, $self->_snp_suffix );
 }
 
 sub _genotyped_path {
@@ -252,6 +254,14 @@ sub _mpileup_suffix {
 
     my $suffix = "mpileup";
     $suffix .= ".nr" unless $self->before_noise_reduction;
+    return $suffix;
+}
+
+sub _snp_suffix {
+    my $self = shift;
+
+    my $suffix = "";
+    $suffix .= "nr" unless $self->before_noise_reduction;
     return $suffix;
 }
 
