@@ -13,6 +13,8 @@ use List::Util 'max';
 use Scalar::Util 'looks_like_number';
 use Getopt::Long;
 
+###TODO: ¿¿¿¿incorporate into commander as sub????
+
 my ( $mpileup_file, $snp_file, $par1_id, $par2_id, $out_file, $no_indels );
 
 my $options = GetOptions(

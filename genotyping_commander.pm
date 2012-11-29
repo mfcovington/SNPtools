@@ -13,6 +13,7 @@ use autodie;
 # add relevant validity tests for extract_mpileup
 # make so that validity tests are done once and remembered
 # allow override of samtools version check
+# TO DO: incorporate option to ignore indels (do for snp ID, too?) (see line 60)
 
 sub extract_mpileup {
     my $self = shift;
@@ -43,16 +44,20 @@ sub genotype {
 
     $self->_make_dir( $self->genotyped_dir );
 
-    my $pileup_path = $self->mpileup_dir . "/" . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix );
-    my $snp_path    = $self->snp_dir     . "/" . join( '.', "polyDB", $self->chromosome );
+    my $pileup_path    = $self->mpileup_dir   . "/" . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix );
+    my $snp_path       = $self->snp_dir       . "/" . join( '.', "polyDB", $self->chromosome );
+    my $genotyped_path = $self->genotyped_dir . "/" . join( '.', $self->id, $self->chromosome, $self->_genotyped_suffix );
 
     my $genotyping_cmd =
       "./genotyping_pileups.pl \\
-    --pileup $pileup_path \\
-    --par1_id " . $self->par1 . "\\
-    --par2_id " . $self->par2 . "\\
-    --snp $snp_path \\
-    --out_dir " . $self->genotyped_dir;
+    --mpileup  $pileup_path \\
+    --snp      $snp_path \\
+    --par1_id  ${ \$self->par1 } \\
+    --par2_id  ${ \$self->par2 } \\
+    --out_file $genotyped_path";
+
+    # TO DO: incorporate option to ignore indels (do for snp ID, too?):
+    # $genotyping_cmd .= " --no_indels" if $no_indels;
 
     if ( ! -e $pileup_path ) {
         say "  Pileup file not found: $pileup_path" if $self->verbose();
@@ -232,6 +237,14 @@ sub _mpileup_suffix {
     my $self = shift;
 
     my $suffix = "mpileup";
+    $suffix .= ".nr" unless $self->before_noise_reduction;
+    return $suffix;
+}
+
+sub _genotyped_suffix {
+    my $self = shift;
+
+    my $suffix = "genotyped";
     $suffix .= ".nr" unless $self->before_noise_reduction;
     return $suffix;
 }
