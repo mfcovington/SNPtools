@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# noise_reduction.pl
+# genotype_parents+nr.pl
 # Mike Covington
 # created: 2012-09-21
 #
@@ -14,7 +14,7 @@ use genotyping_commander;
 my $usage = <<USAGE_END;
 
 USAGE:
-genotype_parents+nr.pl
+$0
   --id1        Parent 1 ID
   --id2        Parent 2 ID
   --bam1       Parent 1 alignment file (.bam)

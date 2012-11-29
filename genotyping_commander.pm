@@ -13,63 +13,88 @@ use autodie;
 # add relevant validity tests for extract_mpileup
 # make so that validity tests are done once and remembered
 # allow override of samtools version check
-
-sub samtools_cmd_mpileup {
-    my $self = shift;
-
-    my $samtools_cmd =
-        "samtools mpileup -l "
-      . $self->snp_dir . "/"
-      . join( '.', "polyDB", $self->chromosome ) . " -f "
-      . $self->fasta . " "
-      . $self->bam . " > "
-      . $self->mpileup_dir . "/"
-      . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix );
-
-    return $samtools_cmd;
-}
+# TO DO: incorporate option to ignore indels (do for snp ID, too?) (see line 60)
 
 sub extract_mpileup {
     my $self = shift;
 
-    $self->_make_dir( $self->mpileup_dir );
+    $self->_make_dir( $self->_mpileup_dir );
 
-    say "  Running: " . $self->samtools_cmd_mpileup() if $self->verbose();
-    system( $self->samtools_cmd_mpileup );
+    my $samtools_cmd =
+        "samtools mpileup \\
+      -l ${ \$self->_snp_path } \\
+      -f ${ \$self->fasta } \\
+         ${ \$self->bam } \\
+      >  ${ \$self->_pileup_path }";
+
+    if ( ! -e $self->_snp_path ) {
+        say "  SNP file not found: ${ \$self->_snp_path }" if $self->verbose();
+        return;
+    }
+    else {
+        say "  Running: $samtools_cmd" if $self->verbose();
+        system( $samtools_cmd );
+    }
 }
 
 sub genotype {
     my $self = shift;
 
-    $self->_make_dir( $self->genotyped_dir );
+    $self->_make_dir( $self->_genotyped_dir );
 
     my $genotyping_cmd =
       "./genotyping_pileups.pl \\
-    --pileup "  . $self->mpileup_dir . "/" . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix ) . " \\
-    --snp "     . $self->snp_dir     . "/" . join( '.', "polyDB", $self->chromosome ) . " \\
-    --out_dir " . $self->genotyped_dir;
+    --mpileup  ${ \$self->_pileup_path } \\
+    --snp      ${ \$self->_snp_path } \\
+    --par1_id  ${ \$self->par1 } \\
+    --par2_id  ${ \$self->par2 } \\
+    --out_file ${ \$self->_genotyped_path }";
 
-    say "  Running:\n  " . $genotyping_cmd if $self->verbose();
-    system( $genotyping_cmd );
+    # TO DO: incorporate option to ignore indels (do for snp ID, too?):
+    # $genotyping_cmd .= " --no_indels" if $no_indels;
+
+    if ( ! -e $self->_pileup_path ) {
+        say "  Pileup file not found: ${ \$self->_pileup_path }" if $self->verbose();
+        return;
+    }
+    elsif ( ! -e $self->_snp_path ) {
+        say "  SNP file not found: ${ \$self->_snp_path }" if $self->verbose();
+        return;
+    }
+    else {
+        say "  Running:\n  " . $genotyping_cmd if $self->verbose();
+        system( $genotyping_cmd );
+    }
 }
 
 sub noise_reduction {
     my $self = shift;
 
     my $R = Statistics::R->new();
-    my $par1_genotyped = $self->genotyped_dir . "/" . join( '.', $self->par1, $self->chromosome, "genotyped" );
-    my $par2_genotyped = $self->genotyped_dir . "/" . join( '.', $self->par2, $self->chromosome, "genotyped" );
-    $R->run(qq`PAR1 <- read.table("$par1_genotyped")`);
-    $R->run(qq`PAR2 <- read.table("$par2_genotyped")`);
-    $R->run(q`PAR1_ratio <- PAR1[ , 3 ]/PAR1[ , 5 ]`);
-    $R->run(q`PAR2_ratio <- PAR2[ , 4 ]/PAR2[ , 5 ]`);
-    my $min_ratio = 0.7;
-    $R->run(qq`pos_nr <- PAR1[ PAR1_ratio > $min_ratio & PAR2_ratio > $min_ratio , 2 ]`);
-    my $polymorphisms = $self->snp_dir . "/" . join( '.', "polyDB", $self->chromosome );
-    my $polymorphisms_nr = $polymorphisms . ".nr";
-    $R->run(qq`SNP <- read.table( "$polymorphisms", head = T )`);
-    $R->run(q`SNP_nr <- SNP[ is.element( SNP$pos, pos_nr) , ]`);
-    $R->run(qq`write.table( SNP_nr, file = "$polymorphisms_nr", quote = F, sep = "\t", row.names = F )`);
+    my $par1_genotyped = $self->_genotyped_dir . "/" . join( '.', $self->par1, $self->chromosome, "genotyped" );
+    my $par2_genotyped = $self->_genotyped_dir . "/" . join( '.', $self->par2, $self->chromosome, "genotyped" );
+
+    if ( ! -e $par1_genotyped ) {
+        say "  Parent 1 genotype file not found: $par1_genotyped" if $self->verbose();
+        return;
+    }
+    elsif ( ! -e $par2_genotyped ) {
+        say "  Parent 2 genotype file not found: $par2_genotyped" if $self->verbose();
+        return;
+    }
+    else {
+        $R->run(qq`PAR1 <- read.table("$par1_genotyped")`);
+        $R->run(qq`PAR2 <- read.table("$par2_genotyped")`);
+        $R->run(q`PAR1_ratio <- PAR1[ , 3 ]/PAR1[ , 5 ]`);
+        $R->run(q`PAR2_ratio <- PAR2[ , 4 ]/PAR2[ , 5 ]`);
+        my $min_ratio = 0.7;
+        $R->run(qq`pos_nr <- PAR1[ PAR1_ratio > $min_ratio & PAR2_ratio > $min_ratio , 2 ]`);
+        my $polymorphisms    = $self->_snp_path;
+        my $polymorphisms_nr = $polymorphisms . ".nr";
+        $R->run(qq`SNP <- read.table( "$polymorphisms", head = T )`);
+        $R->run(q`SNP_nr <- SNP[ is.element( SNP$pos, pos_nr) , ]`);
+        $R->run(qq`write.table( SNP_nr, file = "$polymorphisms_nr", quote = F, sep = "\t", row.names = F )`);
+    }
 };
 
 around [qw(extract_mpileup genotype noise_reduction)] => sub {
@@ -148,7 +173,7 @@ has 'out_dir' => (
     lazy => 1,
 );
 
-has 'genotyped_dir' => (
+has '_genotyped_dir' => (
     is      => 'rw',
     isa     => 'Str',
     default => sub {
@@ -159,7 +184,7 @@ has 'genotyped_dir' => (
     lazy => 1,
 );
 
-has 'mpileup_dir' => (
+has '_mpileup_dir' => (
     is      => 'rw',
     isa     => 'Str',
     default => sub {
@@ -170,7 +195,7 @@ has 'mpileup_dir' => (
     lazy => 1,
 );
 
-has 'snp_dir' => (
+has '_snp_dir' => (
     is      => 'rw',
     isa     => 'Str',
     default => sub {
@@ -202,10 +227,38 @@ has 'before_noise_reduction' => (
     lazy    => 1,
 );
 
+sub _pileup_path {
+    my $self = shift;
+
+    return $self->_mpileup_dir . "/"
+      . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix );
+}
+
+sub _snp_path {
+    my $self = shift;
+
+    return $self->_snp_dir . "/" . join( '.', "polyDB", $self->chromosome );
+}
+
+sub _genotyped_path {
+    my $self = shift;
+
+    return $self->_genotyped_dir . "/"
+      . join( '.', $self->id, $self->chromosome, $self->_genotyped_suffix );
+}
+
 sub _mpileup_suffix {
     my $self = shift;
 
     my $suffix = "mpileup";
+    $suffix .= ".nr" unless $self->before_noise_reduction;
+    return $suffix;
+}
+
+sub _genotyped_suffix {
+    my $self = shift;
+
+    my $suffix = "genotyped";
     $suffix .= ".nr" unless $self->before_noise_reduction;
     return $suffix;
 }
@@ -215,7 +268,7 @@ sub _make_dir {
     my $dir_name = shift;
 
     ( my $filename, $dir_name ) = fileparse( $self->out_file ) unless defined $dir_name;
-    make_path( $dir_name );
+    make_path( $dir_name ) unless -e $dir_name;
 }
 
 sub _validity_tests {
