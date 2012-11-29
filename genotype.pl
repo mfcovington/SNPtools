@@ -14,12 +14,12 @@ use genotyping_commander;
 my $usage = <<USAGE_END;
 
 USAGE:
-genotype.pl
-  --id           Sample identifier
-  --bam          Sample alignment file (.bam)
-  --fasta        Reference file (.fasta/.fa)
-  --out_dir      Output directory [current]
-  --threads      Number of threads [1]
+$0
+  --id         Sample identifier
+  --bam        Sample alignment file (.bam)
+  --fasta      Reference file (.fasta/.fa)
+  --out_dir    Output directory [current]
+  --threads    Number of threads [1]
   --verbose
   --help
 

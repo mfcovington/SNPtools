@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# genotype.pl
+# genotype_all.pl
 # Mike Covington
 # created: 2011-12-05
 #
@@ -14,10 +14,10 @@ use genotyping_commander;
 my $usage = <<USAGE_END;
 
 USAGE:
-genotype_all.pl
-  --fasta        Reference file (.fasta/.fa)
-  --out_dir      Output directory [current]
-  --threads      Number of threads [1]
+$0
+  --fasta      Reference file (.fasta/.fa)
+  --out_dir    Output directory [current]
+  --threads    Number of threads [1]
   --verbose
   --help
 

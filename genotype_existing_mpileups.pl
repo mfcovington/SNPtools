@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# genotype_mpileups.pl
+# genotype_existing_mpileups.pl
 # Mike Covington
 # created: 2011-12-05
 #
@@ -14,15 +14,15 @@ use genotyping_commander;
 my $usage = <<USAGE_END;
 
 USAGE:
-snp_finder.pl
-  --id           Sample identifier
-  --par1         Parent 1 ID
-  --par2         Parent 2 ID
-  --bam          Sample alignment file (.bam)
-  --fasta        Reference file (.fasta/.fa)
-  --out_dir      Output directory [current]
-  --threads      Number of threads [1]
-  --no_nr        Use if noise reduction has not been performed
+$0
+  --id         Sample identifier
+  --par1       Parent 1 ID
+  --par2       Parent 2 ID
+  --bam        Sample alignment file (.bam)
+  --fasta      Reference file (.fasta/.fa)
+  --out_dir    Output directory [current]
+  --threads    Number of threads [1]
+  --no_nr      Use if noise reduction has not been performed
   --verbose
   --help
 
