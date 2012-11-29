@@ -53,12 +53,12 @@ sub genotype {
     # TO DO: incorporate option to ignore indels (do for snp ID, too?):
     # $genotyping_cmd .= " --no_indels" if $no_indels;
 
-    if ( ! -e $self->_pileup_path ) {
-        say "  Pileup file not found: ${ \$self->_pileup_path }" if $self->verbose();
+    if ( ! -e $self->_snp_path ) {
+        say "  SNP file not found: ${ \$self->_snp_path }" if $self->verbose();
         return;
     }
-    elsif ( ! -e $self->_snp_path ) {
-        say "  SNP file not found: ${ \$self->_snp_path }" if $self->verbose();
+    elsif ( ! -e $self->_pileup_path ) {
+        say "  Pileup file not found: ${ \$self->_pileup_path }" if $self->verbose();
         return;
     }
     else {
