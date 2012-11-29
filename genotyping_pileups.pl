@@ -186,9 +186,11 @@ for my $position ( sort { $a <=> $b } keys %mpileups ) {
     }
     else {
         $par1_count =
-          $mpileups{$position}->{'mpileup'} =~ s/$par1_base/$par1_base/gi;
+          $mpileups{$position}->{'mpileup'} =~ s/$par1_base/$par1_base/gi
+          if defined $par1_base; # reminder: parent base undefined for inserts
         $par2_count =
-          $mpileups{$position}->{'mpileup'} =~ s/$par2_base/$par2_base/gi;
+          $mpileups{$position}->{'mpileup'} =~ s/$par2_base/$par2_base/gi
+          if defined $par2_base; # reminder: parent base undefined for inserts
     }
 
     $par1_count = 0 unless $par1_count;
