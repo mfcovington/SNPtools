@@ -26,7 +26,7 @@ my $options = GetOptions(
     "no_indels"  => \$no_indels,
 );
 
-#build mpileup hash
+# build mpileup hash
 open my $mpileup_fh, "<", $mpileup_file;
 my %mpileups = map {
     chomp;
@@ -91,26 +91,8 @@ for my $position ( sort { $a <=> $b } keys %mpileups ) {
     # convert , and . to ref_base
     $mpileups{$position}->{'mpileup'} =~ s/ \. | , /$mpileups{$position}->{'ref_base'}/gix;
 
-    #count
-    my $A_count   = $mpileups{$position}->{'mpileup'} =~ tr/Aa//;
-    my $C_count   = $mpileups{$position}->{'mpileup'} =~ tr/Cc//;
-    my $T_count   = $mpileups{$position}->{'mpileup'} =~ tr/Tt//;
-    my $G_count   = $mpileups{$position}->{'mpileup'} =~ tr/Gg//;
-    my $del_count = $mpileups{$position}->{'mpileup'} =~ tr/*//;
-    my $insert_count = scalar @insertions;
-    my $total_count = $A_count + $C_count + $T_count + $G_count + $del_count + $insert_count;
-    my $par1_count = 0;
-    my $par2_count = 0;
-
-
-    my (
-        $par1_base,     $par2_base, @insert_bases,
-        $insert_parent, $is_insert, $insert_seq,
-        $del_parent,    $is_del,    $skip
-    );
-
     # at least for now, skip polymorphisms where
-    # one parent is a SNP and the other is an insertion
+    # one parent is a SNP/del and the other is an insertion
     # (very rare and not labeled as DIFF_SNPs)
     next
       if scalar @{ $snps{$position} } > 1
@@ -123,6 +105,12 @@ for my $position ( sort { $a <=> $b } keys %mpileups ) {
       && ${ $snps{$position} }[0]->{'insert_pos'} > 1;
 
     # separate snp classes and determine genotype of parents from snp hash
+    my (
+        $par1_base,     $par2_base, @insert_bases,
+        $insert_parent, $is_insert, $insert_seq,
+        $del_parent,    $is_del,    $skip
+    );
+
     if ( ${ $snps{$position} }[0]->{'snp_class'} eq 'DIFF_SNP' ) {
         $par1_base = ${ $snps{$position} }[0]->{'snp_base'}
           if ${ $snps{$position} }[0]->{'genotype'} eq $par1_id;
@@ -154,13 +142,22 @@ for my $position ( sort { $a <=> $b } keys %mpileups ) {
     else { die "SOMETHING IS WRONG!!!"; }
 
     # count stuff up
-    $par1_count = 0;
-    $par2_count = 0;
+    my $A_count   = $mpileups{$position}->{'mpileup'} =~ tr/Aa//;
+    my $C_count   = $mpileups{$position}->{'mpileup'} =~ tr/Cc//;
+    my $T_count   = $mpileups{$position}->{'mpileup'} =~ tr/Tt//;
+    my $G_count   = $mpileups{$position}->{'mpileup'} =~ tr/Gg//;
+    my $del_count = $mpileups{$position}->{'mpileup'} =~ tr/*//;
+    my $insert_count = scalar @insertions;
+    my $total_count =
+      $A_count + $C_count + $T_count + $G_count + $del_count + $insert_count;
+    my $par1_count = 0;
+    my $par2_count = 0;
+
     if ($is_insert) {
         $insert_seq = join "", @insert_bases;
         my $mpileup_inserts = join " ", @insertions;
         my $matched_insert_count =
-          $mpileup_inserts =~ s/\b$insert_seq\b/\b$insert_seq\b/gi; ##added word boundaries so AA wouldn't match AAAA twice, for example
+          $mpileup_inserts =~ s/\b$insert_seq\b/\b$insert_seq\b/gi; # added word boundaries so AA wouldn't match AAAA twice, for example
         if ( $insert_parent eq $par1_id ) {
             $par1_count = $matched_insert_count;
             $par2_count = max( $A_count, $C_count, $T_count, $G_count );
@@ -187,10 +184,10 @@ for my $position ( sort { $a <=> $b } keys %mpileups ) {
     else {
         $par1_count =
           $mpileups{$position}->{'mpileup'} =~ s/$par1_base/$par1_base/gi
-          if defined $par1_base; # reminder: parent base undefined for inserts
+          if defined $par1_base;   # reminder: parent base undefined for inserts
         $par2_count =
           $mpileups{$position}->{'mpileup'} =~ s/$par2_base/$par2_base/gi
-          if defined $par2_base; # reminder: parent base undefined for inserts
+          if defined $par2_base;   # reminder: parent base undefined for inserts
     }
 
     $par1_count = 0 unless $par1_count;
