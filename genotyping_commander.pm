@@ -14,6 +14,8 @@ use autodie;
 # make so that validity tests are done once and remembered
 # allow override of samtools version check
 # TO DO: incorporate option to ignore indels (do for snp ID, too?) (see line 60)
+# Update "  Need samtools version 0.1.XX+" in sub _valid_samtools_version
+# Add method that returns full usage statement
 
 sub extract_mpileup {
     my $self = shift;
@@ -71,8 +73,8 @@ sub noise_reduction {
     my $self = shift;
 
     my $R = Statistics::R->new();
-    my $par1_genotyped = $self->_genotyped_dir . "/" . join( '.', $self->par1, $self->chromosome, "genotyped" );
-    my $par2_genotyped = $self->_genotyped_dir . "/" . join( '.', $self->par2, $self->chromosome, "genotyped" );
+    my $par1_genotyped = $self->_genotyped_dir . "/" . join( '.', $self->par1, $self->_chromosome, "genotyped" );
+    my $par2_genotyped = $self->_genotyped_dir . "/" . join( '.', $self->par2, $self->_chromosome, "genotyped" );
 
     if ( ! -e $par1_genotyped ) {
         say "  Parent 1 genotype file not found: $par1_genotyped" if $self->verbose();
@@ -106,7 +108,7 @@ around [qw(extract_mpileup genotype noise_reduction)] => sub {
     my $pm = new Parallel::ForkManager($self->threads);
     foreach my $chr (@chromosomes) {
         $pm->start and next;
-        $self->chromosome($chr);
+        $self->_chromosome($chr);
         $self->$orig(@_);
         $pm->finish;
     }
@@ -126,9 +128,15 @@ sub bam_index {
 sub get_seq_names {
     my $self = shift;
 
-    say "  Getting sequence names from bam file" if $self->verbose;
-    my @header = $self->_get_header;
-    my @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
+    my @seq_names;
+    if ( defined $self->seq_list ) {
+        @seq_names = split /,/, $self->seq_list;
+    }
+    else {
+        say "  Getting sequence names from bam file" if $self->verbose;
+        my @header = $self->_get_header;
+        @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
+    }
     return @seq_names;
 }
 
@@ -157,7 +165,12 @@ has 'fasta' => (
     isa => 'Str',
 );
 
-has 'chromosome' => (
+has 'seq_list' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+has '_chromosome' => (
     is  => 'rw',
     isa => 'Str',
 );
@@ -232,21 +245,21 @@ sub _pileup_path {
     my $self = shift;
 
     return $self->_mpileup_dir . "/"
-      . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix );
+      . join( '.', $self->id, $self->_chromosome, $self->_mpileup_suffix );
 }
 
 sub _snp_path {
     my $self = shift;
 
     return $self->_snp_dir . "/"
-      . join( '.', "polyDB", $self->chromosome, $self->_snp_suffix );
+      . join( '.', "polyDB", $self->_chromosome, $self->_snp_suffix );
 }
 
 sub _genotyped_path {
     my $self = shift;
 
     return $self->_genotyped_dir . "/"
-      . join( '.', $self->id, $self->chromosome, $self->_genotyped_suffix );
+      . join( '.', $self->id, $self->_chromosome, $self->_genotyped_suffix );
 }
 
 sub _mpileup_suffix {
