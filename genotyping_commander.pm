@@ -14,6 +14,8 @@ use autodie;
 # make so that validity tests are done once and remembered
 # allow override of samtools version check
 # TO DO: incorporate option to ignore indels (do for snp ID, too?) (see line 60)
+# Update "  Need samtools version 0.1.XX+" in sub _valid_samtools_version
+# Add method that returns full usage statement
 
 sub extract_mpileup {
     my $self = shift;
