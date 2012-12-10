@@ -44,9 +44,15 @@ sub bam_index {
 sub get_seq_names {
     my $self = shift;
 
-    say "  Getting sequence names from bam file" if $self->verbose;
-    my @header = $self->_get_header;
-    my @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
+    my @seq_names;
+    if ( defined $self->seq_list ) {
+        @seq_names = split /,/, $self->seq_list;
+    }
+    else {
+        say "  Getting sequence names from bam file" if $self->verbose;
+        my @header = $self->_get_header;
+        @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
+    }
     return @seq_names;
 }
 
@@ -99,8 +105,8 @@ around 'get_coverage_all' => sub {
     foreach my $chr (@chromosomes) {
         $pm->start and next;
 
-        $self->chromosome($chr);
-        $self->out_file( $self->out_dir . "/coverage/" . $self->id . "." . $self->chromosome . ".coverage" );
+        $self->_chromosome($chr);
+        $self->out_file( $self->out_dir . "/coverage/" . $self->id . "." . $self->_chromosome . ".coverage" );
         $self->_make_dir();
 
         $self->$orig(@_);
@@ -121,7 +127,12 @@ has 'bam' => (
     isa => 'Str',
 );
 
-has 'chromosome' => (
+has 'seq_list' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+has '_chromosome' => (
     is  => 'rw',
     isa => 'Str',
 );
@@ -175,13 +186,13 @@ sub _region {
     my $self = shift;
 
     my $region;
-    given ( $self->chromosome ) {
-        $region = " -r " . $self->chromosome . ":" . $self->pos_start . "-" . $self->pos_end . " "
+    given ( $self->_chromosome ) {
+        $region = " -r " . $self->_chromosome . ":" . $self->pos_start . "-" . $self->pos_end . " "
             when defined
             and defined $self->pos_start
             and defined $self->pos_end
             and $self->pos_start < $self->pos_end;
-        $region = " -r " . $self->chromosome . " " when defined;
+        $region = " -r " . $self->_chromosome . " " when defined;
         default { $region = " " }
     }
 
