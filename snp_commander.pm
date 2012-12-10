@@ -39,17 +39,6 @@ sub get_seq_names {
     return @seq_names;
 }
 
-    my @seq_names;
-    if ( defined $self->seq_list ) {
-        @seq_names = split /,/, $self->seq_list;
-    }
-    else {
-        say "  Getting sequence names from bam file" if $self->verbose;
-        my @header = $self->_get_header;
-        @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
-    }
-
-
 sub get_seq_lengths {
     my $self = shift;
 
