@@ -15,34 +15,38 @@ my $usage = <<USAGE_END;
 
 USAGE:
 coverage_calculator.pl
-  --id         Sample identifier
-  --bam        Sample alignment file (.bam)
-  --out_dir    Output directory [current]
-  --threads    Number of threads [1]
+  --id          Sample identifier
+  --bam         Sample alignment file (.bam)
+  --seq_list    OPTIONAL: Comma-delimted list of sequence IDs to analyze
+                (By default, this list is generated from the bam file header.)
+  --out_dir     Output directory [current]
+  --threads     Number of threads [1]
   --verbose
   --help
 
 USAGE_END
 
-my ( $bam_file, $id, $out_dir, $threads, $verbose, $help );
+my ( $id, $bam_file, $seq_list, $out_dir, $threads, $verbose, $help );
 my $options = GetOptions(
-    "bam=s"     => \$bam_file,
-    "id=s"      => \$id,
-    "out_dir=s" => \$out_dir,
-    "threads=i" => \$threads,
-    "verbose"   => \$verbose,
-    "help"      => \$help,
+    "id=s"       => \$id,
+    "bam=s"      => \$bam_file,
+    "seq_list=s" => \$seq_list,
+    "out_dir=s"  => \$out_dir,
+    "threads=i"  => \$threads,
+    "verbose"    => \$verbose,
+    "help"       => \$help,
 );
 
 die $usage if $help;
 die $usage unless defined $bam_file && defined $id;
 
 my $coverage = coverage_commander->new(
-    bam     => $bam_file,
-    id      => $id,
-    out_dir => $out_dir || "./",
-    threads => $threads,
-    verbose => $verbose,
+    id       => $id,
+    bam      => $bam_file,
+    seq_list => $seq_list,
+    out_dir  => $out_dir || "./",
+    threads  => $threads,
+    verbose  => $verbose,
 );
 $coverage->get_coverage_all;
 
