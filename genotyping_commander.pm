@@ -251,7 +251,7 @@ sub _pileup_path {
 sub _snp_path {
     my $self = shift;
 
-    my $path = $self->_snp_dir . "/polyDB." . $self->chromosome;
+    my $path = $self->_snp_dir . "/polyDB." . $self->_chromosome;
     $path .= ".nr" unless $self->before_noise_reduction;
     return $path;
 }
