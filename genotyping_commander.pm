@@ -251,8 +251,9 @@ sub _pileup_path {
 sub _snp_path {
     my $self = shift;
 
-    return $self->_snp_dir . "/"
-      . join( '.', "polyDB", $self->_chromosome, $self->_snp_suffix );
+    my $path = $self->_snp_dir . "/polyDB." . $self->chromosome;
+    $path .= ".nr" unless $self->before_noise_reduction;
+    return $path;
 }
 
 sub _genotyped_path {
@@ -267,14 +268,6 @@ sub _mpileup_suffix {
 
     my $suffix = "mpileup";
     $suffix .= ".nr" unless $self->before_noise_reduction;
-    return $suffix;
-}
-
-sub _snp_suffix {
-    my $self = shift;
-
-    my $suffix = "";
-    $suffix .= "nr" unless $self->before_noise_reduction;
     return $suffix;
 }
 
