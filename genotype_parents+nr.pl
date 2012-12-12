@@ -31,7 +31,7 @@ $0
 USAGE_END
 
 my (
-    $par1,    $par2,    $par1_bam, $par2_bam, $fasta_file,
+    $par1,    $par2,    $par1_bam, $par2_bam, $fasta_file, $seq_list,
     $out_dir, $threads, $no_nr,    $verbose,  $help
 );
 
