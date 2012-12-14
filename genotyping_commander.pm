@@ -90,7 +90,7 @@ sub noise_reduction {
         $R->run(q`PAR1_ratio <- PAR1[ , 3 ]/PAR1[ , 5 ]`);
         $R->run(q`PAR2_ratio <- PAR2[ , 4 ]/PAR2[ , 5 ]`);
         my $min_ratio = $self->nr_ratio;
-        $R->run(qq`pos_nr <- PAR1[ PAR1_ratio > $min_ratio & PAR2_ratio > $min_ratio , 2 ]`);
+        $R->run(qq`pos_nr <- PAR1[ PAR1_ratio >= $min_ratio & PAR2_ratio >= $min_ratio , 2 ]`);
         my $polymorphisms    = $self->_snp_path;
         $self->before_noise_reduction(0);
         my $polymorphisms_nr = $self->_snp_path;
