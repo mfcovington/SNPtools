@@ -6,10 +6,12 @@ use File::Path 'make_path';
 use Parallel::ForkManager;
 use autodie;
 use Statistics::R;
+use feature 'say';
 # use Data::Printer;
 
 # TODO:
 # - chromosome nicknames/abbreviations
+# - fork to genoplot multiple IDs in parallel
 
 sub genoplot_by_chr {
     my $self = shift;
@@ -53,29 +55,27 @@ sub genoplot_by_id {
     my @filenames;
     foreach my $chr (@chromosomes) {
         $self->_chromosome($chr);
-        push @filenames, $self->_get_genofile;
+        push @filenames, $self->_genotyped_dir . $self->_get_genofile;
     }
 
     my $R = Statistics::R->new();
 
-    $R->set( 'filenames',   @filenames );
-    $R->set( 'id',          $id );
-    $R->set( 'par1',        $par1 );
-    $R->set( 'par2',        $par2 );
-    $R->set( 'chromosomes', @chromosomes );
+    $R->set( 'filenames', \@filenames );
+    $R->set( 'id',        $id );
+    $R->set( 'par1',      $par1 );
+    $R->set( 'par2',      $par2 );
+    # $R->set( 'chromosomes', @chromosomes );
     $R->run_from_file("genoplot_by_id.build_df.R");
     $R->run_from_file("genoplot_by_id.build_plot.R");
     # $R->run_from_file("genoplot_by_chr.add_summary.R") if $self->plot_summary;
-    $R->run(qq`setwd($plot_dir)`)
+    $R->run(qq`setwd("$plot_dir")`);
     $R->run(
         qq`ggsave(
-          filename = paste($plot_path, $plot_format, sep = "."),
+          filename = paste("$plot_path", "$plot_format", sep = "."),
           plot     = geno.plot,
           width    = $plot_width,
           height   = $plot_height)`
     );
-
-    $self->filenames = ();
 }
 
 sub bam_index {
@@ -111,20 +111,20 @@ sub _get_genofile {
     return $genofile;
 }
 
-around [qw(extract_mpileup genotype noise_reduction)] => sub {
-    my $orig = shift;
-    my $self = shift;
+# around [qw(extract_mpileup genotype noise_reduction)] => sub {
+#     my $orig = shift;
+#     my $self = shift;
 
-    my @chromosomes = $self->get_seq_names;
-    my $pm = new Parallel::ForkManager($self->threads);
-    foreach my $chr (@chromosomes) {
-        $pm->start and next;
-        $self->_chromosome($chr);
-        $self->$orig(@_);
-        $pm->finish;
-    }
-    $pm->wait_all_children;
-};
+#     my @chromosomes = $self->get_seq_names;
+#     my $pm = new Parallel::ForkManager($self->threads);
+#     foreach my $chr (@chromosomes) {
+#         $pm->start and next;
+#         $self->_chromosome($chr);
+#         $self->$orig(@_);
+#         $pm->finish;
+#     }
+#     $pm->wait_all_children;
+# };
 
 has 'before_noise_reduction' => (
     is      => 'rw',
@@ -157,6 +157,16 @@ has 'plot_height' => (
 );
 
 has 'id' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+has 'par1' => (
+    is  => 'ro',
+    isa => 'Str',
+);
+
+has 'par2' => (
     is  => 'ro',
     isa => 'Str',
 );
@@ -215,11 +225,22 @@ has '_plot_dir' => (
     lazy => 1,
 );
 
+has '_genotyped_dir' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => sub {
+        my $self = shift;
+
+        return $self->out_dir . "/genotyped/";
+    },
+    lazy => 1,
+);
+
 sub _plot_path {
     my $self = shift;
 
     my $path = join "/", $self->_plot_dir, $self->id;
-    $path .= ".nr" unless $self->before_noise_reduction;
+    $path .= ".before_nr" if $self->before_noise_reduction;
     return $path;
 }
 
@@ -235,9 +256,9 @@ sub _validity_tests {
     my $self = shift;
 
     $self->_validity_tests_samtools;
-    $self->_valid_fasta;
+    # $self->_valid_fasta;
     $self->_valid_bam;
-    $self->_valid_bam_index;
+    # $self->_valid_bam_index;
 }
 
 sub _validity_tests_samtools {
@@ -282,17 +303,17 @@ sub _valid_bam_index {
     }
 }
 
-sub _valid_fasta {
-    my $self = shift;
+# sub _valid_fasta {
+#     my $self = shift;
 
-    if ( -e $self->fasta and $self->fasta =~ m/ \.fasta$ | \.fa$ /ix ) {
-        say "  Found valid fasta file: " . $self->fasta if $self->verbose;
-        return 1;
-    }
-    else {
-        die "  Can't find valid fasta file: " . $self->fasta;
-    }
-}
+#     if ( -e $self->fasta and $self->fasta =~ m/ \.fasta$ | \.fa$ /ix ) {
+#         say "  Found valid fasta file: " . $self->fasta if $self->verbose;
+#         return 1;
+#     }
+#     else {
+#         die "  Can't find valid fasta file: " . $self->fasta;
+#     }
+# }
 
 sub _valid_samtools_path {
     my $self = shift;
