@@ -24,6 +24,7 @@ $0
                 (By default, this list is generated from the bam file header.)
   --out_dir     Output directory [current]
   --threads     Number of threads [1]
+  --nr_ratio    Noise Reduction Ratio [0.7]
   --no_nr       Disable Noise Reduction
   --verbose
   --help
@@ -32,7 +33,7 @@ USAGE_END
 
 my (
     $par1,    $par2,    $par1_bam, $par2_bam, $fasta_file, $seq_list,
-    $out_dir, $threads, $no_nr,    $verbose,  $help
+    $out_dir, $threads, $nr_ratio, $no_nr,    $verbose,    $help
 );
 
 my $options = GetOptions(
@@ -44,6 +45,7 @@ my $options = GetOptions(
     "seq_list=s" => \$seq_list,
     "out_dir=s"  => \$out_dir,
     "threads=i"  => \$threads,
+    "nr_ratio=f" => \$nr_ratio,
     "no_nr"      => \$no_nr,
     "verbose"    => \$verbose,
     "help"       => \$help,
@@ -65,6 +67,7 @@ my $geno = genotyping_commander->new(
     seq_list => $seq_list,
     out_dir  => $out_dir,
     threads  => $threads,
+    nr_ratio => $nr_ratio,
     verbose  => $verbose,
 );
 

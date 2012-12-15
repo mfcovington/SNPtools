@@ -85,18 +85,26 @@ sub noise_reduction {
         return;
     }
     else {
-        $R->run(qq`PAR1 <- read.table("$par1_genotyped")`);
-        $R->run(qq`PAR2 <- read.table("$par2_genotyped")`);
-        $R->run(q`PAR1_ratio <- PAR1[ , 3 ]/PAR1[ , 5 ]`);
-        $R->run(q`PAR2_ratio <- PAR2[ , 4 ]/PAR2[ , 5 ]`);
-        my $min_ratio = 0.7;
-        $R->run(qq`pos_nr <- PAR1[ PAR1_ratio > $min_ratio & PAR2_ratio > $min_ratio , 2 ]`);
-        my $polymorphisms    = $self->_snp_path;
+        my $min_ratio                        = $self->nr_ratio;
+        my $cmd_id_pos_pass_ratio = <<EOF;
+PAR1 <- read.table("$par1_genotyped")
+PAR2 <- read.table("$par2_genotyped")
+PAR1_ratio <- PAR1[ , 3 ]/PAR1[ , 5 ]
+PAR2_ratio <- PAR2[ , 4 ]/PAR2[ , 5 ]
+pos_nr_PAR1 <- PAR1[ PAR1_ratio >= $min_ratio , 2 ]
+pos_nr_PAR2 <- PAR2[ PAR2_ratio >= $min_ratio , 2 ]
+pos_nr <- intersect( pos_nr_PAR1, pos_nr_PAR2 )
+EOF
+        my $cmd_filter_and_write_nr_SNPs = <<EOF;
+SNP <- read.table( "$polymorphisms", head = T )
+SNP_nr <- SNP[ is.element( SNP$pos, pos_nr) , ]
+write.table( SNP_nr, file = "$polymorphisms_nr", quote = F, sep = "\t", row.names = F )
+EOF
+        $R->run($cmd_id_pos_pass_ratio);
+        my $polymorphisms = $self->_snp_path;
         $self->before_noise_reduction(0);
         my $polymorphisms_nr = $self->_snp_path;
-        $R->run(qq`SNP <- read.table( "$polymorphisms", head = T )`);
-        $R->run(q`SNP_nr <- SNP[ is.element( SNP$pos, pos_nr) , ]`);
-        $R->run(qq`write.table( SNP_nr, file = "$polymorphisms_nr", quote = F, sep = "\t", row.names = F )`);
+        $R->run($cmd_filter_and_write_nr_SNPs);
     }
 };
 
@@ -225,6 +233,13 @@ has 'threads' => (
     isa     => 'Int',
     default => 1,
     lazy => 1,
+);
+
+has 'nr_ratio' => (
+    is      => 'rw',
+    isa     => 'Num',
+    default => 0.7,
+    lazy    => 1,
 );
 
 has 'verbose' => (
