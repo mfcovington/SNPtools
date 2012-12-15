@@ -14,6 +14,8 @@ use autodie;
 # make so that validity tests are done once and remembered
 # allow override of samtools version check
 # TO DO: incorporate option to ignore indels (do for snp ID, too?) (see line 60)
+# Update "  Need samtools version 0.1.XX+" in sub _valid_samtools_version
+# Add method that returns full usage statement
 
 sub extract_mpileup {
     my $self = shift;
@@ -71,8 +73,8 @@ sub noise_reduction {
     my $self = shift;
 
     my $R = Statistics::R->new();
-    my $par1_genotyped = $self->_genotyped_dir . "/" . join( '.', $self->par1, $self->chromosome, "genotyped" );
-    my $par2_genotyped = $self->_genotyped_dir . "/" . join( '.', $self->par2, $self->chromosome, "genotyped" );
+    my $par1_genotyped = $self->_genotyped_dir . "/" . join( '.', $self->par1, $self->_chromosome, "genotyped" );
+    my $par2_genotyped = $self->_genotyped_dir . "/" . join( '.', $self->par2, $self->_chromosome, "genotyped" );
 
     if ( ! -e $par1_genotyped ) {
         say "  Parent 1 genotype file not found: $par1_genotyped" if $self->verbose();
@@ -83,18 +85,26 @@ sub noise_reduction {
         return;
     }
     else {
-        $R->run(qq`PAR1 <- read.table("$par1_genotyped")`);
-        $R->run(qq`PAR2 <- read.table("$par2_genotyped")`);
-        $R->run(q`PAR1_ratio <- PAR1[ , 3 ]/PAR1[ , 5 ]`);
-        $R->run(q`PAR2_ratio <- PAR2[ , 4 ]/PAR2[ , 5 ]`);
-        my $min_ratio = 0.7;
-        $R->run(qq`pos_nr <- PAR1[ PAR1_ratio > $min_ratio & PAR2_ratio > $min_ratio , 2 ]`);
-        my $polymorphisms    = $self->_snp_path;
+        my $min_ratio                        = $self->nr_ratio;
+        my $cmd_id_pos_pass_ratio = <<EOF;
+PAR1 <- read.table("$par1_genotyped")
+PAR2 <- read.table("$par2_genotyped")
+PAR1_ratio <- PAR1[ , 3 ]/PAR1[ , 5 ]
+PAR2_ratio <- PAR2[ , 4 ]/PAR2[ , 5 ]
+pos_nr_PAR1 <- PAR1[ PAR1_ratio >= $min_ratio , 2 ]
+pos_nr_PAR2 <- PAR2[ PAR2_ratio >= $min_ratio , 2 ]
+pos_nr <- intersect( pos_nr_PAR1, pos_nr_PAR2 )
+EOF
+        my $cmd_filter_and_write_nr_SNPs = <<EOF;
+SNP <- read.table( "$polymorphisms", head = T )
+SNP_nr <- SNP[ is.element( SNP$pos, pos_nr) , ]
+write.table( SNP_nr, file = "$polymorphisms_nr", quote = F, sep = "\t", row.names = F )
+EOF
+        $R->run($cmd_id_pos_pass_ratio);
+        my $polymorphisms = $self->_snp_path;
         $self->before_noise_reduction(0);
         my $polymorphisms_nr = $self->_snp_path;
-        $R->run(qq`SNP <- read.table( "$polymorphisms", head = T )`);
-        $R->run(q`SNP_nr <- SNP[ is.element( SNP$pos, pos_nr) , ]`);
-        $R->run(qq`write.table( SNP_nr, file = "$polymorphisms_nr", quote = F, sep = "\t", row.names = F )`);
+        $R->run($cmd_filter_and_write_nr_SNPs);
     }
 };
 
@@ -106,7 +116,7 @@ around [qw(extract_mpileup genotype noise_reduction)] => sub {
     my $pm = new Parallel::ForkManager($self->threads);
     foreach my $chr (@chromosomes) {
         $pm->start and next;
-        $self->chromosome($chr);
+        $self->_chromosome($chr);
         $self->$orig(@_);
         $pm->finish;
     }
@@ -126,9 +136,15 @@ sub bam_index {
 sub get_seq_names {
     my $self = shift;
 
-    say "  Getting sequence names from bam file" if $self->verbose;
-    my @header = $self->_get_header;
-    my @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
+    my @seq_names;
+    if ( defined $self->seq_list ) {
+        @seq_names = split /,/, $self->seq_list;
+    }
+    else {
+        say "  Getting sequence names from bam file" if $self->verbose;
+        my @header = $self->_get_header;
+        @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
+    }
     return @seq_names;
 }
 
@@ -157,7 +173,12 @@ has 'fasta' => (
     isa => 'Str',
 );
 
-has 'chromosome' => (
+has 'seq_list' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+has '_chromosome' => (
     is  => 'rw',
     isa => 'Str',
 );
@@ -214,6 +235,13 @@ has 'threads' => (
     lazy => 1,
 );
 
+has 'nr_ratio' => (
+    is      => 'rw',
+    isa     => 'Num',
+    default => 0.7,
+    lazy    => 1,
+);
+
 has 'verbose' => (
     is      => 'ro',
     isa     => 'Bool',
@@ -232,13 +260,13 @@ sub _pileup_path {
     my $self = shift;
 
     return $self->_mpileup_dir . "/"
-      . join( '.', $self->id, $self->chromosome, $self->_mpileup_suffix );
+      . join( '.', $self->id, $self->_chromosome, $self->_mpileup_suffix );
 }
 
 sub _snp_path {
     my $self = shift;
 
-    my $path = $self->_snp_dir . "/polyDB." . $self->chromosome;
+    my $path = $self->_snp_dir . "/polyDB." . $self->_chromosome;
     $path .= ".nr" unless $self->before_noise_reduction;
     return $path;
 }
@@ -247,7 +275,7 @@ sub _genotyped_path {
     my $self = shift;
 
     return $self->_genotyped_dir . "/"
-      . join( '.', $self->id, $self->chromosome, $self->_genotyped_suffix );
+      . join( '.', $self->id, $self->_chromosome, $self->_genotyped_suffix );
 }
 
 sub _mpileup_suffix {
