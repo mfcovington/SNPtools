@@ -12,7 +12,6 @@ use feature 'say';
 use Getopt::Long;
 use genoplot_commander;
 
-
 my $usage = <<USAGE_END;
 
 USAGE:
@@ -25,6 +24,7 @@ $0
   --col_het     Color for Heterzygous [Black]
   --width       Plot width in inches [10]
   --height      Plot height in inches [8]
+  --format      Plot format (ps, pictex, pdf, tiff, [png], or bmp)
   --bam         Sample alignment file (.bam)
   --seq_list    OPTIONAL: Comma-delimted list of sequence IDs to analyze
                 (By default, this list is generated from the bam file header.)
@@ -37,9 +37,9 @@ $0
 USAGE_END
 
 my (
-    $id,      $par1,    $par2,   $col_par1, $col_par2,
-    $col_het, $width,   $height, $bam_file, $seq_list,
-    $out_dir, $threads, $no_nr,  $verbose,  $help
+    $id,      $par1,   $par2,    $col_par1, $col_par2, $col_het,
+    $width,   $height, $format,  $bam_file, $seq_list, $out_dir,
+    $threads, $no_nr,  $verbose, $help
 );
 my $options = GetOptions(
     "id=s"       => \$id,
@@ -50,6 +50,7 @@ my $options = GetOptions(
     "col_het=s"  => \$col_het,
     "width=i"    => \$width,
     "height=i"   => \$height,
+    "format=s"   => \$format,
     "bam=s"      => \$bam_file,
     "seq_list=s" => \$seq_list,
     "out_dir=s"  => \$out_dir,
@@ -75,6 +76,7 @@ my $genoplot = genoplot_commander->new(
     col_par2    => $col_par2,
     col_het     => $col_het,
     plot_width  => $width,
+    plot_height => $height,
     plot_height => $height,
     bam         => $bam_file,
     seq_list    => $seq_list,
