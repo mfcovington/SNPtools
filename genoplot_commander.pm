@@ -70,14 +70,17 @@ sub genoplot_by_id {
     $R->set( 'col_par1',  $col_par1 );
     $R->set( 'col_par2',  $col_par2 );
     $R->set( 'col_het',   $col_het );
-    # $R->set( 'chromosomes', @chromosomes );
+    say "  Building data frame for $id plot." if $self->verbose;
     $R->run_from_file("genoplot_by_id.build_df.R");
+    say "  Generating plot for $id." if $self->verbose;
     $R->run_from_file("genoplot_by_id.build_plot.R");
-    # $R->run_from_file("genoplot_by_chr.add_summary.R") if $self->plot_summary;
     $R->run(qq`setwd("$plot_dir")`);
+    my $plot_name = "$plot_path.$plot_format" ;
+    $plot_name =~ s|/{2,}|/|g;
+    say "  Saving: $plot_name" if $self->verbose;
     $R->run(
         qq`ggsave(
-          filename = paste("$plot_path", "$plot_format", sep = "."),
+          filename = "$plot_name",
           plot     = geno.plot,
           width    = $plot_width,
           height   = $plot_height)`
