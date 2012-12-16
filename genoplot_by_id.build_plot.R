@@ -27,6 +27,7 @@ geno.plot <- ggplot(geno_df, aes(pos, cov.plot)) +
     low = "magenta",
     mid = "black",
     high = "green",
+    limits = c(-1, 1),
     name = substitute(frac(par2 - par1, total), list(par1 = par1, par2 = par2, total = "Total reads" ))
   ) +
   theme(
