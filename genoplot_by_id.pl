@@ -23,6 +23,8 @@ $0
   --col_par1    Color for Parent 1 [Magenta]
   --col_par2    Color for Parent 2 [Green]
   --col_het     Color for Heterzygous [Black]
+  --width       Plot width in inches [10]
+  --height      Plot height in inches [8]
   --bam         Sample alignment file (.bam)
   --seq_list    OPTIONAL: Comma-delimted list of sequence IDs to analyze
                 (By default, this list is generated from the bam file header.)
@@ -35,17 +37,19 @@ $0
 USAGE_END
 
 my (
-    $id,    $par1,     $par2,     $col_par1,   $col_par2,
-    $col_het,  $bam_file, $seq_list, $out_dir, $threads,
-    $no_nr, $verbose,  $help
+    $id,      $par1,    $par2,   $col_par1, $col_par2,
+    $col_het, $width,   $height, $bam_file, $seq_list,
+    $out_dir, $threads, $no_nr,  $verbose,  $help
 );
 my $options = GetOptions(
     "id=s"       => \$id,
     "par1=s"     => \$par1,
     "par2=s"     => \$par2,
-    "col_par1=s"    => \$col_par1,
-    "col_par2=s"    => \$col_par2,
-    "col_het=s"     => \$col_het,
+    "col_par1=s" => \$col_par1,
+    "col_par2=s" => \$col_par2,
+    "col_het=s"  => \$col_het,
+    "width=i"    => \$width,
+    "height=i"   => \$height,
     "bam=s"      => \$bam_file,
     "seq_list=s" => \$seq_list,
     "out_dir=s"  => \$out_dir,
@@ -64,17 +68,19 @@ die $usage
   && defined $bam_file;
 
 my $genoplot = genoplot_commander->new(
-    id       => $id,
-    par1     => $par1,
-    par2     => $par2,
+    id          => $id,
+    par1        => $par1,
+    par2        => $par2,
     col_par1    => $col_par1,
     col_par2    => $col_par2,
     col_het     => $col_het,
-    bam      => $bam_file,
-    seq_list => $seq_list,
-    out_dir  => $out_dir,
-    threads  => $threads,
-    verbose  => $verbose,
+    plot_width  => $width,
+    plot_height => $height,
+    bam         => $bam_file,
+    seq_list    => $seq_list,
+    out_dir     => $out_dir,
+    threads     => $threads,
+    verbose     => $verbose,
 );
 
 $genoplot->before_noise_reduction(1) if $no_nr;
