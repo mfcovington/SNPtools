@@ -153,13 +153,13 @@ has 'plot_format' => (
 has 'plot_width' => (
     is      => 'ro',
     isa     => 'Num',
-    default => '8',
+    default => '10',
 );
 
 has 'plot_height' => (
     is      => 'ro',
     isa     => 'Num',
-    default => '10',
+    default => '8',
 );
 
 has 'id' => (
