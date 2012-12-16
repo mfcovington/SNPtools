@@ -20,9 +20,9 @@ geno.plot <- ggplot(geno_df, aes(pos, cov.plot)) +
   geom_point(size = 1, aes(color = (par2 - par1) / cov)) +
   facet_grid(chr ~ .) +
   scale_color_gradient2(
-    low    = "magenta",
-    mid    = "black",
-    high   = "green",
+    low    = col_par2,
+    mid    = col_het,
+    high   = col_par1,
     limits = c(-1, 1),
     name   = substitute(frac(par2 - par1, total),
         list(par1 = par1, par2 = par2, total = "Total reads"))

@@ -20,6 +20,9 @@ $0
   --id          Sample identifier
   --par1        Parent 1 ID
   --par2        Parent 2 ID
+  --col_par1    Color for Parent 1 [Magenta]
+  --col_par2    Color for Parent 2 [Green]
+  --col_het     Color for Heterzygous [Black]
   --bam         Sample alignment file (.bam)
   --seq_list    OPTIONAL: Comma-delimted list of sequence IDs to analyze
                 (By default, this list is generated from the bam file header.)
@@ -31,11 +34,18 @@ $0
 
 USAGE_END
 
-my ( $id, $par1, $par2, $bam_file, $seq_list, $out_dir, $threads, $no_nr, $verbose, $help );
+my (
+    $id,    $par1,     $par2,     $col_par1,   $col_par2,
+    $col_het,  $bam_file, $seq_list, $out_dir, $threads,
+    $no_nr, $verbose,  $help
+);
 my $options = GetOptions(
     "id=s"       => \$id,
     "par1=s"     => \$par1,
     "par2=s"     => \$par2,
+    "col_par1=s"    => \$col_par1,
+    "col_par2=s"    => \$col_par2,
+    "col_het=s"     => \$col_het,
     "bam=s"      => \$bam_file,
     "seq_list=s" => \$seq_list,
     "out_dir=s"  => \$out_dir,
@@ -57,6 +67,9 @@ my $genoplot = genoplot_commander->new(
     id       => $id,
     par1     => $par1,
     par2     => $par2,
+    col_par1    => $col_par1,
+    col_par2    => $col_par2,
+    col_het     => $col_het,
     bam      => $bam_file,
     seq_list => $seq_list,
     out_dir  => $out_dir,

@@ -44,6 +44,9 @@ sub genoplot_by_id {
     my $id          = $self->id;
     my $par1        = $self->par1;
     my $par2        = $self->par2;
+    my $col_par1    = $self->col_par1;
+    my $col_par2    = $self->col_par2;
+    my $col_het     = $self->col_het;
     my $plot_format = $self->plot_format;
     my $plot_width  = $self->plot_width;
     my $plot_height = $self->plot_height;
@@ -64,6 +67,9 @@ sub genoplot_by_id {
     $R->set( 'id',        $id );
     $R->set( 'par1',      $par1 );
     $R->set( 'par2',      $par2 );
+    $R->set( 'col_par1',  $col_par1 );
+    $R->set( 'col_par2',  $col_par2 );
+    $R->set( 'col_het',   $col_het );
     # $R->set( 'chromosomes', @chromosomes );
     $R->run_from_file("genoplot_by_id.build_df.R");
     $R->run_from_file("genoplot_by_id.build_plot.R");
@@ -169,6 +175,27 @@ has 'par1' => (
 has 'par2' => (
     is  => 'ro',
     isa => 'Str',
+);
+
+has 'col_par1' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'magenta',
+    lazy    => 1,
+);
+
+has 'col_par2' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'green',
+    lazy    => 1,
+);
+
+has 'col_het' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'black',
+    lazy    => 1,
 );
 
 has 'bam' => (
