@@ -139,11 +139,6 @@ has 'before_noise_reduction' => (
     lazy    => 1,
 );
 
-has 'filename' => (
-    is         => 'rw',
-    isa        => 'Str',
-);
-
 has 'plot_format' => (
     is      => 'ro',
     isa     => 'Str',
