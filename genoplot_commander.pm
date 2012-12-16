@@ -148,18 +148,21 @@ has 'plot_format' => (
     is      => 'ro',
     isa     => 'Str',
     default => 'png',
+    lazy    => 1,
 );
 
 has 'plot_width' => (
     is      => 'ro',
     isa     => 'Num',
-    default => '10',
+    default => 10,
+    lazy    => 1,
 );
 
 has 'plot_height' => (
     is      => 'ro',
     isa     => 'Num',
-    default => '8',
+    default => 8,
+    lazy    => 1,
 );
 
 has 'id' => (
@@ -227,18 +230,21 @@ has 'out_dir' => (
     is      => 'rw',
     isa     => 'Str',
     default => "./",
+    lazy    => 1,
 );
 
 has 'threads' => (
     is      => 'rw',
     isa     => 'Int',
     default => 1,
+    lazy    => 1,
 );
 
 has 'verbose' => (
     is      => 'ro',
     isa     => 'Bool',
     default => 0,
+    lazy    => 1,
 );
 
 has '_plot_dir' => (
