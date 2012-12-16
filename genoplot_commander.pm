@@ -44,6 +44,9 @@ sub genoplot_by_id {
     my $id          = $self->id;
     my $par1        = $self->par1;
     my $par2        = $self->par2;
+    my $col_par1    = $self->col_par1;
+    my $col_par2    = $self->col_par2;
+    my $col_het     = $self->col_het;
     my $plot_format = $self->plot_format;
     my $plot_width  = $self->plot_width;
     my $plot_height = $self->plot_height;
@@ -64,14 +67,20 @@ sub genoplot_by_id {
     $R->set( 'id',        $id );
     $R->set( 'par1',      $par1 );
     $R->set( 'par2',      $par2 );
-    # $R->set( 'chromosomes', @chromosomes );
+    $R->set( 'col_par1',  $col_par1 );
+    $R->set( 'col_par2',  $col_par2 );
+    $R->set( 'col_het',   $col_het );
+    say "  Building data frame for $id plot." if $self->verbose;
     $R->run_from_file("genoplot_by_id.build_df.R");
+    say "  Generating plot for $id." if $self->verbose;
     $R->run_from_file("genoplot_by_id.build_plot.R");
-    # $R->run_from_file("genoplot_by_chr.add_summary.R") if $self->plot_summary;
     $R->run(qq`setwd("$plot_dir")`);
+    my $plot_name = "$plot_path.$plot_format" ;
+    $plot_name =~ s|/{2,}|/|g;
+    say "  Saving: $plot_name" if $self->verbose;
     $R->run(
         qq`ggsave(
-          filename = paste("$plot_path", "$plot_format", sep = "."),
+          filename = "$plot_name",
           plot     = geno.plot,
           width    = $plot_width,
           height   = $plot_height)`
@@ -133,27 +142,25 @@ has 'before_noise_reduction' => (
     lazy    => 1,
 );
 
-has 'filename' => (
-    is         => 'rw',
-    isa        => 'Str',
-);
-
 has 'plot_format' => (
     is      => 'ro',
     isa     => 'Str',
     default => 'png',
+    lazy    => 1,
 );
 
 has 'plot_width' => (
     is      => 'ro',
     isa     => 'Num',
-    default => '8',
+    default => 10,
+    lazy    => 1,
 );
 
 has 'plot_height' => (
     is      => 'ro',
     isa     => 'Num',
-    default => '10',
+    default => 8,
+    lazy    => 1,
 );
 
 has 'id' => (
@@ -169,6 +176,27 @@ has 'par1' => (
 has 'par2' => (
     is  => 'ro',
     isa => 'Str',
+);
+
+has 'col_par1' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'magenta',
+    lazy    => 1,
+);
+
+has 'col_par2' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'green',
+    lazy    => 1,
+);
+
+has 'col_het' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'black',
+    lazy    => 1,
 );
 
 has 'bam' => (
@@ -200,18 +228,21 @@ has 'out_dir' => (
     is      => 'rw',
     isa     => 'Str',
     default => "./",
+    lazy    => 1,
 );
 
 has 'threads' => (
     is      => 'rw',
     isa     => 'Int',
     default => 1,
+    lazy    => 1,
 );
 
 has 'verbose' => (
     is      => 'ro',
     isa     => 'Bool',
     default => 0,
+    lazy    => 1,
 );
 
 has '_plot_dir' => (
