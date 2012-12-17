@@ -101,7 +101,19 @@ sub get_seq_names {
     my $self = shift;
 
     my @seq_names;
-    if ( defined $self->seq_list ) {
+    if ( defined $self->region ) {
+        my $region = $self->region;
+        my ( $chr, $start, $end ) = $region =~ /(.*):(\d*)-(\d*)/;
+        my $region_error =
+          "  ERROR: There is a problem with the region designation: $region\n";
+        die $region_error unless $start || $end;
+        die $region_error if $start && $end && $start > $end;
+        $self->_region_start = $start;
+        $self->_region_end   = $end;
+        say "  Getting region of $chr from $start-$end" if $self->verbose;
+        @seq_names = $chr;
+    }
+    elsif ( defined $self->seq_list ) {
         @seq_names = split /,/, $self->seq_list;
     }
     else {
