@@ -209,6 +209,21 @@ has 'fasta' => (
     isa => 'Str',
 );
 
+has 'region' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+has '_region_start' => (
+    is  => 'rw',
+    isa => 'Int',
+);
+
+has '_region_end' => (
+    is  => 'rw',
+    isa => 'Int',
+);
+
 has 'seq_list' => (
     is  => 'rw',
     isa => 'Str',
