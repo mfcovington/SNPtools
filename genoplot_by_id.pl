@@ -28,6 +28,8 @@ $0
   --bam         Sample alignment file (.bam)
   --seq_list    OPTIONAL: Comma-delimted list of sequence IDs to analyze
                 (By default, this list is generated from the bam file header.)
+  --region      OPTIONAL: Used for plotting a region of a chromosome
+                FORMAT:   CHR_NAME:START-END
   --out_dir     Output directory [current]
   --threads     Number of threads [1]
   --no_nr       Use if noise reduction has not been performed
@@ -37,9 +39,9 @@ $0
 USAGE_END
 
 my (
-    $id,      $par1,   $par2,    $col_par1, $col_par2, $col_het,
-    $width,   $height, $format,  $bam_file, $seq_list, $out_dir,
-    $threads, $no_nr,  $verbose, $help
+    $id,      $par1,    $par2,   $col_par1, $col_par2, $col_het,
+    $width,   $height,  $format, $bam_file, $seq_list, $region,
+    $out_dir, $threads, $no_nr,  $verbose,  $help
 );
 my $options = GetOptions(
     "id=s"       => \$id,
@@ -53,6 +55,7 @@ my $options = GetOptions(
     "format=s"   => \$format,
     "bam=s"      => \$bam_file,
     "seq_list=s" => \$seq_list,
+    "region=s"   => \$region,
     "out_dir=s"  => \$out_dir,
     "threads=i"  => \$threads,
     "no_nr"      => \$no_nr,
@@ -80,6 +83,7 @@ my $genoplot = genoplot_commander->new(
     plot_height => $height,
     bam         => $bam_file,
     seq_list    => $seq_list,
+    region      => $region,
     out_dir     => $out_dir,
     threads     => $threads,
     verbose     => $verbose,
