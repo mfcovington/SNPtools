@@ -85,7 +85,11 @@ sub noise_reduction {
         return;
     }
     else {
-        my $min_ratio                        = $self->nr_ratio;
+        my $min_ratio     = $self->nr_ratio;
+        my $polymorphisms = $self->_snp_path;
+        $self->before_noise_reduction(0);
+        my $polymorphisms_nr = $self->_snp_path;
+
         my $cmd_id_pos_pass_ratio = <<EOF;
 PAR1 <- read.table("$par1_genotyped")
 PAR2 <- read.table("$par2_genotyped")
@@ -95,15 +99,13 @@ pos_nr_PAR1 <- PAR1[ PAR1_ratio >= $min_ratio , 2 ]
 pos_nr_PAR2 <- PAR2[ PAR2_ratio >= $min_ratio , 2 ]
 pos_nr <- intersect( pos_nr_PAR1, pos_nr_PAR2 )
 EOF
+        $R->run($cmd_id_pos_pass_ratio);
+
         my $cmd_filter_and_write_nr_SNPs = <<EOF;
 SNP <- read.table( "$polymorphisms", head = T )
-SNP_nr <- SNP[ is.element( SNP$pos, pos_nr) , ]
+SNP_nr <- SNP[ is.element( SNP\$pos, pos_nr) , ]
 write.table( SNP_nr, file = "$polymorphisms_nr", quote = F, sep = "\t", row.names = F )
 EOF
-        $R->run($cmd_id_pos_pass_ratio);
-        my $polymorphisms = $self->_snp_path;
-        $self->before_noise_reduction(0);
-        my $polymorphisms_nr = $self->_snp_path;
         $R->run($cmd_filter_and_write_nr_SNPs);
     }
 };
