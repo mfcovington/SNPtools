@@ -17,6 +17,7 @@ use List::Util 'max';
 #   validate against bam header before `return @seq_names;`
 #    - do this for all relevant modules
 # - fix x-axis labels when plotting regions
+# - add option to change backgorund color
 
 sub genoplot_by_chr {
     my $self = shift;
