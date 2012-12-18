@@ -225,14 +225,14 @@ has 'par2' => (
 has 'col_par1' => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'magenta',
+    default => 'orange',
     lazy    => 1,
 );
 
 has 'col_par2' => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'green',
+    default => 'sky blue',
     lazy    => 1,
 );
 
