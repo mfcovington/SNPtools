@@ -42,7 +42,7 @@ foreach my $file (@files) {
                  &&    $elements[7]          < $coverage_threshold );    #deletion
 
         # print SNPs/indels to output unless they don't pass the flanking coverage test
-        unless (   $elements[26] == 0                                        #avoid illegal division by zero
+        unless (   $elements[26] == 0 || $elements[29] == 0                  #avoid illegal division by zero
                 || (   $elements[27] / $elements[26] > $ratio_threshold
                     && $elements[30] / $elements[29] < $ratio_threshold )    #intron-exon junction
                 || (   $elements[25] / $elements[26] > $ratio_threshold

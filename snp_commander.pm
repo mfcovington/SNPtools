@@ -27,9 +27,15 @@ sub bam_index {
 sub get_seq_names {
     my $self = shift;
 
-    say "  Getting sequence names from bam file" if $self->verbose;
-    my @header = $self->_get_header;
-    my @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
+    my @seq_names;
+    if ( defined $self->seq_list ) {
+        @seq_names = split /,/, $self->seq_list;
+    }
+    else {
+        say "  Getting sequence names from bam file" if $self->verbose;
+        my @header = $self->_get_header;
+        @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
+    }
     return @seq_names;
 }
 
@@ -50,7 +56,7 @@ sub identify_snps {
 
     my $identify_snps_cmd =
       "~/git.repos/snp_identification/01.1.SNP_calling_homos.pl \\
-    --chromosome " . $self->chromosome . " \\
+    --chromosome " . $self->_chromosome . " \\
     --o " . $self->out_file . " \\
     --n_reads " . $self->cov_min . " \\
     --ref_freq " . $self->snp_min . " \\
@@ -71,10 +77,10 @@ around 'identify_snps' => sub {
     foreach my $chr (@chromosomes) {
         $pm->start and next;
 
-        $self->chromosome($chr);
-        # my $cov_out = $self->out_dir . "/" . $self->id . ".snps." . $self->chromosome;
+        $self->_chromosome($chr);
+        # my $cov_out = $self->out_dir . "/" . $self->id . ".snps." . $self->_chromosome;
         # $self->out_file($cov_out);
-        $self->out_file( $self->out_dir . "/snps/" . $self->id . "." . $self->chromosome . ".snps" );
+        $self->out_file( $self->out_dir . "/snps/" . $self->id . "." . $self->_chromosome . ".snps" );
         # $self->identify_snps;
 
         $self->$orig(@_);
@@ -99,7 +105,12 @@ has 'fasta' => (
     isa => 'Str',
 );
 
-has 'chromosome' => (
+has 'seq_list' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+has '_chromosome' => (
     is  => 'rw',
     isa => 'Str',
 );
