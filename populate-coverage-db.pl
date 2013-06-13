@@ -6,9 +6,11 @@ use CoverageDB::Main;
 
 my $schema = CoverageDB::Main->connect('dbi:SQLite:db/coverage.db');
 
+my $sam_gap_cmd = "samtools mpileup test/test.bam | cut -f1-2,4";
+my $sam_nogap_cmd = "samtools depth test/test.bam";
 
-open my $gap_fh, "<", "test/coverage/test.SL2.40ch01.coverage.cov_gaps";
-open my $nogap_fh, "<", "test/coverage/test.SL2.40ch01.coverage.cov_nogaps";
+open my $gap_fh, "-|", $sam_gap_cmd;
+open my $nogap_fh, "-|", $sam_nogap_cmd;
 my $sample_id = "test";
 my $count;
 my @cov_data;
