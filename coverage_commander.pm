@@ -273,7 +273,7 @@ sub populate_CoverageDB_by_chr {
     my $sam_gap_cmd = "samtools mpileup -r $chromosome $bam_file | cut -f1-2,4";
     my $sam_nogap_cmd = "samtools depth -r $chromosome $bam_file";
 
-    say "Get coverage for $chromosome" if $self->verbose;
+    say "  Getting coverage for $chromosome" if $self->verbose;
     my $count = 1;
     my @cov_data;
 
