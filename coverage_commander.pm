@@ -214,6 +214,7 @@ sub add_positions {
 
     my %cov_pos; # = $self->cov_pos;
 
+# TODO: custom path
     open my $snps_fh, "<", "../genotyping/snp_master/polyDB.$chr.nr";
     <$snps_fh>;
     while (<$snps_fh>) {
@@ -223,7 +224,7 @@ sub add_positions {
         $cov_pos{$chr}{ $snp_pos + $flank_dist } = 1;
     }
     close $snps_fh;
-    print scalar keys $cov_pos{$chr}, "\n";
+    # print scalar keys $cov_pos{$chr}, "\n";
     $self->cov_pos( \%cov_pos );
 }
 
@@ -257,7 +258,10 @@ around 'get_coverage_db' => sub {
 sub populate_CoverageDB_by_chr {
     my $self = shift;
 
-    my $schema = CoverageDB::Main->connect('dbi:SQLite:db/coverage.db');
+# TODO: custom path (and make empty db?)
+    my $dbi = 'SQLite';
+    my $db = 'db/coverage.db';
+    my $schema = CoverageDB::Main->connect("dbi:$dbi:$db");
 
     my $chromosome  = $self->_chromosome;
     my $flank_dist  = $self->flank_dist;
@@ -268,7 +272,7 @@ sub populate_CoverageDB_by_chr {
     my $sam_gap_cmd = "samtools mpileup -r $chromosome $bam_file | cut -f1-2,4";
     my $sam_nogap_cmd = "samtools depth -r $chromosome $bam_file";
 
-
+    say "Get coverage for $chromosome" if $self->verbose;
     my $count = 1;
     my @cov_data;
 
@@ -294,7 +298,7 @@ sub populate_CoverageDB_by_chr {
 
 sub populate_and_reset {
     my ( $count_ref, $cov_data_ref, $schema_ref ) = @_;
-    say $$count_ref++;
+    $$count_ref = 1;
     $$schema_ref->populate(
         'Coverage',
         [
@@ -347,7 +351,7 @@ sub _validity_tests_samtools {
 sub _get_header {
     my $self = shift;
 
-    $self->_validity_tests();
+    # $self->_validity_tests();
     my $get_header_cmd = "samtools view -H " . $self->bam;
     my @header = `$get_header_cmd`;
     return @header;
