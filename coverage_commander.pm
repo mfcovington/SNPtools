@@ -7,6 +7,7 @@ use File::Path 'make_path';
 use Parallel::ForkManager;
 use autodie;
 # use Data::Printer;
+use CoverageDB::Main;
 
 #TODO: check for presence of valid region!!!!
 #TODO: require certain arguments to be defined
@@ -116,6 +117,22 @@ around 'get_coverage_all' => sub {
     $pm->wait_all_children;
 };
 
+has 'cov_pos' => (
+    is  => 'rw',
+    isa => 'HashRef'
+);
+
+has 'cov_data' => (
+    is  => 'ro',
+    isa => 'ArrayRef'
+);
+
+has 'flank_dist' => (
+    is      => 'rw',
+    isa     => 'Int',
+    default => 8,
+);
+
 has 'id' => (
     is      => 'ro',
     isa     => 'Str',
@@ -158,6 +175,12 @@ has 'out_file' => (
     isa => 'Str',
 );
 
+has 'db' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 1,
+);
+
 has 'gap' => (
     is      => 'rw',
     isa     => 'Bool',
@@ -181,6 +204,103 @@ has 'verbose' => (
     isa     => 'Bool',
     default => 0,
 );
+
+
+sub add_positions {
+    my $self = shift;
+
+    my $chr = $self->_chromosome;
+    my $flank_dist = $self->flank_dist;
+
+    my %cov_pos; # = $self->cov_pos;
+
+    open my $snps_fh, "<", "../genotyping/snp_master/polyDB.$chr.nr";
+    <$snps_fh>;
+    while (<$snps_fh>) {
+        my $snp_pos = [ split /\t/ ]->[1];
+        $cov_pos{$chr}{$snp_pos}                 = 1;
+        $cov_pos{$chr}{ $snp_pos - $flank_dist } = 1;
+        $cov_pos{$chr}{ $snp_pos + $flank_dist } = 1;
+    }
+    close $snps_fh;
+    print scalar keys $cov_pos{$chr}, "\n";
+    $self->cov_pos( \%cov_pos );
+}
+
+# around qw( add_positions populate_CoverageDB_by_chr ) => sub {
+#     my $orig = shift;
+#     my $self = shift;
+
+#     $self->_validity_tests();
+
+#     my @chromosomes = $self->get_seq_names;
+#     my $pm = new Parallel::ForkManager($self->threads);
+#     foreach my $chr (@chromosomes) {
+#         $pm->start and next;
+
+#         $self->_chromosome($chr);
+#         # $self->out_file( $self->out_dir . "/coverage/" . $self->id . "." . $self->_chromosome . ".coverage" );
+#         # $self->_make_dir();
+
+#         $self->$orig(@_);
+
+#         $pm->finish;
+#     }
+#     $pm->wait_all_children;
+# };
+
+sub populate_CoverageDB_by_chr {
+    my $self = shift;
+
+    $self->_validity_tests();
+
+    my $schema = CoverageDB::Main->connect('dbi:SQLite:db/coverage.db');
+
+    my $chromosome  = $self->_chromosome;
+    my $flank_dist  = $self->flank_dist;
+    my $cov_pos_ref = $self->cov_pos;
+    my $bam_file    = $self->bam;
+    my $sample_id   = $self->id;
+
+    my $sam_gap_cmd = "samtools mpileup -r $chromosome $bam_file | cut -f1-2,4";
+    my $sam_nogap_cmd = "samtools depth -r $chromosome $bam_file";
+
+
+    my $count = 1;
+    my @cov_data;
+
+    open my $gap_fh,   "-|", $sam_gap_cmd;
+    open my $nogap_fh, "-|", $sam_nogap_cmd;
+    while ( my $gap_line = <$gap_fh> ) {
+        my $nogap_line = <$nogap_fh>;
+        chomp( $gap_line, $nogap_line );
+        my ( $chr, $pos, $gap_cov ) = split /\t/, $gap_line;
+        my $nogap_cov = [ split /\t/, $nogap_line ]->[2];
+        if ( exists $$cov_pos_ref{$chr}{$pos} ) {
+            $count++;
+            push @cov_data, [ $sample_id, $chr, $pos, $gap_cov, $nogap_cov ];
+        }
+
+        populate_and_reset( \$count, \@cov_data, \$schema ) if $count % 100000 == 0;
+    }
+    close $gap_fh;
+    close $nogap_fh;
+
+    populate_and_reset( \$count, \@cov_data, \$schema ) if scalar @cov_data;
+}
+
+sub populate_and_reset {
+    my ( $count_ref, $cov_data_ref, $schema_ref ) = @_;
+    say $$count_ref++;
+    $$schema_ref->populate(
+        'Coverage',
+        [
+            [qw/sample_id chromosome position gap_cov nogap_cov/],
+            @$cov_data_ref
+        ]
+    );
+    @$cov_data_ref = ();
+}
 
 sub _region {
     my $self = shift;

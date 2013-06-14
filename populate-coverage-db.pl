@@ -8,7 +8,7 @@ my $schema = CoverageDB::Main->connect('dbi:SQLite:db/coverage.db');
 
 my $flank_dist = 8;
 my @chromosomes =
-  qw( SL2.40ch01 SL2.40ch02 SL2.40ch03 SL2.40ch04 SL2.40ch05 SL2.40ch06 SL2.40ch07 SL2.40ch08 SL2.40ch09 SL2.40ch10 );
+  qw( SL2.40ch01 SL2.40ch02 SL2.40ch03 SL2.40ch04 SL2.40ch05 SL2.40ch06 SL2.40ch07 SL2.40ch08 SL2.40ch09 SL2.40ch10 SL2.40ch11 SL2.40ch12 );
 
 for my $chr (@chromosomes) {
     my %cov_pos;
