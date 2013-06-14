@@ -7,6 +7,7 @@ use File::Path 'make_path';
 use Parallel::ForkManager;
 use autodie;
 # use Data::Printer;
+use Capture::Tiny 'capture_stderr';
 use CoverageDB::Main;
 
 #TODO: check for presence of valid region!!!!
@@ -276,7 +277,10 @@ sub populate_CoverageDB_by_chr {
     my $count = 1;
     my @cov_data;
 
-    open my $gap_fh,   "-|", $sam_gap_cmd;
+    my $gap_fh;
+    my $stderr = capture_stderr {    # suppress mpileup output sent to stderr
+        open $gap_fh,   "-|", $sam_gap_cmd;
+    };
     open my $nogap_fh, "-|", $sam_nogap_cmd;
     while ( my $gap_line = <$gap_fh> ) {
         my $nogap_line = <$nogap_fh>;
