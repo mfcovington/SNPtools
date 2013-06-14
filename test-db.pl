@@ -7,7 +7,7 @@ use CoverageDB::Main;
 my $schema = CoverageDB::Main->connect('dbi:SQLite:db/coverage.db');
 
 
-get_cov( ( 'test', 'SL2.40ch02', [49914000..49914020] ) );
+get_cov( ( 'test', 'SL2.40ch02', [28604400..28604500] ) );
 
 sub get_cov {
     # my $pos_ref = shift;
