@@ -6,22 +6,68 @@ use CoverageDB::Main;
 
 my $schema = CoverageDB::Main->connect('dbi:SQLite:db/coverage.db');
 
+
 my $sam_gap_cmd = "samtools mpileup test/test.bam | cut -f1-2,4";
 my $sam_nogap_cmd = "samtools depth test/test.bam";
+
+my $flank_dist = 8;
+
+my %cov_pos;
+my @chromosomes =
+  qw( SL2.40ch01 SL2.40ch02 SL2.40ch03 SL2.40ch04 SL2.40ch05 SL2.40ch06 SL2.40ch07 SL2.40ch08 SL2.40ch09 SL2.40ch10 );
+
+for (@chromosomes) {
+    add_positions($_);
+}
+
+sub add_positions {
+    my $chr = shift;
+    open my $snps_fh, "<", "../genotyping/snp_master/polyDB.$chr.nr";
+    <$snps_fh>;
+    while ( <$snps_fh> ) {
+        my $snp_pos = [ split /\t/ ]->[1];
+        $cov_pos{$chr}{$snp_pos} = 1;
+        $cov_pos{$chr}{$snp_pos - $flank_dist} = 1;
+        $cov_pos{$chr}{$snp_pos + $flank_dist} = 1;
+    }
+    close $snps_fh;
+    say scalar keys %cov_pos;
+    say scalar keys $cov_pos{$chr};
+}
+
+# __END__
+
+# my %cov_pos = (
+#     'SL2.40ch01' => {
+#         40 => 1,
+#         50 => 1,
+#         67 => 1,
+#         },
+#     'SL2.40ch02' => {
+#         49914000 => 1,
+#         49914008 => 1,
+#         49914019 => 1,
+#         },
+# );
+
 
 open my $gap_fh, "-|", $sam_gap_cmd;
 open my $nogap_fh, "-|", $sam_nogap_cmd;
 my $sample_id = "test";
-my $count;
+my $count = 1;
 my @cov_data;
 while ( my $gap_line = <$gap_fh> ) {
     my $nogap_line = <$nogap_fh>;
     chomp( $gap_line, $nogap_line );
     my ( $chr, $pos, $gap_cov ) = split /\t/, $gap_line;
     my $nogap_cov = [ split /\t/, $nogap_line ]->[2];
-    $count++;
 
-    push @cov_data, [ $sample_id, $chr, $pos, $gap_cov, $nogap_cov ];
+    if ( exists $cov_pos{$chr}{$pos} ) {
+        $count++;
+        push @cov_data, [ $sample_id, $chr, $pos, $gap_cov, $nogap_cov ];
+        # say "$chr - $pos";
+    }
+
 
     populate_and_reset() if $count % 100000 == 0;
 
@@ -32,7 +78,7 @@ while ( my $gap_line = <$gap_fh> ) {
     #         [ $sample_id, $chr, $pos, $gap_cov, $nogap_cov ]
     #     ]
     # );
-
+    # last if $chr eq "SL2.40ch02";
 }
 close $gap_fh;
 close $nogap_fh;
