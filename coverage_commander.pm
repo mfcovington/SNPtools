@@ -227,32 +227,35 @@ sub add_positions {
     $self->cov_pos( \%cov_pos );
 }
 
-# around qw( add_positions populate_CoverageDB_by_chr ) => sub {
-#     my $orig = shift;
-#     my $self = shift;
+sub get_coverage_db {
+    my $self = shift;
 
-#     $self->_validity_tests();
+    $self->add_positions;
+    $self->populate_CoverageDB_by_chr;
+}
 
-#     my @chromosomes = $self->get_seq_names;
-#     my $pm = new Parallel::ForkManager($self->threads);
-#     foreach my $chr (@chromosomes) {
-#         $pm->start and next;
-
-#         $self->_chromosome($chr);
-#         # $self->out_file( $self->out_dir . "/coverage/" . $self->id . "." . $self->_chromosome . ".coverage" );
-#         # $self->_make_dir();
-
-#         $self->$orig(@_);
-
-#         $pm->finish;
-#     }
-#     $pm->wait_all_children;
-# };
-
-sub populate_CoverageDB_by_chr {
+around 'get_coverage_db' => sub {
+    my $orig = shift;
     my $self = shift;
 
     $self->_validity_tests();
+
+    my @chromosomes = $self->get_seq_names;
+    my $pm = new Parallel::ForkManager($self->threads);
+    foreach my $chr (@chromosomes) {
+        $pm->start and next;
+
+        $self->_chromosome($chr);
+
+        $self->$orig(@_);
+
+        $pm->finish;
+    }
+    $pm->wait_all_children;
+};
+
+sub populate_CoverageDB_by_chr {
+    my $self = shift;
 
     my $schema = CoverageDB::Main->connect('dbi:SQLite:db/coverage.db');
 
