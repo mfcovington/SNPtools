@@ -49,24 +49,24 @@ die $usage
   unless defined $snp_in && defined $cov_prefix && defined $id && defined $chr;
 
 #generate filenames
-my ( $cov_nogaps_file, $cov_gaps_file ) = ( $cov_prefix ) x 2 ;
-$cov_nogaps_file .= ".cov_nogaps";
-$cov_gaps_file   .= ".cov_gaps";
+# my ( $cov_nogaps_file, $cov_gaps_file ) = ( $cov_prefix ) x 2 ;
+# $cov_nogaps_file .= ".cov_nogaps";
+# $cov_gaps_file   .= ".cov_gaps";
 my ( $filename, $directories, $suffix ) = fileparse( $snp_in, ".csv" );
 my $snp_out = $directories . $filename . ".nogap.gap.csv";
 
 #open files
 open my $snp_in_fh,     "<", $snp_in;
 open my $snp_out_fh,    ">", $snp_out;
-open my $cov_nogaps_fh, "<", $cov_nogaps_file;
-open my $cov_gaps_fh,   "<", $cov_gaps_file;
+# open my $cov_nogaps_fh, "<", $cov_nogaps_file;
+# open my $cov_gaps_fh,   "<", $cov_gaps_file;
 
 #build coverage hashes
-my ( %nogaps, %gaps );
-%nogaps = map { chomp; @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_nogaps_fh>;
-%gaps   = map { chomp; @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_gaps_fh>;
-close $cov_nogaps_fh;
-close $cov_gaps_fh;
+# my ( %nogaps, %gaps );
+# %nogaps = map { chomp; @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_nogaps_fh>;
+# %gaps   = map { chomp; @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_gaps_fh>;
+# close $cov_nogaps_fh;
+# close $cov_gaps_fh;
 
 my %cov_hash = build_cov_hash( ( $id, $chr ) );
 
@@ -97,15 +97,22 @@ while ( my $snp_line = <$snp_in_fh> ) {
     my ( $snp_chr, $snp_pos_unsplit, $snp_remainder ) = split( /,/, $snp_line, 3 );
     my ( $snp_pos, $snp_pos_index ) = split( /\./, $snp_pos_unsplit );
 
-    my ( $del_cov ) = ${ [ split /,/, $snp_remainder ] }[5];    #nogaps doesn't see deletions, must compensate
+    # nogaps doesn't see deletions, must compensate
+    my ( $del_cov ) = ${ [ split /,/, $snp_remainder ] }[5];
 
     my $lt_pos = $snp_pos - $flank_dist;
     my $rt_pos = $snp_pos + $flank_dist;
 
     say $snp_out_fh join( ",",
-        $snp_chr,                $snp_pos_unsplit,         $snp_remainder,
-        $nogaps{ $lt_pos } || 0, $nogaps{ $snp_pos } + $del_cov || 0, $nogaps{ $rt_pos } || 0,
-        $gaps{ $lt_pos }   || 0, $gaps{ $snp_pos }              || 0, $gaps{ $rt_pos }   || 0 );
+        $snp_chr,
+        $snp_pos_unsplit,
+        $snp_remainder,
+        $cov_hash{$lt_pos}{nogap}  // 0,
+        $cov_hash{$snp_pos}{nogap} // 0 + $del_cov,
+        $cov_hash{$rt_pos}{nogap}  // 0,
+        $cov_hash{$lt_pos}{gap}    // 0,
+        $cov_hash{$snp_pos}{gap}   // 0,
+        $cov_hash{$rt_pos}{gap}    // 0 );
 }
 
 #close shop
