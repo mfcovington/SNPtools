@@ -12,8 +12,6 @@ use feature 'say';
 use File::Basename;
 use Getopt::Long;
 
-#TODO: gap and nogap one at a time to cut down on memory requirements
-
 # TODO: fix paths
 use lib '../coverage_calc/';
 use CoverageDB::Main;
@@ -25,7 +23,6 @@ my $usage = <<USAGE_END;
 USAGE:
 flanking_coverage_calculator.pl
   --snp_file   </PATH/TO/snp_file.csv>
-  --cov_prefix </PATH/TO/cov_file_prefix_only -- w/o .cov_(no)gap>
   --sample_id
   --chromosome
   --flank_dist <flanking distance to use [8]>
@@ -34,11 +31,10 @@ flanking_coverage_calculator.pl
 USAGE_END
 
 #get options
-my ( $snp_in, $cov_prefix, $id, $chr, $help );
+my ( $snp_in, $id, $chr, $help );
 my $flank_dist = 8;    # default
 my $options = GetOptions(
     "snp_file=s"   => \$snp_in,
-    "cov_prefix=s" => \$cov_prefix,
     "sample_id=s"  => \$id,
     "chromosome=s" => \$chr,
     "flank_dist=i" => \$flank_dist,
@@ -46,42 +42,21 @@ my $options = GetOptions(
 );
 die $usage if $help;
 die $usage
-  unless defined $snp_in && defined $cov_prefix && defined $id && defined $chr;
+  unless
+    defined $snp_in &&
+    defined $id     &&
+    defined $chr;
 
 #generate filenames
-# my ( $cov_nogaps_file, $cov_gaps_file ) = ( $cov_prefix ) x 2 ;
-# $cov_nogaps_file .= ".cov_nogaps";
-# $cov_gaps_file   .= ".cov_gaps";
 my ( $filename, $directories, $suffix ) = fileparse( $snp_in, ".csv" );
 my $snp_out = $directories . $filename . ".nogap.gap.csv";
 
 #open files
 open my $snp_in_fh,     "<", $snp_in;
 open my $snp_out_fh,    ">", $snp_out;
-# open my $cov_nogaps_fh, "<", $cov_nogaps_file;
-# open my $cov_gaps_fh,   "<", $cov_gaps_file;
 
 #build coverage hashes
-# my ( %nogaps, %gaps );
-# %nogaps = map { chomp; @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_nogaps_fh>;
-# %gaps   = map { chomp; @{ [ split /\t/ ] }[ 1 .. 2 ] } <$cov_gaps_fh>;
-# close $cov_nogaps_fh;
-# close $cov_gaps_fh;
-
 my %cov_hash = build_cov_hash( ( $id, $chr ) );
-
-sub build_cov_hash {
-    my ( $sample_id, $chr ) = @_;
-
-    my $rs = $schema->resultset('Coverage')->search(
-        { 'sample_id' => $sample_id, 'chromosome' => $chr, },
-        { select => [qw/ position gap_cov nogap_cov /] }
-    );
-
-    return
-      map { $_->position => { gap => $_->gap_cov, nogap => $_->nogap_cov } }
-      $rs->all;
-}
 
 #write header
 my $header = <$snp_in_fh>;
@@ -118,4 +93,18 @@ while ( my $snp_line = <$snp_in_fh> ) {
 #close shop
 close $snp_in_fh;
 close $snp_out_fh;
+
+sub build_cov_hash {
+    my ( $sample_id, $chr ) = @_;
+
+    my $rs = $schema->resultset('Coverage')->search(
+        { 'sample_id' => $sample_id, 'chromosome' => $chr, },
+        { select => [qw/ position gap_cov nogap_cov /] }
+    );
+
+    return
+      map { $_->position => { gap => $_->gap_cov, nogap => $_->nogap_cov } }
+      $rs->all;
+}
+
 exit;
