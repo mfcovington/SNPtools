@@ -9,6 +9,7 @@ use autodie;
 # use Data::Printer;
 use Capture::Tiny 'capture_stderr';
 use CoverageDB::Main;
+use POSIX;
 
 #TODO: check for presence of valid region!!!!
 #TODO: require certain arguments to be defined
@@ -243,7 +244,7 @@ around 'get_coverage_db' => sub {
     $self->_validity_tests();
 
     my @chromosomes = $self->get_seq_names;
-    my $pm = new Parallel::ForkManager($self->threads);
+    my $pm = new Parallel::ForkManager( floor $self->threads / 2 );
     foreach my $chr (@chromosomes) {
         $pm->start and next;
 
