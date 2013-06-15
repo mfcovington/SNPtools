@@ -90,6 +90,45 @@ around 'identify_snps' => sub {
     $pm->wait_all_children;
 };
 
+sub flanking_cov {
+    my $self = shift;
+
+    $self->_validity_tests();
+    # $self->_make_dir();
+
+    my $flanking_cov_cmd =
+      "~/git.repos/snp_identification/flanking_coverage_calculator.pl \\
+    --snp_file "   . $self->out_dir . "/snps/"     . join( '.', $self->id, $self->chromosome, "snps.csv" )     . " \\
+    --cov_prefix " . $self->out_dir . "/coverage/" . join( '.', $self->id, $self->chromosome, "coverage" );
+
+#ADD FLANK DIST
+
+    say "  Running:\n  " . $flanking_cov_cmd if $self->verbose();
+    system($flanking_cov_cmd );
+}
+
+around 'flanking_cov' => sub {
+    my $orig = shift;
+    my $self = shift;
+
+    my @chromosomes = $self->get_seq_names;
+    my $pm = new Parallel::ForkManager($self->threads);
+    foreach my $chr (@chromosomes) {
+        $pm->start and next;
+
+        $self->chromosome($chr);
+        # my $cov_out = $self->out_dir . "/" . $self->id . ".snps." . $self->chromosome;
+        # $self->out_file($cov_out);
+        # $self->out_file( $self->out_dir . "/snps/" . $self->id . "." . $self->chromosome . ".snps" );
+        # $self->identify_snps;
+
+        $self->$orig(@_);
+
+        $pm->finish;
+    }
+    $pm->wait_all_children;
+};
+
 has 'id' => (
     is  => 'ro',
     isa => 'Str',
