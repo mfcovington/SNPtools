@@ -74,17 +74,7 @@ my $snp_caller = sub {
         my $qpos = $pileup->qpos;
         my $qseq = $b->qseq;
 
-#GET BASE AND QUALIY SCORE FOR THE BASE...(THERE IS A PROBLEM WITH READ THAT HAVE DELETIONS
-#SO I NEED TO CHECK IF THE BASE WE ARE LOOKING AT HAS A POS GREATER THAN THE END OF THE READ)
-            my ($qbase);
-            my $read_length = $b->query->length;
-            if ( $pileup->qpos < $read_length ) {
-                $qbase = substr( $b->qseq, $pileup->qpos, 1 );
-            }
-            else {
-                $qbase = substr( $b->qseq, ( $read_length - 1 ), 1 );
-            }
-
+        my $qbase = substr( $qseq, $qpos, 1 );
 
         my $read_length = $b->query->length;
 
