@@ -14,9 +14,9 @@ use List::MoreUtils 'any';
 my (
     $chromosome,
     $outputfile,
-    $threshold_fraction_of_reads_matching_ref,
-    $threshold_fraction_of_reads_matching_ref_for_indels,
-    $threshold_number_of_reads,
+    $min_ratio,        # threshold for fraction of reads matching ref
+    $min_ratio_ins,    # threshold for fraction of reads matching ref for indels
+    $min_depth,        # threshold for number of reads
     $fasta_ref,
     $bam_file,
 );
@@ -24,9 +24,9 @@ my (
 GetOptions(
     'chromosome:s' => \$chromosome,
     'o:s'          => \$outputfile,
-    'n_reads:i'    => \$threshold_number_of_reads,
-    'ref_freq:f'   => \$threshold_fraction_of_reads_matching_ref,
-    'indel_freq:f' => \$threshold_fraction_of_reads_matching_ref_for_indels,
+    'n_reads:i'    => \$min_depth,
+    'ref_freq:f'   => \$min_ratio,
+    'indel_freq:f' => \$min_ratio_ins,
     'fasta_ref:s'  => \$fasta_ref,
     'bam_file:s'   => \$bam_file,
 );
@@ -47,15 +47,15 @@ my $sam = Bio::DB::Sam->new(
 
 my $snp_caller = sub {
     my ( $seqid, $pos, $p ) = @_;
-    my %positions_in_reads_seen;
-    my %distances_in_reads_seen;
+    my %positions;
+    my %distances;
 
     #GET BASE FOR THE REFERENCE SEQUENCE
     my $refbase = $sam->segment( $seqid, $pos, $pos )->dna;
     $refbase = uc $refbase;
 
     return if $refbase eq "N";
-    return if scalar @$p < $threshold_number_of_reads;
+    return if scalar @$p < $min_depth;
 
     my %ins_hash = (
         'inserted_bases'       => [],
@@ -91,19 +91,19 @@ my $snp_caller = sub {
             next if any { $_ == $pos_in_read } @gap_pos;
         }
 
-#IF THE INDEL IS AN INSERTION ADD BASES, QUALITIES, AND MORE TO %ins_hash'
-#LATER WE SEE IF THESE ARE ENOUGH AND MAKE ONE LINE OF OUTPUT PER BASE INSERTED
+ #IF THE INDEL IS AN INSERTION ADD BASES, QUALITIES, AND MORE TO %ins_hash'
+ #LATER WE SEE IF THESE ARE ENOUGH AND MAKE ONE LINE OF OUTPUT PER BASE INSERTED
         if ( $pileup->indel > 0 ) {
             my $ins_base = substr( $qseq, ($qpos) + 1, $pileup->indel );
 
-#ADD THE INFO FROM THE BASE THAT BEFORE THE INSERTION "PREINS"
+            #ADD THE INFO FROM THE BASE THAT BEFORE THE INSERTION "PREINS"
             $ins_hash{'preINSbases'}->{$qbase}++;
 
             #ADD THE POSITION IN THE READ WHERE THE INSERTION IS LOCATED
-            $positions_in_reads_seen{'ins'}->{$qbase}->{$pos_in_read}++;
-            $distances_in_reads_seen{'ins'}->{$qbase}
-              ->{ $read_length - $pos_in_read }++;
-     #ADD BASES AND QUALITIES TO THE INSERTION HASH BY POSITION IN INSERTION
+            $positions{'ins'}->{$qbase}->{$pos_in_read}++;
+            $distances{'ins'}->{$qbase}->{ $read_length - $pos_in_read }++;
+
+         #ADD BASES AND QUALITIES TO THE INSERTION HASH BY POSITION IN INSERTION
             my @in_nucs = split '', $ins_base;
             for my $ins_pos ( 0 .. $#in_nucs ) {
                 my $printf_pos;
@@ -129,15 +129,15 @@ my $snp_caller = sub {
 
 #IF IT IS A DELETION, JUST REMEMBER THE SIZE OF THE INSERTION AND IN WHICH READ IT WAS
         elsif ( $pileup->is_del ) {
-            $positions_in_reads_seen{'del'}->{$pos_in_read}++;
-            $distances_in_reads_seen{'del'}->{ $read_length - $pos_in_read }++;
+            $positions{'del'}->{$pos_in_read}++;
+            $distances{'del'}->{ $read_length - $pos_in_read }++;
         }
 
         #NON DELETION READS, JUST ADD TO HASHES
         #THERE ARE NS IN THE READS, WE DO NOT COUNT THEM
         else {
-            $positions_in_reads_seen{$qbase}->{$pos_in_read}++;
-            $distances_in_reads_seen{$qbase}->{ $read_length - $pos_in_read }++;
+            $positions{$qbase}->{$pos_in_read}++;
+            $distances{$qbase}->{ $read_length - $pos_in_read }++;
         }
 
         $coverage++;
@@ -151,62 +151,48 @@ my $snp_caller = sub {
     #GET NUMBER OF READS FOR DELETIONS, INSERTIONS AND REFERENCE
     my ( $insert_reads, $deletion_reads, $ref_reads, $all_reads ) =
       ( 0, 0, 0, 0 );
-    $ref_reads = sum( values %{ $positions_in_reads_seen{$refbase} } )
-      if ( defined $positions_in_reads_seen{$refbase} );
-    $all_reads += sum( values %{ $positions_in_reads_seen{"A"} } )
-      if ( defined $positions_in_reads_seen{"A"} );
-    $all_reads += sum( values %{ $positions_in_reads_seen{"C"} } )
-      if ( defined $positions_in_reads_seen{"C"} );
-    $all_reads += sum( values %{ $positions_in_reads_seen{"G"} } )
-      if ( defined $positions_in_reads_seen{"G"} );
-    $all_reads += sum( values %{ $positions_in_reads_seen{"T"} } )
-      if ( defined $positions_in_reads_seen{"T"} );
+    $ref_reads = sum( values %{ $positions{$refbase} } )
+      if ( exists $positions{$refbase} );
+    $all_reads += sum( values %{ $positions{"A"} } )
+      if ( exists $positions{"A"} );
+    $all_reads += sum( values %{ $positions{"C"} } )
+      if ( exists $positions{"C"} );
+    $all_reads += sum( values %{ $positions{"G"} } )
+      if ( exists $positions{"G"} );
+    $all_reads += sum( values %{ $positions{"T"} } )
+      if ( exists $positions{"T"} );
 
-    if ( defined $positions_in_reads_seen{'ins'} ) {
-        for ( keys %{ $positions_in_reads_seen{'ins'} } ) {
-            $insert_reads +=
-              sum( values %{ $positions_in_reads_seen{'ins'}->{$_} } );
+    if ( exists $positions{'ins'} ) {
+        for ( keys %{ $positions{'ins'} } ) {
+            $insert_reads += sum( values %{ $positions{'ins'}->{$_} } );
         }
     }
-    $deletion_reads = sum( values %{ $positions_in_reads_seen{'del'} } )
-      if ( defined $positions_in_reads_seen{'del'} );
+    $deletion_reads = sum( values %{ $positions{'del'} } )
+      if ( exists $positions{'del'} );
 
-#I CHECK FIRST IF IT IS AN INSERTION< THE AN DELETION AND THEN A SNP
-    if (
-        $insert_reads > 1
-        && (
-            $insert_reads >= round(
-                $ref_reads *
-                  $threshold_fraction_of_reads_matching_ref_for_indels
-            )
-        )
-        && (
-            $insert_reads >= round(
-                $all_reads * ( $threshold_fraction_of_reads_matching_ref / 2 )
-            )
-        )
-      )
+    #I CHECK FIRST IF IT IS AN INSERTION< THE AN DELETION AND THEN A SNP
+    if (   $insert_reads > 1
+        && ( $insert_reads >= round( $ref_reads * $min_ratio_ins ) )
+        && ( $insert_reads >= round( $all_reads * ( $min_ratio / 2 ) ) ) )
     {
-     #FIRST CHECK IF THERE IS A SNP IN THE BASE BEFORE THE INS
-     #FOR THIS I"VE MADE A FUNCTION THAT CALCULATES THE BASES, POSITIONS ETC
-        my ( $preins_line, $preins_pos_in_reads_seen,
-            $preins_most_abundant_base_reads,
+        #FIRST CHECK IF THERE IS A SNP IN THE BASE BEFORE THE INS
+        #FOR THIS I"VE MADE A FUNCTION THAT CALCULATES THE BASES, POSITIONS ETC
+        my ( $preins_line, $preins_pos, $preins_most_abundant_base_reads,
             $preins_most_abundant_base, $preins_total )
-          = calculate_snp_in_pre_insertion( \%positions_in_reads_seen,
-            $refbase );
-        my ( $rpreins_line, $rpreins_pos_in_reads_seen ) =
-          calculate_snp_in_pre_insertion( \%distances_in_reads_seen, $refbase );
+          = calculate_snp_in_pre_insertion( \%positions, $refbase );
+        my ( $rpreins_line, $rpreins_pos ) =
+          calculate_snp_in_pre_insertion( \%distances, $refbase );
 
         #THEN CHECK AS ALWAYS FOR SNPS...
         if (   $preins_most_abundant_base ne $refbase
             && $preins_most_abundant_base_reads >=
-            ( $preins_total * $threshold_fraction_of_reads_matching_ref )
-            && $preins_most_abundant_base_reads >= $threshold_number_of_reads )
+            ( $preins_total * $min_ratio )
+            && $preins_most_abundant_base_reads >= $min_depth )
         {
             my $line =
                 "$seqid,$pos,$refbase,$preins_line,$preins_most_abundant_base,"
-              . calculate_attributes($preins_pos_in_reads_seen) . ","
-              . calculate_attributes($rpreins_pos_in_reads_seen);
+              . calculate_attributes($preins_pos) . ","
+              . calculate_attributes($rpreins_pos);
             say $snp_out_fh "$line";
 
             #say "SNP: $line";
@@ -217,13 +203,13 @@ my $snp_caller = sub {
         my %new_hash_with_positions_for_ins   = ();
         my %r_new_hash_with_positions_for_ins = ();
         foreach my $nt ( ( 'A', 'C', 'G', 'T', 'del' ) ) {
-            foreach ( keys %{ $positions_in_reads_seen{'ins'}->{$nt} } ) {
+            foreach ( keys %{ $positions{'ins'}->{$nt} } ) {
                 $new_hash_with_positions_for_ins{$_} =
-                  $positions_in_reads_seen{'ins'}->{$nt}->{$_};
+                  $positions{'ins'}->{$nt}->{$_};
             }
-            foreach ( keys %{ $distances_in_reads_seen{'ins'}->{$nt} } ) {
+            foreach ( keys %{ $distances{'ins'}->{$nt} } ) {
                 $r_new_hash_with_positions_for_ins{$_} =
-                  $distances_in_reads_seen{'ins'}->{$nt}->{$_};
+                  $distances{'ins'}->{$nt}->{$_};
             }
         }
 
@@ -239,7 +225,7 @@ my $snp_caller = sub {
             my ( $nt_line, $most_abundant_ins, $most_abundant_ins_reads ) =
               ( "", 0, 0 );
             foreach my $nt ( ( 'A', 'C', 'G', 'T', 'del' ) ) {
-                if ( defined( $ins_hash{'bases'}->{$new_pos}->{$nt} ) ) {
+                if ( exists( $ins_hash{'bases'}->{$new_pos}->{$nt} ) ) {
                     $nt_line .= "$ins_hash{'bases'}->{$new_pos}->{$nt},";
                     if ( $most_abundant_ins_reads <
                         $ins_hash{'bases'}->{$new_pos}->{$nt} )
@@ -258,46 +244,36 @@ my $snp_caller = sub {
         }
 
     }
-    elsif (
-        $deletion_reads > 1
-        && (
-            $deletion_reads >= round(
-                $ref_reads *
-                  $threshold_fraction_of_reads_matching_ref_for_indels
-            )
-        )
-      )
+    elsif ( $deletion_reads > 1
+        && ( $deletion_reads >= round( $ref_reads * $min_ratio_ins ) ) )
     {
         my ( $nt_line, $most_abundant_base, $most_abundant_base_reads, $total )
-          = do_quantification_loop( \%positions_in_reads_seen );
+          = do_quantification_loop( \%positions );
         my $line = "$seqid,$pos,$refbase,$nt_line,del,";
         $line .=
-            calculate_attributes( \%{ $positions_in_reads_seen{'del'} } )
-          . ","
-          . calculate_attributes( \%{ $distances_in_reads_seen{'del'} } );
+            calculate_attributes( \%{ $positions{'del'} } ) . ","
+          . calculate_attributes( \%{ $distances{'del'} } );
         say $snp_out_fh "$line";
     }
     else {
 
         my ( $nt_line, $most_abundant_base, $most_abundant_base_reads, $total )
-          = do_quantification_loop( \%positions_in_reads_seen );
+          = do_quantification_loop( \%positions );
 
         if (   $most_abundant_base ne $refbase
-            && $most_abundant_base_reads >=
-            ( $coverage * $threshold_fraction_of_reads_matching_ref )
-            && $most_abundant_base_reads >= $threshold_number_of_reads )
+            && $most_abundant_base_reads >= ( $coverage * $min_ratio )
+            && $most_abundant_base_reads >= $min_depth )
         {
             my $line = "$seqid,$pos,$refbase,$nt_line,$most_abundant_base,";
-            $line .= calculate_attributes(
-                \%{ $positions_in_reads_seen{$most_abundant_base} } )
+            $line .=
+                calculate_attributes( \%{ $positions{$most_abundant_base} } )
               . ","
-              . calculate_attributes(
-                \%{ $distances_in_reads_seen{$most_abundant_base} } );
+              . calculate_attributes( \%{ $distances{$most_abundant_base} } );
             say $snp_out_fh "$line";
         }
     }
-    %positions_in_reads_seen = ();
-    %distances_in_reads_seen = ();
+    %positions = ();
+    %distances = ();
 
 };
 
@@ -324,7 +300,7 @@ sub calculate_attributes {
     }
     my ( $quart_count, $out_string ) = ( 0, "" );
     foreach my $s ( ( 1 .. 5 ) ) {
-        if ( defined $quarters{$s} ) {
+        if ( exists $quarters{$s} ) {
             $quart_count++;
             $out_string .= "$quarters{$s},";
         }
@@ -348,10 +324,10 @@ sub calculate_snp_in_pre_insertion {
     foreach my $nt ( ( 'A', 'C', 'G', 'T', 'del' ) ) {
         my $number_of_reads = 0;
         $number_of_reads += sum( values %{ $positions_in_reads_hash->{$nt} } )
-          if ( defined $positions_in_reads_hash->{$nt} );
+          if ( exists $positions_in_reads_hash->{$nt} );
         $number_of_reads +=
           sum( values %{ $positions_in_reads_hash->{'ins'}->{$nt} } )
-          if ( defined $positions_in_reads_hash->{'ins'}->{$nt} );
+          if ( exists $positions_in_reads_hash->{'ins'}->{$nt} );
         $total += $number_of_reads;
         $nt_line .= "$number_of_reads,";
         if ( $most_abundant_base_reads < $number_of_reads ) {
@@ -383,7 +359,7 @@ sub do_quantification_loop {
     foreach my $nt ( ( 'A', 'C', 'G', 'T', 'del' ) ) {
         my $number_of_reads = 0;
         $number_of_reads = sum( values %{ $positions_in_reads_hash->{$nt} } )
-          if ( defined $positions_in_reads_hash->{$nt} );
+          if ( exists $positions_in_reads_hash->{$nt} );
         $total += $number_of_reads;
         $nt_line .= "$number_of_reads,";
         if ( $most_abundant_base_reads < $number_of_reads ) {
