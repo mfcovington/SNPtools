@@ -9,6 +9,7 @@ use autodie;
 use Getopt::Long;
 use Bio::DB::Sam;
 use List::Util 'sum';
+use List::MoreUtils 'any';
 
 my (
     $chromosome,
@@ -92,22 +93,12 @@ my $snp_caller = sub {
             #GETTING THE POSITION IN THE READS WHERE THE SNP IS LOCATED
             my $pos_in_read = $pileup->pos;
 
-            #SKIP THE READ IF THE POSION IS FOUND INSIDE THE SPLICING
-            my $cigar                           = $b->cigar_str;
-            my $skip_this_read_it_is_a_splicing = 0;
+            #SKIP THE READ IF THE POSITION IS FOUND INSIDE A GAP
+            my $cigar = $b->cigar_str;
             if ( $cigar =~ /N/ ) {
-
-#           print "$pos - $name;  ref: $refbase; base: $qbase; length: $read_length; ";
-#           CIGAR_parsing($cigar) if ($cigar=~ /N/);
-                my @splic_pos = CIGAR_parsing($cigar);
-                foreach (@splic_pos) {
-                    $skip_this_read_it_is_a_splicing = 1
-                      if ( $pos_in_read == $_ );
-                }
-
-                #           say "";
+                my @gap_pos = parse_cigar($cigar);
+                next if any { $_ == $pos_in_read } @gap_pos;
             }
-            next if ( $skip_this_read_it_is_a_splicing == 1 );
 
 #       if ($pileup->indel){
 #           say "indel";
@@ -460,38 +451,21 @@ sub do_quantification_loop {
     return ( $nt_line, $most_abundant_base, $most_abundant_base_reads, $total );
 }
 
-#OLD CIGAR SUBROUTINE:
-# sub CIGAR_parsing {
-#   my $cigar_tr =  shift;
-#   my @parts = split /\d+N/,$cigar_tr;
-#   my @bad_pos;
-#   my $cum_sum = 1;
-#   foreach(@parts){
-#       $_ =~ s/M//g;
-#       $cum_sum += $_;
-#       push @bad_pos, $cum_sum;
-#   }
-#   pop @bad_pos;
-# # print "@bad_pos";
-#   return @bad_pos;
-# }
-
 #NEW CIGAR SUBROUTINE FROM PEPE ON 2011-12-20:
-sub CIGAR_parsing {
-    my $cigar_tr = shift;
-    my @parts = split /\d*N/, $cigar_tr;
+sub parse_cigar {
+    my @parts = split /\d*N/, shift;
     pop @parts;
-    my @bad_pos;
-    my $cum_sum = 1;
-    foreach my $sub_cigar (@parts) {
-        my @numbers = split( /[A-Z]/, $sub_cigar );
-        my @letters = split( /\d*/,   $sub_cigar );
+    my @gap_start_pos;
+    my $pos_sum = 1;
+    for (@parts) {
+        my @numbers = split /[A-Z]/;
+        my @letters = split /\d*/;
         shift @letters;
-        for ( my $i = 0 ; $i < @numbers ; $i++ ) {
-            $cum_sum += $numbers[$i] if ( $letters[$i] =~ /(M|I)/ );
-            push @bad_pos, $cum_sum;
+        for my $i ( 0 .. $#numbers ) {
+            $pos_sum += $numbers[$i] if ( $letters[$i] =~ /M|I/ );
+            push @gap_start_pos, $pos_sum;
         }
     }
-    return @bad_pos;
+    return @gap_start_pos;
 }
 
