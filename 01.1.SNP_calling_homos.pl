@@ -2,16 +2,23 @@
 #perl 01.1.SNP_calling_homos.pl -fasta_ref /Volumes/SolexaRAID/Solexa_runs_Data/00.Downloaded_references_and_others/S_lycopersicum_chromosomes.2.40.fa -chrm_start 0 -chrm_end 0 -n_reads 4 -ref_freq 0.66 -indel_freq 0.33 -o SNP_table.PEN.final.Picard_and_GATK.1.1 -bam_file ../2.40.Chromosomes_alignments/BWA_merged_files/PEN.final.Picard_and_GATK.bam
 #adapted from Pepe's script by mfc
 #2012-01-06: CIGAR subroutine altered per Pepe's suggestion
-
 use strict;
 use warnings;
-use Data::Dumper;
+use feature 'say';
+use autodie;
 use Getopt::Long;
 use Bio::DB::Sam;
-use List::Util qw(sum);
+use List::Util 'sum';
 
-##COLLECT ARGUMENTS FROM CLI
-my ($chromosome, $outputfile, $threshold_fraction_of_reads_matching_ref, $threshold_fraction_of_reads_matching_ref_for_indels, $threshold_number_of_reads, $fasta_ref, $sps_bam_file);
+my (
+    $chromosome,
+    $outputfile,
+    $threshold_fraction_of_reads_matching_ref,
+    $threshold_fraction_of_reads_matching_ref_for_indels,
+    $threshold_number_of_reads,
+    $fasta_ref,
+    $sps_bam_file,
+);
 
 GetOptions(
 	'chromosome:s'	=> \$chromosome,
@@ -20,17 +27,17 @@ GetOptions(
 	'ref_freq:f'	=> \$threshold_fraction_of_reads_matching_ref,
 	'indel_freq:f'	=> \$threshold_fraction_of_reads_matching_ref_for_indels,
 	'fasta_ref:s'	=> \$fasta_ref,
-	'bam_file:s'	=> \$sps_bam_file
-); #GetOptions
+	'bam_file:s'	=> \$sps_bam_file,
+);
 
-print "Look for SNPs on $chromosome ($sps_bam_file)\n";
+say "Look for SNPs on $chromosome ($sps_bam_file)";
 ##OPEN OUTPUT FILE
 my $out_filename = ">$outputfile.csv";
-open (SNP_OUTFILE, $out_filename) or die "Could not open $out_filename\n";
+open (SNP_OUTFILE, $out_filename);
 
 #MAKE HEADER LINE AND PRINT IT TO THE OUTPUT FILE
 my $snp_header = "seq_id,pos,ref,a,c,g,t,del";
-print SNP_OUTFILE "$snp_header\n";
+say SNP_OUTFILE "$snp_header";
 
 my $sam = Bio::DB::Sam->new(
 	-bam  => "$sps_bam_file",
@@ -46,14 +53,13 @@ my %ins_hash;
 
 my $snp_caller = sub {
 	my ($seqid,$pos,$p) = @_;
-#		print "$seqid,$pos,$p\n";
-#		print Dumper @$p;
+#		say "$seqid,$pos,$p";
 		#GET BASE FOR THE REFERENCE SEQUENCE
 	my $refbase = $sam->segment($seqid,$pos,$pos)->dna;
 	$refbase = uc($refbase);
 	#	if($pos == 4197587){
-	#	print "$pos\n";
-	
+	#	say "$pos";
+
 	if($refbase ne "N"){
 		my %ins_hash = (
 			'inserted_bases' => [],
@@ -61,9 +67,9 @@ my $snp_caller = sub {
 			'ins_point_mismatches' => 0,
 			'preINSbases'	=> { 'A' => 0, 'C' => 0, 'G' => 0, 'T' => 0, 'del' => 0}
 		);
-	
+
 		my $alignment_size = 0;
-	
+
 		for my $pileup (@$p) {
 			my $b = $pileup->alignment;
 			#NAME OF READ AND ORIENTATION
@@ -71,7 +77,7 @@ my $snp_caller = sub {
 			my $flag = $b->flag;
 			$name .= "_$flag";
 			$name =~ s/trimmed_//;
-	#		print "NAME: $name\n";
+	#		say "NAME: $name";
 			#GET BASE AND QUALIY SCORE FOR THE BASE...(THERE IS A PROBLEM WITH READ THAT HAVE DELETIONS
 			#SO I NEED TO CHECK IF THE BASE WE ARE LOOKING AT HAS A POS GREATER THAN THE END OF THE READ)
 			my ($qbase);
@@ -81,10 +87,10 @@ my $snp_caller = sub {
 			}else{
 				$qbase = substr($b->qseq,($read_length-1),1);
 			}
-	
+
 			#GETTING THE POSITION IN THE READS WHERE THE SNP IS LOCATED
 			my $pos_in_read = $pileup->pos;
-	
+
 			#SKIP THE READ IF THE POSION IS FOUND INSIDE THE SPLICING
 			my $cigar = $b->cigar_str;
 			my $skip_this_read_it_is_a_splicing = 0;
@@ -95,22 +101,22 @@ my $snp_caller = sub {
 				foreach(@splic_pos){
 				  $skip_this_read_it_is_a_splicing = 1 if ($pos_in_read==$_);
 				};
-	#	  		print "\n";
+	#	  		say "";
 			}
 			next if ($skip_this_read_it_is_a_splicing==1);
-	
+
 	#		if ($pileup->indel){
-	#			print "indel\n";
-	#			print "indel at pos: $pos\tread name: $name\tref base: $refbase\tbase: $qbase\tquality: $qscore\n";
-	#			print "pos in read: ",$pileup->qpos,"\tquery length:",$b->query->length,"\tindel length: ",$pileup->indel,"\n";
+	#			say "indel";
+	#			say "indel at pos: $pos\tread name: $name\tref base: $refbase\tbase: $qbase\tquality: $qscore";
+	#			say "pos in read: ",$pileup->qpos,"\tquery length:",$b->query->length,"\tindel length: ",$pileup->indel,"";
 				#IF THE INDEL IS AN INSERTION ADD BASES, QUALITIES, AND MORE TO %ins_hash'
 				#LATER WE SEE IF THESE ARE ENOUGH AND MAKE ONE LINE OF OUTPUT PER BASE INSERTED
 			if ($pileup->indel>0){
 				my $ins_base = substr($b->qseq,($pileup->qpos)+1,$pileup->indel);
-#				print "indel at pos: $pos\tread name: $name\tref base: $refbase\tbase: $qbase\n";
-#				print "read pos: ",$pileup->qpos,"\tquery length:",$b->query->length,"\tindel length: ",$pileup->indel,"\t$ins_base\n";
+#				say "indel at pos: $pos\tread name: $name\tref base: $refbase\tbase: $qbase";
+#				say "read pos: ",$pileup->qpos,"\tquery length:",$b->query->length,"\tindel length: ",$pileup->indel,"\t$ins_base";
 				#ADD THE INFO FROM THE BASE THAT BEFORE THE INSERTION "PREINS"
-				$ins_hash{'preINSbases'}->{$qbase}++; 
+				$ins_hash{'preINSbases'}->{$qbase}++;
 
 				#ADD THE POSITION IN THE READ WHERE THE INSERTION IS LOCATED
 				$positions_in_reads_seen{'ins'}->{$qbase}->{$pos_in_read}++;
@@ -126,11 +132,11 @@ my $snp_caller = sub {
 						$printf_pos = "$pos.0".($ins_pos+1);
 					}else{
 						$printf_pos = "$pos.".($ins_pos+1);
-					}						
+					}
 					$ins_hash{'bases'}->{$printf_pos}->{$in_nucs[$ins_pos]}++;
 				}
 
-#				print "\nscore: $score_string\n";
+#				say "\nscore: $score_string";
 				#THIS IS GOING to hold the BASES OF THE INSERTION
 				push @{$ins_hash{'inserted_bases'}},$ins_base;
 				if($refbase eq $qbase){
@@ -155,15 +161,15 @@ my $snp_caller = sub {
 				$distances_in_reads_seen{$qbase}->{$read_length-$pos_in_read}++;
 				$alignment_size++;
 #### GET COVERAGE
-#				print "NON INDEL: $pos\t$name\t$refbase\t$qbase\n";
+#				say "NON INDEL: $pos\t$name\t$refbase\t$qbase";
 			}
 		}
-	
+
 	###########################################################################
 	#PARSING OUTPUT TO WRITE IN FILE
 	###########################################################################
-	
-	
+
+
 		#GET NUMBER OF READS FOR DELETIONS, INSERTIONS AND REFERENCE
 		my ($insert_reads,$deletion_reads,$ref_reads,$all_reads) =(0,0,0,0);
 		$ref_reads = sum(values %{$positions_in_reads_seen{$refbase}}) if(defined $positions_in_reads_seen{$refbase});
@@ -171,16 +177,16 @@ my $snp_caller = sub {
 		$all_reads += sum(values %{$positions_in_reads_seen{"C"}}) if(defined $positions_in_reads_seen{"C"});
 		$all_reads += sum(values %{$positions_in_reads_seen{"G"}}) if(defined $positions_in_reads_seen{"G"});
 		$all_reads += sum(values %{$positions_in_reads_seen{"T"}}) if(defined $positions_in_reads_seen{"T"});
-	
+
 		if(defined $positions_in_reads_seen{'ins'}){
 			for (keys %{$positions_in_reads_seen{'ins'}}){
 				$insert_reads += sum(values %{$positions_in_reads_seen{'ins'}->{$_}});
 			}
 		}
 		$deletion_reads = sum(values %{$positions_in_reads_seen{'del'}}) if(defined $positions_in_reads_seen{'del'});
-	
+
 		#I CHECK FIRST IF IT IS AN INSERTION< THE AN DELETION AND THEN A SNP
-	#	print "$refbase\t$ref_reads\tall reads: $all_reads\tins: $insert_reads\tdel: $deletion_reads\n";
+	#	say "$refbase\t$ref_reads\tall reads: $all_reads\tins: $insert_reads\tdel: $deletion_reads";
 		if (
 			$insert_reads > 1 &&
 			($insert_reads >= round($ref_reads * $threshold_fraction_of_reads_matching_ref_for_indels)) &&
@@ -190,8 +196,8 @@ my $snp_caller = sub {
 			#FOR THIS I"VE MADE A FUNCTION THAT CALCULATES THE BASES, POSITIONS ETC
 			my ($preins_line,$preins_pos_in_reads_seen,$preins_most_abundant_base_reads,$preins_most_abundant_base,$preins_total) = caculate_snp_in_pre_insertion(\%positions_in_reads_seen,$refbase);
 			my ($rpreins_line,$rpreins_pos_in_reads_seen,$rpreins_most_abundant_base_reads,$rpreins_most_abundant_base,$rpreins_total) = caculate_snp_in_pre_insertion(\%distances_in_reads_seen,$refbase);
-	#		print "$pos: $refbase\ttotal: $preins_total\tref: $ref_reads\tins: $insert_reads > ".round($ref_reads*$threshold_fraction_of_reads_matching_ref_for_indels)."\t\n$preins_line\n$rpreins_line\n";
-	
+	#		say "$pos: $refbase\ttotal: $preins_total\tref: $ref_reads\tins: $insert_reads > ".round($ref_reads*$threshold_fraction_of_reads_matching_ref_for_indels)."\t\n$preins_line\n$rpreins_line";
+
 			#THEN CHECK AS ALWAYS FOR SNPS...
 			if(
 				$preins_most_abundant_base ne $refbase &&
@@ -199,10 +205,10 @@ my $snp_caller = sub {
 				$preins_most_abundant_base_reads >= $threshold_number_of_reads
 			) {
 				my $line = "$seqid,$pos,$refbase,$preins_line,$preins_most_abundant_base," . calculate_attributes($preins_pos_in_reads_seen).",".calculate_attributes($rpreins_pos_in_reads_seen);
-				print SNP_OUTFILE "$line\n";
-				#print "SNP: $line\n";
+				say SNP_OUTFILE "$line";
+				#say "SNP: $line";
 			}
-	
+
 			#NOW ADD INSERTION LINES TO THE OUTFILE IN  A LOOP (INFO IN %ins_hash)
 			#FIRST GET ATTRIBUTE LINE FOR THE PREINS BASE (CAN BE DONE FOR EACH BASE IN THE INSERTION)
 			my %new_hash_with_positions_for_ins=();
@@ -217,11 +223,11 @@ my $snp_caller = sub {
 			}
 			#PASS HASH TO SUB TO CALCULATE ATTRBUTES (POSITIONS OF READS)
 			my $preins_attr_line = calculate_attributes(\%new_hash_with_positions_for_ins) . ",". calculate_attributes(\%r_new_hash_with_positions_for_ins);
-	
+
 			for my $new_pos (sort {$a <=> $b} keys(%{$ins_hash{'bases'}})){
 				my $line = "$seqid,$new_pos,INS,";
-	
-				#FIRST GET ABUNDANCES 
+
+				#FIRST GET ABUNDANCES
 				my ($nt_line, $most_abundant_ins, $most_abundant_ins_reads) = ("",0,0);
 				foreach my $nt (('A','C','G','T','del')){
 					if(defined($ins_hash{'bases'}->{$new_pos}->{$nt})){
@@ -235,10 +241,10 @@ my $snp_caller = sub {
 					}
 				}
 				$line .= $nt_line . "$most_abundant_ins,$preins_attr_line";
-				print SNP_OUTFILE "$line\n";
-	#			print "INS: $line\n";
+				say SNP_OUTFILE "$line";
+	#			say "INS: $line";
 			}
-	
+
 		}elsif(
 			$deletion_reads > 1 &&
 			($deletion_reads >= round($ref_reads * $threshold_fraction_of_reads_matching_ref_for_indels))
@@ -246,12 +252,12 @@ my $snp_caller = sub {
 			my($nt_line,$most_abundant_base,$most_abundant_base_reads,$total) = do_quantification_loop(\%positions_in_reads_seen);
 			my $line = "$seqid,$pos,$refbase,$nt_line,del,";
 			$line .= calculate_attributes(\%{$positions_in_reads_seen{'del'}}) .",". calculate_attributes(\%{$distances_in_reads_seen{'del'}});
-			print SNP_OUTFILE "$line\n";
-	#		print "DEL: $line\n";
+			say SNP_OUTFILE "$line";
+	#		say "DEL: $line";
 		}else{
-			
+
 			my($nt_line,$most_abundant_base,$most_abundant_base_reads,$total) = do_quantification_loop(\%positions_in_reads_seen);
-	#		print "$most_abundant_base ne $refbase && $most_abundant_base_reads > ($alignment_size*$threshold_fraction_of_reads_matching_ref) && $most_abundant_base_reads >= $threshold_number_of_reads\n";
+	#		say "$most_abundant_base ne $refbase && $most_abundant_base_reads > ($alignment_size*$threshold_fraction_of_reads_matching_ref) && $most_abundant_base_reads >= $threshold_number_of_reads";
 			if(
 				$most_abundant_base ne $refbase &&
 				$most_abundant_base_reads >= ($alignment_size * $threshold_fraction_of_reads_matching_ref) &&
@@ -259,13 +265,13 @@ my $snp_caller = sub {
 			) {
 				my $line = "$seqid,$pos,$refbase,$nt_line,$most_abundant_base,";
 				$line .= calculate_attributes(\%{$positions_in_reads_seen{$most_abundant_base}}) .",". calculate_attributes(\%{$distances_in_reads_seen{$most_abundant_base}});
-				print SNP_OUTFILE "$line\n";
-	#			print "SNP: $line\n";
+				say SNP_OUTFILE "$line";
+	#			say "SNP: $line";
 			}
 		}
 		%positions_in_reads_seen=();
 		%distances_in_reads_seen=();
-	
+
 	}
 
 };
@@ -273,13 +279,13 @@ my $snp_caller = sub {
 
 # my @targets = $sam->seq_ids;
 # @targets = sort {$a cmp $b} @targets;
-#print "@targets\n";
+#say "@targets";
 # my $chromosome_counter=0;
 # foreach my $chromosome (@targets[$chromosome..$chrm_end]){
 	# $chromosome_counter++;
 	#CAPITALIZE FOR COLOMA!!!
 #	substr($chromosome,0,2,"SL");
-	# print "$chromosome_counter. $chromosome\tlength: $chr_lengths{$chromosome}\n";
+	# say "$chromosome_counter. $chromosome\tlength: $chr_lengths{$chromosome}";
 	# `sleep 1`;
 	$sam->fast_pileup($chromosome,$snp_caller);
 #	$sam->fast_pileup("$chromosome:55900..56900",$snp_caller);
@@ -299,17 +305,17 @@ sub log10 {
 }
 
 sub print_hash{
-	my %hash = @_;	
+	my %hash = @_;
 	my @keys = keys(%hash);
-	if ($keys[0] =~ m/[^0-9.]/){ 
+	if ($keys[0] =~ m/[^0-9.]/){
 		foreach my $key (sort (keys(%hash))) {
-		   print "$key => $hash{$key}\n";
+		   say "$key => $hash{$key}";
 		}
 	}else{
 		foreach my $key (sort {$a <=> $b} (keys(%hash))) {
-		   print "$key => $hash{$key}\n";
+		   say "$key => $hash{$key}";
 		}
-	}		
+	}
 }
 
 sub round {
