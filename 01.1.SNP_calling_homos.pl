@@ -55,6 +55,7 @@ my $snp_caller = sub {
     $refbase = uc $refbase;
 
     return if $refbase eq "N";
+    return if scalar @$p < $threshold_number_of_reads;
 
     my %ins_hash = (
         'inserted_bases'       => [],
@@ -68,13 +69,16 @@ my $snp_caller = sub {
 
     for my $pileup (@$p) {
 
+        next if $pileup->is_refskip;
 
         my $b = $pileup->alignment;
 
         my $qpos = $pileup->qpos;
         my $qseq = $b->qseq;
+        next unless $b->qscore->[$qpos] > 25;
 
         my $qbase = substr( $qseq, $qpos, 1 );
+        next if $qbase eq 'N';
 
         my $read_length = $b->query->length;
 
