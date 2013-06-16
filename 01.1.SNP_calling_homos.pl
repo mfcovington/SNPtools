@@ -44,14 +44,10 @@ my $sam = Bio::DB::Sam->new(
     -fasta => "$fasta_ref"
 );
 
-my %deletion_reads_ids;
-my %spliced_reads_ids;
-my %positions_in_reads_seen;
-my %distances_in_reads_seen;
-my %ins_hash;
-
 my $snp_caller = sub {
     my ( $seqid, $pos, $p ) = @_;
+    my %positions_in_reads_seen;
+    my %distances_in_reads_seen;
 
     #       say "$seqid,$pos,$p";
     #GET BASE FOR THE REFERENCE SEQUENCE
@@ -234,10 +230,8 @@ my $snp_caller = sub {
                 $preins_most_abundant_base, $preins_total )
               = calculate_snp_in_pre_insertion( \%positions_in_reads_seen,
                 $refbase );
-            my ( $rpreins_line, $rpreins_pos_in_reads_seen,
-                $rpreins_most_abundant_base_reads,
-                $rpreins_most_abundant_base, $rpreins_total )
-              = calculate_snp_in_pre_insertion( \%distances_in_reads_seen,
+            my ( $rpreins_line, $rpreins_pos_in_reads_seen ) =
+              calculate_snp_in_pre_insertion( \%distances_in_reads_seen,
                 $refbase );
 
 #       say "$pos: $refbase\ttotal: $preins_total\tref: $ref_reads\tins: $insert_reads > ".round($ref_reads*$threshold_fraction_of_reads_matching_ref_for_indels)."\t\n$preins_line\n$rpreins_line";
