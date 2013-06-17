@@ -31,21 +31,29 @@ GetOptions(
     'bam_file:s'   => \$bam_file,
 );
 
-say "Looking for SNPs on $chromosome ($bam_file)";
-##OPEN OUTPUT FILE
-my $out_filename = "$outputfile.csv";
-open my $snp_out_fh, ">", $out_filename;
-
-#MAKE HEADER LINE AND PRINT IT TO THE OUTPUT FILE
-my $snp_header = "seq_id,pos,ref,a,c,g,t,del";
-say $snp_out_fh "$snp_header";
-
 my $sam = Bio::DB::Sam->new(
     -bam   => "$bam_file",
     -fasta => "$fasta_ref"
 );
 
-my $snp_caller = sub {
+say "Looking for SNPs on $chromosome ($bam_file)";
+
+my $out_filename = "$outputfile.csv";
+open my $snp_out_fh, ">", $out_filename;
+
+my $snp_header = "seq_id,pos,ref,a,c,g,t,del";
+say $snp_out_fh "$snp_header";
+
+$sam->fast_pileup( $chromosome, \&snp_caller );
+
+close $snp_out_fh;
+
+exit;
+
+###################################################
+#SUBROUTINES
+
+sub snp_caller {
     my ( $seqid, $pos, $p ) = @_;
     my %positions;
     my %distances;
@@ -271,15 +279,6 @@ my $snp_caller = sub {
     %distances = ();
 
 };
-
-$sam->fast_pileup( $chromosome, $snp_caller );
-
-close $snp_out_fh;
-
-exit;
-
-###################################################
-#SUBROUTINES
 
 sub round {
     my ($number) = shift;
