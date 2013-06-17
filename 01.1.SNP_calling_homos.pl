@@ -149,26 +149,21 @@ my $snp_caller = sub {
     ###########################################################################
 
     #GET NUMBER OF READS FOR DELETIONS, INSERTIONS AND REFERENCE
-    my ( $insert_reads, $deletion_reads, $ref_reads, $all_reads ) =
-      ( 0, 0, 0, 0 );
-    $ref_reads = sum( values %{ $positions{$refbase} } )
-      if ( exists $positions{$refbase} );
-    $all_reads += sum( values %{ $positions{"A"} } )
-      if ( exists $positions{"A"} );
-    $all_reads += sum( values %{ $positions{"C"} } )
-      if ( exists $positions{"C"} );
-    $all_reads += sum( values %{ $positions{"G"} } )
-      if ( exists $positions{"G"} );
-    $all_reads += sum( values %{ $positions{"T"} } )
-      if ( exists $positions{"T"} );
+    my ( $insert_reads, $deletion_reads, $ref_reads, $all_reads ) = (0) x 4;
+    $ref_reads = sum values %{ $positions{$refbase} }
+      if exists $positions{$refbase};
+
+    for (qw(A C G T)) {
+        $all_reads += sum values %{ $positions{$_} } if exists $positions{$_};
+    }
 
     if ( exists $positions{'ins'} ) {
-        for ( keys %{ $positions{'ins'} } ) {
-            $insert_reads += sum( values %{ $positions{'ins'}->{$_} } );
-        }
+        $insert_reads += sum values %{ $positions{'ins'}->{$_} }
+          for keys %{ $positions{'ins'} }
     }
-    $deletion_reads = sum( values %{ $positions{'del'} } )
-      if ( exists $positions{'del'} );
+
+    $deletion_reads = sum values %{ $positions{'del'} }
+      if exists $positions{'del'};
 
     #I CHECK FIRST IF IT IS AN INSERTION< THE AN DELETION AND THEN A SNP
     if (   $insert_reads > 1
@@ -202,12 +197,12 @@ my $snp_caller = sub {
 #FIRST GET ATTRIBUTE LINE FOR THE PREINS BASE (CAN BE DONE FOR EACH BASE IN THE INSERTION)
         my %new_hash_with_positions_for_ins   = ();
         my %r_new_hash_with_positions_for_ins = ();
-        foreach my $nt ( ( 'A', 'C', 'G', 'T', 'del' ) ) {
-            foreach ( keys %{ $positions{'ins'}->{$nt} } ) {
+        for my $nt ( qw( A C G T del ) ) {
+            for ( keys %{ $positions{'ins'}->{$nt} } ) {
                 $new_hash_with_positions_for_ins{$_} =
                   $positions{'ins'}->{$nt}->{$_};
             }
-            foreach ( keys %{ $distances{'ins'}->{$nt} } ) {
+            for ( keys %{ $distances{'ins'}->{$nt} } ) {
                 $r_new_hash_with_positions_for_ins{$_} =
                   $distances{'ins'}->{$nt}->{$_};
             }
@@ -224,7 +219,7 @@ my $snp_caller = sub {
             #FIRST GET ABUNDANCES
             my ( $nt_line, $most_abundant_ins, $most_abundant_ins_reads ) =
               ( "", 0, 0 );
-            foreach my $nt ( ( 'A', 'C', 'G', 'T', 'del' ) ) {
+            for my $nt ( qw( A C G T del ) ) {
                 if ( exists( $ins_hash{'bases'}->{$new_pos}->{$nt} ) ) {
                     $nt_line .= "$ins_hash{'bases'}->{$new_pos}->{$nt},";
                     if ( $most_abundant_ins_reads <
@@ -294,12 +289,12 @@ sub round {
 sub calculate_attributes {
     my ($positions_from_reads_hash) = shift;
     my %quarters;
-    foreach my $p ( keys %{$positions_from_reads_hash} ) {
+    for my $p ( keys %{$positions_from_reads_hash} ) {
         $quarters{ ( int( $p / 16.3 ) + 1 ) } +=
           $positions_from_reads_hash->{$p};
     }
     my ( $quart_count, $out_string ) = ( 0, "" );
-    foreach my $s ( ( 1 .. 5 ) ) {
+    for my $s ( 1 .. 5 ) {
         if ( exists $quarters{$s} ) {
             $quart_count++;
             $out_string .= "$quarters{$s},";
@@ -321,7 +316,7 @@ sub calculate_snp_in_pre_insertion {
     #DO THE LOOP TO CALCULATE ABUNDANCES OF NTS, ETC
     my ( $nt_line, $total, $most_abundant_base, $most_abundant_base_reads ) =
       ( "", 0, "del", 0 );
-    foreach my $nt ( ( 'A', 'C', 'G', 'T', 'del' ) ) {
+    for my $nt ( qw( A C G T del ) ) {
         my $number_of_reads = 0;
         $number_of_reads += sum( values %{ $positions_in_reads_hash->{$nt} } )
           if ( exists $positions_in_reads_hash->{$nt} );
@@ -356,7 +351,7 @@ sub do_quantification_loop {
     my $positions_in_reads_hash = shift;
     my ( $nt_line, $total, $most_abundant_base, $most_abundant_base_reads ) =
       ( "", 0, "del", 0 );
-    foreach my $nt ( ( 'A', 'C', 'G', 'T', 'del' ) ) {
+    for my $nt ( qw( A C G T del ) ) {
         my $number_of_reads = 0;
         $number_of_reads = sum( values %{ $positions_in_reads_hash->{$nt} } )
           if ( exists $positions_in_reads_hash->{$nt} );
