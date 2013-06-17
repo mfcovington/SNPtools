@@ -193,9 +193,7 @@ sub snp_caller {
             && $preins_most_abundant_base_reads >= $min_depth )
         {
             my $line =
-                "$seqid,$pos,$refbase,$preins_line,$preins_most_abundant_base,"
-              . calculate_attributes($preins_pos) . ","
-              . calculate_attributes($rpreins_pos);
+                "$seqid,$pos,$refbase,$preins_line,$preins_most_abundant_base";
             say $snp_out_fh "$line";
 
             #say "SNP: $line";
@@ -217,9 +215,6 @@ sub snp_caller {
         }
 
         #PASS HASH TO SUB TO CALCULATE ATTRBUTES (POSITIONS OF READS)
-        my $preins_attr_line =
-            calculate_attributes( \%new_hash_with_positions_for_ins ) . ","
-          . calculate_attributes( \%r_new_hash_with_positions_for_ins );
 
         for my $new_pos ( sort { $a <=> $b } keys( %{ $ins_hash{'bases'} } ) ) {
             my $line = "$seqid,$new_pos,INS,";
@@ -242,7 +237,7 @@ sub snp_caller {
                     $nt_line .= "0,";
                 }
             }
-            $line .= $nt_line . "$most_abundant_ins,$preins_attr_line";
+            $line .= $nt_line . "$most_abundant_ins";
             say $snp_out_fh "$line";
         }
 
@@ -252,10 +247,7 @@ sub snp_caller {
     {
         my ( $nt_line, $most_abundant_base, $most_abundant_base_reads, $total )
           = do_quantification_loop( \%positions );
-        my $line = "$seqid,$pos,$refbase,$nt_line,del,";
-        $line .=
-            calculate_attributes( \%{ $positions{'del'} } ) . ","
-          . calculate_attributes( \%{ $distances{'del'} } );
+        my $line = "$seqid,$pos,$refbase,$nt_line,del";
         say $snp_out_fh "$line";
     }
     else {
@@ -267,13 +259,10 @@ sub snp_caller {
             && $most_abundant_base_reads >= ( $coverage * $min_ratio )
             && $most_abundant_base_reads >= $min_depth )
         {
-            my $line = "$seqid,$pos,$refbase,$nt_line,$most_abundant_base,";
-            $line .=
-                calculate_attributes( \%{ $positions{$most_abundant_base} } )
-              . ","
-              . calculate_attributes( \%{ $distances{$most_abundant_base} } );
+            my $line = "$seqid,$pos,$refbase,$nt_line,$most_abundant_base";
             say $snp_out_fh "$line";
         }
+
     }
     %positions = ();
     %distances = ();
@@ -283,30 +272,6 @@ sub snp_caller {
 sub round {
     my ($number) = shift;
     return int( $number + .5 );
-}
-
-sub calculate_attributes {
-    my ($positions_from_reads_hash) = shift;
-    my %quarters;
-    for my $p ( keys %{$positions_from_reads_hash} ) {
-        $quarters{ ( int( $p / 16.3 ) + 1 ) } +=
-          $positions_from_reads_hash->{$p};
-    }
-    my ( $quart_count, $out_string ) = ( 0, "" );
-    for my $s ( 1 .. 5 ) {
-        if ( exists $quarters{$s} ) {
-            $quart_count++;
-            $out_string .= "$quarters{$s},";
-        }
-        else {
-            $out_string .= "0,";
-        }
-    }
-    $out_string .=
-        sum( values %{$positions_from_reads_hash} )
-      . ",$quart_count,"
-      . scalar( keys %{$positions_from_reads_hash} );
-    return $out_string;
 }
 
 sub calculate_snp_in_pre_insertion {
