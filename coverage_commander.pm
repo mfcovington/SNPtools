@@ -15,9 +15,6 @@ use POSIX;
 #TODO: require certain arguments to be defined
 #TODO: generate log files??
 #will it cause a problem if i look up a region that has no coverage?  will it return empty string, undef or 0?....looks like empty or undef
-# TODO: the following gets printed (to STDERR) even when not using verbose (BUT DO I EVEN CARE?)
-# [mpileup] 1 samples in 1 input files
-# <mpileup> Set max per-file depth to 8000
 #TODO: Do I need to make defaults lazy and uncomment UndefTolerant?
 
 sub samtools_cmd_gaps {
@@ -271,15 +268,17 @@ sub populate_CoverageDB_by_chr {
     my $bam_file    = $self->bam;
     my $sample_id   = $self->id;
 
-    my $sam_gap_cmd = "samtools mpileup -r $chromosome $bam_file | cut -f1-2,4";
-    my $sam_nogap_cmd = "samtools depth -r $chromosome $bam_file";
-
     say "  Getting coverage for $chromosome" if $self->verbose;
     my $count = 1;
     my @cov_data;
 
+    system("samtools index $bam_file") if ! -e "$bam_file.bai";
+
+    my $sam_gap_cmd = "samtools mpileup -r $chromosome $bam_file | cut -f1-2,4";
+    my $sam_nogap_cmd = "samtools depth -r $chromosome $bam_file";
+
     my $gap_fh;
-    my $stderr = capture_stderr {    # suppress mpileup output sent to stderr
+    capture_stderr {    # suppress mpileup output sent to stderr
         open $gap_fh,   "-|", $sam_gap_cmd;
     };
     open my $nogap_fh, "-|", $sam_nogap_cmd;
