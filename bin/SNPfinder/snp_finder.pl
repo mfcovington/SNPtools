@@ -10,7 +10,7 @@ use warnings;
 use autodie;
 use Getopt::Long;
 
-use snp_commander;
+use SNPtools::SNPfinder;
 
 ###TODO:
 #move looping through chromosomes into module - FINISHED, UNTESTED
@@ -60,7 +60,7 @@ die $usage
   && defined $bam_file
   && defined $fasta_file;
 
-my $snps = snp_commander->new(
+my $snps = SNPtools::SNPfinder->new(
     id        => $id,
     bam       => $bam_file,
     fasta     => $fasta_file,

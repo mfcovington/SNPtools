@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use autodie;
 use Getopt::Long;
-use coverage_commander;
+use SNPtools::Coverage;
 
 my $usage = <<USAGE_END;
 
@@ -40,7 +40,7 @@ my $options = GetOptions(
 die $usage if $help;
 die $usage unless defined $bam_file && defined $id;
 
-my $coverage = coverage_commander->new(
+my $coverage = SNPtools::Coverage->new(
     id       => $id,
     bam      => $bam_file,
     seq_list => $seq_list,
