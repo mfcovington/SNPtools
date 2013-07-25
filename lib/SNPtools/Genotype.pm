@@ -1,4 +1,4 @@
-package genotyping_commander;
+package SNPtools::Genotype;
 use Moose;
 use MooseX::UndefTolerant;
 use Modern::Perl;

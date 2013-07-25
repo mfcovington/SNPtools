@@ -1,4 +1,4 @@
-package genoplot_commander;
+package SNPtools::Plot;
 use Moose;
 use MooseX::UndefTolerant;
 use File::Basename;

@@ -1,4 +1,4 @@
-package coverage_commander;
+package SNPtools::Coverage;
 use Moose;
 # use MooseX::UndefTolerant;
 use Modern::Perl;
@@ -8,7 +8,7 @@ use Parallel::ForkManager;
 use autodie;
 # use Data::Printer;
 use Capture::Tiny 'capture_stderr';
-use CoverageDB::Main;
+use SNPtools::Coverage::DB::Main;
 use POSIX;
 
 #TODO: check for presence of valid region!!!!
@@ -260,7 +260,7 @@ sub populate_CoverageDB_by_chr {
 # TODO: custom path (and make empty db?)
     my $dbi = 'SQLite';
     my $db = 'db/coverage.db';
-    my $schema = CoverageDB::Main->connect("dbi:$dbi:$db");
+    my $schema = Coverage::DB::Main->connect("dbi:$dbi:$db");
 
     my $chromosome  = $self->_chromosome;
     my $flank_dist  = $self->flank_dist;
