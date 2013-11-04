@@ -98,8 +98,8 @@ sub flanking_cov {
 
     my $flanking_cov_cmd =
       "~/git.repos/snp_identification/flanking_coverage_calculator.pl \\
-    --snp_file "   . $self->out_dir . "/snps/"     . join( '.', $self->id, $self->chromosome, "snps.csv" )     . " \\
-    --cov_prefix " . $self->out_dir . "/coverage/" . join( '.', $self->id, $self->chromosome, "coverage" );
+    --snp_file "   . $self->out_dir . "/snps/"     . join( '.', $self->id, $self->_chromosome, "snps.csv" )     . " \\
+    --cov_prefix " . $self->out_dir . "/coverage/" . join( '.', $self->id, $self->_chromosome, "coverage" );
 
 #ADD FLANK DIST
 
@@ -116,10 +116,10 @@ around 'flanking_cov' => sub {
     foreach my $chr (@chromosomes) {
         $pm->start and next;
 
-        $self->chromosome($chr);
-        # my $cov_out = $self->out_dir . "/" . $self->id . ".snps." . $self->chromosome;
+        $self->_chromosome($chr);
+        # my $cov_out = $self->out_dir . "/" . $self->id . ".snps." . $self->_chromosome;
         # $self->out_file($cov_out);
-        # $self->out_file( $self->out_dir . "/snps/" . $self->id . "." . $self->chromosome . ".snps" );
+        # $self->out_file( $self->out_dir . "/snps/" . $self->id . "." . $self->_chromosome . ".snps" );
         # $self->identify_snps;
 
         $self->$orig(@_);
