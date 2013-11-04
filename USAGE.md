@@ -28,7 +28,7 @@
 
 # Identify Polymorphisms
 
-## Find SNPs/indels
+## Find SNPs/indels and filter
 
     BIN=/Users/mfc/git.repos/SNPtools/bin
     DB_DIR=/Users/mfc/git.repos/SNPtools/sample-files
@@ -45,4 +45,8 @@
           --snp_min   0.33 \
           --indel_min 0.33 \
           --threads   3
+
+        for SNP_FILE in $OUT_DIR/snps/$ID.*.snps.nogap.gap.csv; do
+            $BIN/SNPfinder/02.0.filtering_SNPs_by_pos.pl $SNP_FILE
+        done
     done
