@@ -7,6 +7,7 @@ use File::Path 'make_path';
 use Parallel::ForkManager;
 use autodie;
 # use Data::Printer;
+use FindBin qw($Bin);
 
 #TODO: move common subroutines elsewhere (validation, mkdir, bam header-related, etc.)
 #TODO: require certain arguments to be defined
@@ -90,16 +91,23 @@ around 'identify_snps' => sub {
     $pm->wait_all_children;
 };
 
+# TODO: Incorporate script into this module (or coverage module)
 sub flanking_cov {
     my $self = shift;
 
     $self->_validity_tests();
     # $self->_make_dir();
 
-    my $flanking_cov_cmd =
-      "~/git.repos/snp_identification/flanking_coverage_calculator.pl \\
-    --snp_file "   . $self->out_dir . "/snps/"     . join( '.', $self->id, $self->_chromosome, "snps.csv" )     . " \\
-    --cov_prefix " . $self->out_dir . "/coverage/" . join( '.', $self->id, $self->_chromosome, "coverage" );
+    my $snp_file   = $self->out_dir . "/snps/" . join( '.', $self->id, $self->_chromosome, "snps.csv" );
+    my $sample_id  = $self->id;
+    my $chromosome = $self->_chromosome;
+
+    my $flanking_cov_cmd = <<EOF;
+$Bin/flanking_coverage_calculator.pl \\
+    --snp_file   $snp_file   \\
+    --sample_id  $sample_id  \\
+    --chromosome $chromosome
+EOF
 
 #ADD FLANK DIST
 
