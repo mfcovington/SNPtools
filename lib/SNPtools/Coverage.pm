@@ -267,18 +267,15 @@ sub populate_CoverageDB_by_chr {
     my $bam_file    = $self->bam;
     my $sample_id   = $self->id;
 
-# DONE: custom path
-# DONE: correct/improve DB path?
-# DONE: make a DB in out_dir
 # TODO: Create DB table using DBIx::Class instead of DBI
-    my $dbi = 'SQLite';
-    my $db = "$cov_dir/coverage.db";
+    my $dbi    = 'SQLite';
+    my $db     = "$cov_dir/coverage.db";
     my $schema = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
 
-unless (-f $db) {
-    make_path( $cov_dir );
-    my $dbh = DBI->connect("dbi:$dbi:$db");
-    $dbh->do(<<'END_SQL');
+    unless (-f $db) {
+        make_path( $cov_dir );
+        my $dbh = DBI->connect("dbi:$dbi:$db");
+        $dbh->do(<<'END_SQL');
 CREATE TABLE coverage (
     sample_id  TEXT    NOT NULL,
     chromosome TEXT    NOT NULL,
@@ -288,8 +285,8 @@ CREATE TABLE coverage (
     PRIMARY KEY ( sample_id, chromosome, position )
 );
 END_SQL
-    $dbh->disconnect();
-}
+        $dbh->disconnect();
+    }
 
     say "  Getting coverage for $chromosome" if $self->verbose;
     my $count = 1;
