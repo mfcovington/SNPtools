@@ -272,21 +272,7 @@ sub populate_CoverageDB_by_chr {
     my $db     = "$cov_dir/coverage.db";
     my $schema = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
 
-    unless (-f $db) {
-        make_path( $cov_dir );
-        my $dbh = DBI->connect("dbi:$dbi:$db");
-        $dbh->do(<<'END_SQL');
-CREATE TABLE coverage (
-    sample_id  TEXT    NOT NULL,
-    chromosome TEXT    NOT NULL,
-    position   INTEGER NOT NULL,
-    gap_cov    INTEGER NOT NULL,
-    nogap_cov  INTEGER NOT NULL,
-    PRIMARY KEY ( sample_id, chromosome, position )
-);
-END_SQL
-        $dbh->disconnect();
-    }
+    create_db( $db, $dbi, $cov_dir, $self->verbose ) unless -f $db;
 
     say "  Getting coverage for $chromosome" if $self->verbose;
     my $count = 1;
@@ -318,6 +304,25 @@ END_SQL
     close $nogap_fh;
 
     populate_and_reset( \$count, \@cov_data, \$schema ) if scalar @cov_data;
+}
+
+# TODO: Convert create_db into OO method
+sub create_db {
+    my ( $db, $dbi, $db_dir, $verbose ) = @_;
+    say "  Creating coverage database: $db" if $verbose;
+    make_path( $db_dir );
+    my $dbh = DBI->connect("dbi:$dbi:$db");
+    $dbh->do(<<'END_SQL');
+CREATE TABLE coverage (
+sample_id  TEXT    NOT NULL,
+chromosome TEXT    NOT NULL,
+position   INTEGER NOT NULL,
+gap_cov    INTEGER NOT NULL,
+nogap_cov  INTEGER NOT NULL,
+PRIMARY KEY ( sample_id, chromosome, position )
+);
+END_SQL
+    $dbh->disconnect();
 }
 
 sub populate_and_reset {
