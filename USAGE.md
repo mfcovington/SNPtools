@@ -32,7 +32,7 @@
 
     BIN=/Users/mfc/git.repos/SNPtools/bin
     DB_DIR=/Users/mfc/git.repos/SNPtools/sample-files
-    OUT_DIR=/Users/mfc/git.repos/SNPtools/sample-files/output.10kb
+    OUT_DIR=/Users/mfc/git.repos/SNPtools/sample-files/output
 
     for ID in R500 IMB211
     do
@@ -46,5 +46,3 @@
           --indel_min 0.33 \
           --threads   3
     done
-
-    $BIN/Coverage/test-commander-db.pl
