@@ -9,9 +9,9 @@ use strict;
 use warnings;
 use autodie;
 use feature 'say';
-use coverage_commander;
+use SNPtools::Coverage;
 # my $seq_list = 'SL2.40ch01';
-my $coverage = coverage_commander->new(
+my $coverage = SNPtools::Coverage->new(
     id       => 'test',
     bam      => "test/test.bam",
     # seq_list => $seq_list,

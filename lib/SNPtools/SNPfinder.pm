@@ -1,4 +1,4 @@
-package snp_commander;
+package SNPtools::SNPfinder;
 use Moose;
 use MooseX::UndefTolerant;
 use Modern::Perl;

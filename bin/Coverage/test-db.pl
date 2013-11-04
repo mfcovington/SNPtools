@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 use feature 'say';
-use CoverageDB::Main;
+use SNPtools::Coverage::DB::Main;
 
-my $schema = CoverageDB::Main->connect('dbi:SQLite:db/coverage.db');
+my $schema = SNPtools::Coverage::DB::Main->connect('dbi:SQLite:db/coverage.db');
 
 
 get_cov( ( 'test', 'SL2.40ch01' ) );

@@ -11,11 +11,11 @@ use autodie;
 use feature 'say';
 use File::Basename;
 use Getopt::Long;
+use FindBin qw($Bin);
 
 # TODO: fix paths
-use lib '../coverage_calc/';
-use CoverageDB::Main;
-my $schema = CoverageDB::Main->connect('dbi:SQLite:../coverage_calc/db/coverage.db');
+use SNPtools::Coverage::DB::Main;
+my $schema = SNPtools::Coverage::DB::Main->connect('dbi:SQLite:$Bin/../lib/SNPtools/db/coverage.db');
 
 
 my $usage = <<USAGE_END;

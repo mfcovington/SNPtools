@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-use genotyping_commander;
+use SNPtools::Genotype;
 
 my $usage = <<USAGE_END;
 
@@ -36,7 +36,7 @@ die $usage unless $options;
 die $usage if $help;
 die $usage unless defined $fasta_file;
 
-my $geno = genotyping_commander->new(
+my $geno = SNPtools::Genotype->new(
     fasta   => $fasta_file,
     out_dir => $out_dir,
     threads => $threads,
@@ -49,7 +49,7 @@ my @ids = readdir $map_dh;
 
 for (@ids) {
     my $bam_file = $map_dir . $_ . "/merged/" . $_ . "REPLACE_WITH_STANDARDIZED_NAME.bam";
-    my $geno = genotyping_commander->new(
+    my $geno = SNPtools::Genotype->new(
         id      => $_,
         bam     => $bam_file,
         fasta   => $fasta_file,
