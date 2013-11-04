@@ -10,6 +10,7 @@ use autodie;
 use Capture::Tiny 'capture_stderr';
 use SNPtools::Coverage::DB::Main;
 use POSIX;
+use DBI;
 
 #TODO: check for presence of valid region!!!!
 #TODO: require certain arguments to be defined
@@ -259,10 +260,29 @@ around 'get_coverage_db' => sub {
 sub populate_CoverageDB_by_chr {
     my $self = shift;
 
-# TODO: custom path (and make empty db?)
+# TODO: custom path
+# TODO: correct/improve DB path?
+# TODO: make a DB in out_dir (for each sample?)
+# NOTE: until then: rm coverage.db; sqlite3 coverage.db < coverage.sql
+# TODO: Create DB table using DBIx::Class instead of DBI
     my $dbi = 'SQLite';
-    my $db = 'db/coverage.db';
-    my $schema = Coverage::DB::Main->connect("dbi:$dbi:$db");
+    my $db = 'lib/SNPtools/db/coverage.db';
+    my $schema = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
+
+unless (-f $db) {
+    my $dbh = DBI->connect("dbi:$dbi:$db");
+    $dbh->do(<<'END_SQL');
+CREATE TABLE coverage (
+    sample_id  TEXT    NOT NULL,
+    chromosome TEXT    NOT NULL,
+    position   INTEGER NOT NULL,
+    gap_cov    INTEGER NOT NULL,
+    nogap_cov  INTEGER NOT NULL,
+    PRIMARY KEY ( sample_id, chromosome, position )
+);
+END_SQL
+    $dbh->disconnect();
+}
 
     my $chromosome  = $self->_chromosome;
     my $flank_dist  = $self->flank_dist;
