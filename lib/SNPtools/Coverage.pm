@@ -260,16 +260,23 @@ around 'get_coverage_db' => sub {
 sub populate_CoverageDB_by_chr {
     my $self = shift;
 
-# TODO: custom path
-# TODO: correct/improve DB path?
-# TODO: make a DB in out_dir (for each sample?)
-# NOTE: until then: rm coverage.db; sqlite3 coverage.db < coverage.sql
+    my $cov_dir     = $self->out_dir . "/coverage";
+    my $chromosome  = $self->_chromosome;
+    my $flank_dist  = $self->flank_dist;
+    my $cov_pos_ref = $self->cov_pos;
+    my $bam_file    = $self->bam;
+    my $sample_id   = $self->id;
+
+# DONE: custom path
+# DONE: correct/improve DB path?
+# DONE: make a DB in out_dir
 # TODO: Create DB table using DBIx::Class instead of DBI
     my $dbi = 'SQLite';
-    my $db = 'lib/SNPtools/db/coverage.db';
+    my $db = "$cov_dir/coverage.db";
     my $schema = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
 
 unless (-f $db) {
+    make_path( $cov_dir );
     my $dbh = DBI->connect("dbi:$dbi:$db");
     $dbh->do(<<'END_SQL');
 CREATE TABLE coverage (
@@ -283,12 +290,6 @@ CREATE TABLE coverage (
 END_SQL
     $dbh->disconnect();
 }
-
-    my $chromosome  = $self->_chromosome;
-    my $flank_dist  = $self->flank_dist;
-    my $cov_pos_ref = $self->cov_pos;
-    my $bam_file    = $self->bam;
-    my $sample_id   = $self->id;
 
     say "  Getting coverage for $chromosome" if $self->verbose;
     my $count = 1;

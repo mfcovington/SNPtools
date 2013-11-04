@@ -15,9 +15,6 @@ use FindBin qw($Bin);
 
 # TODO: fix paths
 use SNPtools::Coverage::DB::Main;
-my $dbi = 'SQLite';
-my $db = 'lib/SNPtools/db/coverage.db';
-my $schema = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
 
 
 my $usage = <<USAGE_END;
@@ -28,18 +25,20 @@ flanking_coverage_calculator.pl
   --sample_id
   --chromosome
   --flank_dist <flanking distance to use [8]>
+  --cov_db_dir
   --help
 
 USAGE_END
 
 #get options
-my ( $snp_in, $id, $chr, $help );
+my ( $snp_in, $id, $chr, $cov_db_dir, $help );
 my $flank_dist = 8;    # default
 my $options = GetOptions(
     "snp_file=s"   => \$snp_in,
     "sample_id=s"  => \$id,
     "chromosome=s" => \$chr,
     "flank_dist=i" => \$flank_dist,
+    "cov_db_dir=s" => \$cov_db_dir,
     "help"         => \$help,
 );
 die $usage if $help;
@@ -58,6 +57,9 @@ open my $snp_in_fh,     "<", $snp_in;
 open my $snp_out_fh,    ">", $snp_out;
 
 #build coverage hashes
+my $dbi      = 'SQLite';
+my $db       = "$cov_db_dir/coverage.db";
+my $schema   = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
 my %cov_hash = build_cov_hash( ( $id, $chr ) );
 
 #write header

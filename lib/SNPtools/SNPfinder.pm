@@ -98,15 +98,18 @@ sub flanking_cov {
     $self->_validity_tests();
     # $self->_make_dir();
 
-    my $snp_file   = $self->out_dir . "/snps/" . join( '.', $self->id, $self->_chromosome, "snps.csv" );
+    my $out_dir    = $self->out_dir;
     my $sample_id  = $self->id;
     my $chromosome = $self->_chromosome;
+    my $snp_file   = "$out_dir/snps/$sample_id.$chromosome.snps.csv";
+    my $cov_dir    = "$out_dir/coverage";
 
     my $flanking_cov_cmd = <<EOF;
 $Bin/flanking_coverage_calculator.pl \\
     --snp_file   $snp_file   \\
     --sample_id  $sample_id  \\
-    --chromosome $chromosome
+    --chromosome $chromosome \\
+    --cov_db_dir $cov_dir
 EOF
 
 #ADD FLANK DIST
