@@ -15,7 +15,9 @@ use FindBin qw($Bin);
 
 # TODO: fix paths
 use SNPtools::Coverage::DB::Main;
-my $schema = SNPtools::Coverage::DB::Main->connect('dbi:SQLite:$Bin/../lib/SNPtools/db/coverage.db');
+my $dbi = 'SQLite';
+my $db = 'lib/SNPtools/db/coverage.db';
+my $schema = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
 
 
 my $usage = <<USAGE_END;
