@@ -11,6 +11,7 @@ use autodie;
 use Getopt::Long;
 
 use SNPtools::SNPfinder;
+use SNPtools::Coverage;
 
 ###TODO:
 #move looping through chromosomes into module - FINISHED, UNTESTED
@@ -73,7 +74,17 @@ my $snps = SNPtools::SNPfinder->new(
     verbose   => $verbose,
 );
 
+my $coverage = SNPtools::Coverage->new(
+    id       => $id,
+    bam      => $bam_file,
+    seq_list => $seq_list,
+    out_dir  => $out_dir,
+    threads  => $threads,
+    verbose  => $verbose,
+);
+
 $snps->identify_snps;
+$coverage->get_coverage_db;
 $snps->flanking_cov;
 
 exit;
