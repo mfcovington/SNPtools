@@ -210,14 +210,16 @@ sub add_positions {
 
     my $chr = $self->_chromosome;
     my $flank_dist = $self->flank_dist;
+    my $out_dir = $self->out_dir;
+    my $sample_id = $self->id;
 
     my %cov_pos; # = $self->cov_pos;
 
 # TODO: custom path
-    open my $snps_fh, "<", "../genotyping/snp_master/polyDB.$chr.nr";
+    open my $snps_fh, "<", "$out_dir/snps/$sample_id.$chr.snps.csv"; #/genotyping/snp_master/polyDB.$chr.nr";
     <$snps_fh>;
     while (<$snps_fh>) {
-        my $snp_pos = [ split /\t/ ]->[1];
+        my $snp_pos = [ split /,/ ]->[1];
         $cov_pos{$chr}{$snp_pos}                 = 1;
         $cov_pos{$chr}{ $snp_pos - $flank_dist } = 1;
         $cov_pos{$chr}{ $snp_pos + $flank_dist } = 1;
