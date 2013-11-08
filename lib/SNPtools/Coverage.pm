@@ -237,7 +237,7 @@ sub get_coverage_db {
     $self->populate_CoverageDB_by_chr;
 }
 
-around 'get_coverage_db' => sub {
+around [ 'get_coverage_db', 'reciprocal_coverage' ] => sub {
     my $orig = shift;
     my $self = shift;
 
@@ -339,8 +339,17 @@ sub populate_and_reset {
 
 sub reciprocal_coverage {
 
+    my $self = shift;
+    my $chromosome = $self->_chromosome;
+    my $out_dir = $self->out_dir;
+    my $cov_dir = "$out_dir/coverage";
+
+    # ----------
+    # Run in parallel by chromosome
+    # ----------
     # get SNP positions for PAR1
     # get SNP positions for PAR2
+    # ----------
 
     # get cov positions for PAR1
     # get cov positions for PAR2
