@@ -351,6 +351,32 @@ sub reciprocal_coverage {
     # get SNP positions for PAR2
     # ----------
 
+    my $par1 = 'R500';
+    my $par2 = 'IMB211';
+    my $par1_bam = 'sample-files/bam/R500.10kb.bam';
+    my $par2_bam = 'sample-files/bam/IMB211.10kb.bam';
+    my %bams = (
+        $par1 => $par1_bam,
+        $par2 => $par2_bam,
+    );
+
+    my %reciprocal_par = (
+        $par1 => $par2,
+        $par2 => $par1,
+    );
+
+    my %snp_pos;
+
+    for my $id ( $par1, $par2 ) {
+        my $snp_file = "$out_dir/snps/$id.$chromosome.snps.nogap.gap.FILTERED.csv";
+        open my $snp_fh, "<", $snp_file;
+        <$snp_fh>;
+        while (<$snp_fh>) {
+            my $pos = ( split /,/ )[1];
+            $snp_pos{$id}{$pos} = 1;
+        }
+        close $snp_fh;
+    }
     # get cov positions for PAR1
     # get cov positions for PAR2
 
