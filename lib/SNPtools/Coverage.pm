@@ -412,8 +412,43 @@ sub reciprocal_coverage {
 
     }
 
+    # ----------
     # calculate coverage for PAR1/PAR2 at 'missing' positions
     # populate DB
+    # ----------
+
+    for my $id ( $par1, $par2 ) {
+
+        my $other_par = $reciprocal_par{$id};
+        say "  Getting reciprocal coverage for $id:$chromosome" if $self->verbose;
+        my $count = 1;
+        my @cov_data;
+
+
+        my $bam_file = $bams{$id};
+
+        system("samtools index $bam_file") if ! -e "$bam_file.bai";
+
+        my $sam_gap_cmd = "samtools mpileup -r $chromosome $bam_file | cut -f1-2,4";
+
+        my $gap_fh;
+        capture_stderr {    # suppress mpileup output sent to stderr
+            open $gap_fh,   "-|", $sam_gap_cmd;
+        };
+        while ( my $gap_line = <$gap_fh> ) {
+            chomp $gap_line;
+            my ( $chr, $pos, $gap_cov ) = split /\t/, $gap_line;
+            if ( exists $snp_pos{$other_par}{$pos} ) {
+                $count++;
+                push @cov_data, [ $id, $chr, $pos, $gap_cov, undef ];
+            }
+
+            populate_and_reset( \$count, \@cov_data, \$schema ) if $count % 100000 == 0;
+        }
+        close $gap_fh;
+
+        populate_and_reset( \$count, \@cov_data, \$schema ) if scalar @cov_data;
+    }
 
 }
 
