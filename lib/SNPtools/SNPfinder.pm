@@ -15,6 +15,12 @@ use FindBin qw($Bin);
 #TODO: verbose + very verbose
 #TODO: make _out_dir_snp, etc. subs
 
+sub BUILD {
+    my $self = shift;
+
+    $self->_validity_tests;
+}
+
 sub bam_index {
     my $self = shift;
 

@@ -18,6 +18,12 @@ use DBI;
 #will it cause a problem if i look up a region that has no coverage?  will it return empty string, undef or 0?....looks like empty or undef
 #TODO: Do I need to make defaults lazy and uncomment UndefTolerant?
 
+sub BUILD {
+    my $self = shift;
+
+    $self->_validity_tests;
+}
+
 sub samtools_cmd_gaps {
     my $self = shift;
 
