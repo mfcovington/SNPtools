@@ -262,7 +262,6 @@ sub populate_CoverageDB_by_chr {
 
     my $cov_dir     = $self->out_dir . "/coverage";
     my $chromosome  = $self->_chromosome;
-    my $flank_dist  = $self->flank_dist;
     my $cov_pos_ref = $self->cov_pos;
     my $bam_file    = $self->bam;
     my $sample_id   = $self->id;
@@ -318,7 +317,7 @@ sample_id  TEXT    NOT NULL,
 chromosome TEXT    NOT NULL,
 position   INTEGER NOT NULL,
 gap_cov    INTEGER NOT NULL,
-nogap_cov  INTEGER NOT NULL,
+nogap_cov  INTEGER,
 PRIMARY KEY ( sample_id, chromosome, position )
 );
 END_SQL
