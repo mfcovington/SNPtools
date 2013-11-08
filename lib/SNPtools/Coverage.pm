@@ -337,6 +337,24 @@ sub populate_and_reset {
     @$cov_data_ref = ();
 }
 
+sub reciprocal_coverage {
+
+    # get SNP positions for PAR1
+    # get SNP positions for PAR2
+
+    # get cov positions for PAR1
+    # get cov positions for PAR2
+
+    # compare lists and get:
+
+    # SNP positions in PAR1 w/o PAR2 cov
+    # SNP positions in PAR2 w/o PAR1 cov
+
+    # calculate coverage for PAR1/PAR2 at 'missing' positions
+    # populate DB
+
+}
+
 sub _region {
     my $self = shift;
 
