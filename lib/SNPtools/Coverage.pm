@@ -338,23 +338,16 @@ sub populate_and_reset {
 }
 
 sub reciprocal_coverage {
-
     my $self = shift;
+
     my $chromosome = $self->_chromosome;
-    my $out_dir = $self->out_dir;
-    my $cov_dir = "$out_dir/coverage";
+    my $out_dir    = $self->out_dir;
+    my $cov_dir    = "$out_dir/coverage";
+    my $par1       = 'R500';
+    my $par2       = 'IMB211';
+    my $par1_bam   = 'sample-files/bam/R500.10kb.bam';
+    my $par2_bam   = 'sample-files/bam/IMB211.10kb.bam';
 
-    # ----------
-    # Run in parallel by chromosome
-    # ----------
-    # get SNP positions for PAR1
-    # get SNP positions for PAR2
-    # ----------
-
-    my $par1 = 'R500';
-    my $par2 = 'IMB211';
-    my $par1_bam = 'sample-files/bam/R500.10kb.bam';
-    my $par2_bam = 'sample-files/bam/IMB211.10kb.bam';
     my %bams = (
         $par1 => $par1_bam,
         $par2 => $par2_bam,
@@ -365,10 +358,12 @@ sub reciprocal_coverage {
         $par2 => $par1,
     );
 
+    # Get SNP positions for PAR1 & PAR2
     my %snp_pos;
 
     for my $id ( $par1, $par2 ) {
-        my $snp_file = "$out_dir/snps/$id.$chromosome.snps.nogap.gap.FILTERED.csv";
+        my $snp_file =
+          "$out_dir/snps/$id.$chromosome.snps.nogap.gap.FILTERED.csv";
         open my $snp_fh, "<", $snp_file;
         <$snp_fh>;
         while (<$snp_fh>) {
@@ -378,27 +373,14 @@ sub reciprocal_coverage {
         close $snp_fh;
     }
 
-    # ----------
-    # get cov positions for PAR1
-    # get cov positions for PAR2
-    # ----------
+    # get coverage positions for PAR1 & PAR2
     # compare lists and get:
-    # ----------
-    # SNP positions in PAR1 w/o PAR2 cov
-    # SNP positions in PAR2 w/o PAR1 cov
-    # ----------
-
-    # my $cov_pos_ref = $self->cov_pos;
-    # my $bam_file    = $self->bam;
-    # my $sample_id   = $self->id;
+    # - SNP positions in PAR1 w/o PAR2 cov
+    # - SNP positions in PAR2 w/o PAR1 cov
 
     my $dbi    = 'SQLite';
     my $db     = "$cov_dir/coverage.db";
     my $schema = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
-
-    # say "  Getting reciprocal coverage for $chromosome" if $self->verbose;
-    # my $count = 1;
-    # my @cov_data;
 
     for my $id ( $par1, $par2 ) {
 
@@ -406,35 +388,32 @@ sub reciprocal_coverage {
 
         my $all_ref = get_pos_from_cov_db( $id, $chromosome, \$schema );
 
-        for my $pos ( @$all_ref ) {
-            delete $snp_pos{$other_par}{$pos->position};
+        for my $pos (@$all_ref) {
+            delete $snp_pos{$other_par}{ $pos->position };
         }
 
     }
 
-    # ----------
     # calculate coverage for PAR1/PAR2 at 'missing' positions
-    # populate DB
-    # ----------
+    # and populate DB
 
     for my $id ( $par1, $par2 ) {
 
         my $other_par = $reciprocal_par{$id};
+        my $bam_file  = $bams{$id};
+        my $count     = 1;
         say "  Getting reciprocal coverage for $id:$chromosome" if $self->verbose;
-        my $count = 1;
-        my @cov_data;
-
-
-        my $bam_file = $bams{$id};
 
         system("samtools index $bam_file") if ! -e "$bam_file.bai";
 
-        my $sam_gap_cmd = "samtools mpileup -r $chromosome $bam_file | cut -f1-2,4";
+        my $sam_gap_cmd =
+          "samtools mpileup -r $chromosome $bam_file | cut -f1-2,4";
 
         my $gap_fh;
         capture_stderr {    # suppress mpileup output sent to stderr
-            open $gap_fh,   "-|", $sam_gap_cmd;
+            open $gap_fh, "-|", $sam_gap_cmd;
         };
+        my @cov_data;
         while ( my $gap_line = <$gap_fh> ) {
             chomp $gap_line;
             my ( $chr, $pos, $gap_cov ) = split /\t/, $gap_line;
@@ -443,17 +422,16 @@ sub reciprocal_coverage {
                 push @cov_data, [ $id, $chr, $pos, $gap_cov, undef ];
             }
 
-            populate_and_reset( \$count, \@cov_data, \$schema ) if $count % 100000 == 0;
+            populate_and_reset( \$count, \@cov_data, \$schema )
+              if $count % 100000 == 0;
         }
         close $gap_fh;
 
         populate_and_reset( \$count, \@cov_data, \$schema ) if scalar @cov_data;
     }
-
 }
 
 sub get_pos_from_cov_db {
-
     my ( $sample_id, $chr, $schema_ref ) = @_;
 
     my $rs = $$schema_ref->resultset('Coverage')->search(
