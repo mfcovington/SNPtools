@@ -377,17 +377,61 @@ sub reciprocal_coverage {
         }
         close $snp_fh;
     }
+
+    # ----------
     # get cov positions for PAR1
     # get cov positions for PAR2
-
+    # ----------
     # compare lists and get:
-
+    # ----------
     # SNP positions in PAR1 w/o PAR2 cov
     # SNP positions in PAR2 w/o PAR1 cov
+    # ----------
+
+    # my $cov_pos_ref = $self->cov_pos;
+    # my $bam_file    = $self->bam;
+    # my $sample_id   = $self->id;
+
+    my $dbi    = 'SQLite';
+    my $db     = "$cov_dir/coverage.db";
+    my $schema = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
+
+    # say "  Getting reciprocal coverage for $chromosome" if $self->verbose;
+    # my $count = 1;
+    # my @cov_data;
+
+    for my $id ( $par1, $par2 ) {
+
+        my $other_par = $reciprocal_par{$id};
+
+        my $all_ref = get_pos_from_cov_db( $id, $chromosome, \$schema );
+
+        for my $pos ( @$all_ref ) {
+            delete $snp_pos{$other_par}{$pos->position};
+        }
+
+    }
 
     # calculate coverage for PAR1/PAR2 at 'missing' positions
     # populate DB
 
+}
+
+sub get_pos_from_cov_db {
+
+    my ( $sample_id, $chr, $schema_ref ) = @_;
+
+    my $rs = $$schema_ref->resultset('Coverage')->search(
+        {
+            'sample_id'  => $sample_id,
+            'chromosome' => $chr,
+        },
+        { select => [qw/ position /] }
+    );
+
+    my @all = $rs->all;
+
+    return \@all;
 }
 
 sub _region {
