@@ -367,7 +367,10 @@ sub reciprocal_coverage {
         open my $snp_fh, "<", $snp_file;
         <$snp_fh>;
         while (<$snp_fh>) {
-            my $pos = ( split /,/ )[1];
+            my $pos_raw = ( split /,/ )[1];
+
+            # Remove insert nomenclature (e.g., 12295.01 => 12295)
+            my ($pos) = split /\./, $pos_raw;
             $snp_pos{$id}{$pos} = 1;
         }
         close $snp_fh;
