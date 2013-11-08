@@ -144,6 +144,26 @@ has 'bam' => (
     isa => 'Str',
 );
 
+has 'par1' => (
+    is      => 'ro',
+    isa     => 'Str',
+);
+
+has 'par2' => (
+    is      => 'ro',
+    isa     => 'Str',
+);
+
+has 'par1_bam' => (
+    is  => 'ro',
+    isa => 'Str',
+);
+
+has 'par2_bam' => (
+    is  => 'ro',
+    isa => 'Str',
+);
+
 has 'seq_list' => (
     is  => 'rw',
     isa => 'Str',
@@ -343,10 +363,10 @@ sub reciprocal_coverage {
     my $chromosome = $self->_chromosome;
     my $out_dir    = $self->out_dir;
     my $cov_dir    = "$out_dir/coverage";
-    my $par1       = 'R500';
-    my $par2       = 'IMB211';
-    my $par1_bam   = 'sample-files/bam/R500.10kb.bam';
-    my $par2_bam   = 'sample-files/bam/IMB211.10kb.bam';
+    my $par1       = $self->par1; #'R500';
+    my $par2       = $self->par2; #'IMB211';
+    my $par1_bam   = $self->par1_bam; #'sample-files/bam/R500.10kb.bam';
+    my $par2_bam   = $self->par2_bam; #'sample-files/bam/IMB211.10kb.bam';
 
     my %bams = (
         $par1 => $par1_bam,
