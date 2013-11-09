@@ -1,4 +1,4 @@
-package CoverageDB::Main;
+package SNPtools::Coverage::DB::Main;
 use base qw/DBIx::Class::Schema/;
 
 __PACKAGE__->load_namespaces;

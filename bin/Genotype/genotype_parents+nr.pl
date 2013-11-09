@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-use genotyping_commander;
+use SNPtools::Genotype;
 
 my $usage = <<USAGE_END;
 
@@ -60,7 +60,7 @@ die $usage
   && defined $par2_bam
   && defined $fasta_file;
 
-my $geno = genotyping_commander->new(
+my $geno = SNPtools::Genotype->new(
     par1     => $par1,
     par2     => $par2,
     fasta    => $fasta_file,

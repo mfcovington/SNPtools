@@ -10,7 +10,8 @@ use warnings;
 use autodie;
 use Getopt::Long;
 
-use snp_commander;
+use SNPtools::SNPfinder;
+use SNPtools::Coverage;
 
 ###TODO:
 #move looping through chromosomes into module - FINISHED, UNTESTED
@@ -60,7 +61,7 @@ die $usage
   && defined $bam_file
   && defined $fasta_file;
 
-my $snps = snp_commander->new(
+my $snps = SNPtools::SNPfinder->new(
     id        => $id,
     bam       => $bam_file,
     fasta     => $fasta_file,
@@ -73,7 +74,17 @@ my $snps = snp_commander->new(
     verbose   => $verbose,
 );
 
+my $coverage = SNPtools::Coverage->new(
+    id       => $id,
+    bam      => $bam_file,
+    seq_list => $seq_list,
+    out_dir  => $out_dir,
+    threads  => $threads,
+    verbose  => $verbose,
+);
+
 $snps->identify_snps;
+$coverage->get_coverage_db;
 $snps->flanking_cov;
 
 exit;

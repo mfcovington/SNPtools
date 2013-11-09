@@ -1,4 +1,4 @@
-package CoverageDB::Main::Result::Coverage;
+package SNPtools::Coverage::DB::Main::Result::Coverage;
 use base qw/DBIx::Class::Core/;
 
 __PACKAGE__->table('coverage');

@@ -1,4 +1,4 @@
-package genoplot_commander;
+package SNPtools::Plot;
 use Moose;
 use MooseX::UndefTolerant;
 use File::Basename;
@@ -18,6 +18,12 @@ use List::Util 'max';
 #    - do this for all relevant modules
 # - fix x-axis labels when plotting regions
 # - add option to change backgorund color
+
+sub BUILD {
+    my $self = shift;
+
+    $self->_validity_tests;
+}
 
 sub genoplot_by_chr {
     my $self = shift;

@@ -3,14 +3,14 @@
 # Mike Covington
 # created: 2012-07-02
 #
-# Description: 
+# Description:
 #
 use Modern::Perl;
 use Data::Printer;
-use coverage_commander;
+use SNPtools::Coverage;
 
 
-my $coverage = coverage_commander->new(
+my $coverage = SNPtools::Coverage->new(
     bam        => "/Users/mfc/sandbox/genotyping/bwa_tophat_M82-Slyc.sorted.dupl_rm.bam",
     chromosome => "SL2.40ch01",
     # pos_start  => 570800,
@@ -19,7 +19,7 @@ my $coverage = coverage_commander->new(
     verbose    => 1,
     # nogap => 0,
   );
-# p $coverage;  
+# p $coverage;
 say $coverage->samtools_cmd_gaps;
 say $coverage->samtools_cmd_nogaps;
 # say $coverage->pos_start;

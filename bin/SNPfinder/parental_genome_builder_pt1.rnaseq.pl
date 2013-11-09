@@ -3,7 +3,7 @@
 # Mike Covington
 # created: 2012-01-03
 #
-# Description: 
+# Description:
 #
 use strict;
 use warnings;
@@ -12,8 +12,9 @@ use feature 'say';
 use Getopt::Long;
 use File::Path 'make_path';
 
-# TODO:
-    # make write_master_snp subroutine
+# TODO: Make write_master_snp subroutine
+# TODO: Get coverage data from DB
+# TODO: (which requires:) Write coverage data to DB for par1/par2 combined sites of interest (in Coverage.pm)
 
 my $usage = <<USAGE_END;
 

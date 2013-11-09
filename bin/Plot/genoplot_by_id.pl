@@ -10,7 +10,7 @@ use warnings;
 use autodie;
 use feature 'say';
 use Getopt::Long;
-use genoplot_commander;
+use SNPtools::Plot;
 
 my $usage = <<USAGE_END;
 
@@ -71,7 +71,7 @@ die $usage
   && defined $par2
   && defined $bam_file;
 
-my $genoplot = genoplot_commander->new(
+my $genoplot = SNPtools::Plot->new(
     id          => $id,
     par1        => $par1,
     par2        => $par2,

@@ -1,4 +1,4 @@
-package snp_commander;
+package SNPtools::SNPfinder;
 use Moose;
 use MooseX::UndefTolerant;
 use Modern::Perl;
@@ -7,12 +7,19 @@ use File::Path 'make_path';
 use Parallel::ForkManager;
 use autodie;
 # use Data::Printer;
+use FindBin qw($Bin);
 
 #TODO: move common subroutines elsewhere (validation, mkdir, bam header-related, etc.)
 #TODO: require certain arguments to be defined
 #TODO: generate log files??
 #TODO: verbose + very verbose
 #TODO: make _out_dir_snp, etc. subs
+
+sub BUILD {
+    my $self = shift;
+
+    $self->_validity_tests;
+}
 
 sub bam_index {
     my $self = shift;
@@ -90,16 +97,26 @@ around 'identify_snps' => sub {
     $pm->wait_all_children;
 };
 
+# TODO: Incorporate script into this module (or coverage module)
 sub flanking_cov {
     my $self = shift;
 
     $self->_validity_tests();
     # $self->_make_dir();
 
-    my $flanking_cov_cmd =
-      "~/git.repos/snp_identification/flanking_coverage_calculator.pl \\
-    --snp_file "   . $self->out_dir . "/snps/"     . join( '.', $self->id, $self->chromosome, "snps.csv" )     . " \\
-    --cov_prefix " . $self->out_dir . "/coverage/" . join( '.', $self->id, $self->chromosome, "coverage" );
+    my $out_dir    = $self->out_dir;
+    my $sample_id  = $self->id;
+    my $chromosome = $self->_chromosome;
+    my $snp_file   = "$out_dir/snps/$sample_id.$chromosome.snps.csv";
+    my $cov_dir    = "$out_dir/coverage";
+
+    my $flanking_cov_cmd = <<EOF;
+$Bin/flanking_coverage_calculator.pl \\
+    --snp_file   $snp_file   \\
+    --sample_id  $sample_id  \\
+    --chromosome $chromosome \\
+    --cov_db_dir $cov_dir
+EOF
 
 #ADD FLANK DIST
 
@@ -116,10 +133,10 @@ around 'flanking_cov' => sub {
     foreach my $chr (@chromosomes) {
         $pm->start and next;
 
-        $self->chromosome($chr);
-        # my $cov_out = $self->out_dir . "/" . $self->id . ".snps." . $self->chromosome;
+        $self->_chromosome($chr);
+        # my $cov_out = $self->out_dir . "/" . $self->id . ".snps." . $self->_chromosome;
         # $self->out_file($cov_out);
-        # $self->out_file( $self->out_dir . "/snps/" . $self->id . "." . $self->chromosome . ".snps" );
+        # $self->out_file( $self->out_dir . "/snps/" . $self->id . "." . $self->_chromosome . ".snps" );
         # $self->identify_snps;
 
         $self->$orig(@_);
