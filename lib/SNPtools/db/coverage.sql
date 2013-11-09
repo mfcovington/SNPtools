@@ -3,6 +3,6 @@ CREATE TABLE coverage (
     chromosome TEXT    NOT NULL,
     position   INTEGER NOT NULL,
     gap_cov    INTEGER NOT NULL,
-    nogap_cov  INTEGER NOT NULL,
+    nogap_cov  INTEGER,
     PRIMARY KEY ( sample_id, chromosome, position )
 );

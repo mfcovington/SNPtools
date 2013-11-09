@@ -1,0 +1,10 @@
+*.csv
+*.cov_gaps
+*.cov_nogaps
+*.db
+*.bam
+*.bai
+*.fa
+*.fai
+*.vcf
+*.bcf

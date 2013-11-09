@@ -19,6 +19,12 @@ use List::Util 'max';
 # - fix x-axis labels when plotting regions
 # - add option to change backgorund color
 
+sub BUILD {
+    my $self = shift;
+
+    $self->_validity_tests;
+}
+
 sub genoplot_by_chr {
     my $self = shift;
 
