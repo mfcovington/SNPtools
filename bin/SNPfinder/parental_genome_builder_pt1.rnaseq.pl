@@ -64,8 +64,9 @@ die $usage
 # snp/cov build hashes
 my %par1_cov  = cov_hash_builder($par1_cov_file);
 my %par2_cov  = cov_hash_builder($par2_cov_file);
-my %par1_snps = snp_hash_builder( $par1_name, $par1_snp_file);
-my %par2_snps = snp_hash_builder( $par2_name, $par2_snp_file);
+my %snps;
+snp_hash_builder( $par1_name, $par1_snp_file, \%snps);
+snp_hash_builder( $par2_name, $par2_snp_file, \%snps);
 
 # get snp positions with good coverage
 my @all_snp_pos = sort { $a <=> $b } keys %{ { %par1_snps, %par2_snps } };
@@ -120,24 +121,23 @@ exit;
 ###############
 
 sub snp_hash_builder {
-    my ( $par_id, $par_snps_file ) = @_;
+    my ( $par_id, $par_snps_file, $snps_ref ) = @_;
     open my $par_snps_fh, "<", $par_snps_file;
     my $header = <$par_snps_fh>;    # do I care about this?
-    my %par_snps;
+    # my %par_snps;
     while (<$par_snps_fh>) {
         chomp;
         my @par_snp = split /,/;
         my @par_pos = split /\./, $par_snp[1];
         if ( defined $par_pos[1] ) {
-            $par_snps{$par_pos[0]}{$par_id}{$par_pos[1]} = [ @par_snp[ 2, 8 ], $par_pos[1] ];
-            $par_snps{$par_pos[0]}{$par_id}{insert}      = $par_pos[1];
+            $$snps_ref{$par_pos[0]}{$par_id}{$par_pos[1]} = [ @par_snp[ 2, 8 ], $par_pos[1] ];
+            $$snps_ref{$par_pos[0]}{$par_id}{insert}      = $par_pos[1];
         }
         else {
-            $par_snps{ $par_pos[0] }{$par_id}{snp_del} = [ @par_snp[ 2, 8 ] ];
+            $$snps_ref{ $par_pos[0] }{$par_id}{snp_del} = [ @par_snp[ 2, 8 ] ];
         }
     }
     close $par_snps_fh;
-    return %par_snps;
 }
 
 sub cov_hash_builder {
