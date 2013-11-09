@@ -17,6 +17,8 @@ use DBI;
 #TODO: generate log files??
 #will it cause a problem if i look up a region that has no coverage?  will it return empty string, undef or 0?....looks like empty or undef
 #TODO: Do I need to make defaults lazy and uncomment UndefTolerant?
+# TODO: Remove need for both 'bam' and 'par1_bam'/'par2_bam' ('id' vs 'par1'/'par2')
+# TODO: Run _validity_tests on 'par1_bam'/'par2_bam'
 
 sub BUILD {
     my $self = shift;
