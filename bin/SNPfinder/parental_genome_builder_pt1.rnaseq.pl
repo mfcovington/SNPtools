@@ -79,8 +79,9 @@ for my $pos (@all_snp_pos) {
 }
 
 # write master snp file
-make_path($out_dir);
-my $master_snp_file = "$out_dir/master_snp_list.$par1.vs.$par2.$chr";
+my $master_snp_dir = "$out_dir/master_snp_lists";
+make_path($master_snp_dir);
+my $master_snp_file = "$master_snp_dir/master_snp_list.$par1.vs.$par2.$chr";
 open my $master_fh, ">", $master_snp_file;
 say $master_fh join "\t", "chr", "pos", "ref_base", "snp_base", "genotype", "insert_position";
 
