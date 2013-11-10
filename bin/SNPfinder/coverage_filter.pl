@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# parental_genome_builder_pt1.rnaseq.pl
+# coverage_filter.pl
 # Mike Covington
 # created: 2012-01-03
 #
@@ -20,7 +20,7 @@ use SNPtools::Coverage::DB::Main;
 my $usage = <<USAGE_END;
 
 USAGE:
-parental_genome_builder_pt1.rnaseq.pl
+$0.pl
   --chr        chromosome ID
   --snp1       parent #1 snp file
   --snp2       parent #2 snp file
