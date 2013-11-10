@@ -85,30 +85,22 @@ open my $master_fh, ">", $master_snp_file;
 say $master_fh join "\t", "chr", "pos", "ref_base", "snp_base", "genotype", "insert_position";
 
 for my $pos (@good_cov_pos) {
-    if ( defined $par1_snps{$pos} ) {
-        my $insert_length = $par1_snps{$pos}{insert} || 0;
+
+    next unless defined $snps{$pos};
+
+    for my $par_id ( sort keys $snps{$pos} ) {
+
+        # TODO: Check whether the next line should be '|| 0' or '// 0'
+        my $insert_length = $snps{$pos}{$par_id}{insert} || 0;
         if ($insert_length) {
             for my $insert_idx ( 1 .. $insert_length ) {
                 $insert_idx = "0$insert_idx" if $insert_idx < 10;
-                next unless defined $par1_snps{$pos}{$insert_idx}[2];    # there are occasional gaps due to insufficient coverage
-                say $master_fh join "\t", $chr, $pos, @{ $par1_snps{$pos}{$insert_idx} }[ 0, 1 ], $par1, $insert_idx;
+                next unless defined $snps{$pos}{$par_id}{$insert_idx}[2];    # there are occasional gaps due to insufficient coverage
+                say $master_fh join "\t", $chr, $pos, @{ $snps{$pos}{$par_id}{$insert_idx} }[ 0, 1 ], $par_id, $insert_idx;
             }
         }
         else{
-            say $master_fh join "\t", $chr, $pos, @{ $par1_snps{$pos}{snp_del} }[ 0, 1 ], $par1, "NA";
-        }
-    }
-    if ( defined $par2_snps{$pos} ) {
-        my $insert_length = $par2_snps{$pos}{insert} || 0;
-        if ($insert_length) {
-            for my $insert_idx ( 1 .. $insert_length ) {
-                $insert_idx = "0$insert_idx" if $insert_idx < 10;
-                next unless defined $par2_snps{$pos}{$insert_idx}[2];    # there are occasional gaps due to insufficient coverage
-                say $master_fh join "\t", $chr, $pos, @{ $par2_snps{$pos}{$insert_idx} }[ 0, 1 ], $par2, $insert_idx;
-            }
-        }
-        else{
-            say $master_fh join "\t", $chr, $pos, @{ $par2_snps{$pos}{snp_del} }[ 0, 1 ], $par2, "NA";
+            say $master_fh join "\t", $chr, $pos, @{ $snps{$pos}{$par_id}{snp_del} }[ 0, 1 ], $par_id, "NA";
         }
     }
 }
