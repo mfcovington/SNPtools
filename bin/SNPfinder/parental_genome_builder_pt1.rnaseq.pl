@@ -73,10 +73,10 @@ my @all_snp_pos = sort { $a <=> $b } keys %snps;
 my @good_cov_pos;
 for my $pos (@all_snp_pos) {
 
-    my $all_ref = get_cov( $chr, $pos, \$schema );
+    my @cov_db_rows = get_cov( $chr, $pos, \$schema );
 
     my %cov;
-    $cov{ $_->sample_id } = $_->gap_cov for @$all_ref;
+    $cov{ $_->sample_id } = $_->gap_cov for @cov_db_rows;
 
     my $par1_cov = $cov{$par1} // 0;
     my $par2_cov = $cov{$par2} // 0;
@@ -152,8 +152,5 @@ sub get_cov {
         { select => [qw/ sample_id gap_cov /] }
     );
 
-    # TODO: Check whether I can just return $rs->all
-    my @all = $rs->all;
-
-    return \@all;
+    return $rs->all;
 }
