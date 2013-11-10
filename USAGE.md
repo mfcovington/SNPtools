@@ -65,3 +65,12 @@
       --threads  3 \
       --verbose
 
+    for CHR in A0{1..9} A10; do
+        $BIN/SNPfinder/parental_genome_builder_pt1.rnaseq.pl \
+          --chr  $CHR \
+          --snp1 $OUT_DIR/snps/$PAR1.$CHR.snps.nogap.gap.FILTERED.csv \
+          --snp2 $OUT_DIR/snps/$PAR2.$CHR.snps.nogap.gap.FILTERED.csv \
+          --par1 $PAR1 \
+          --par2 $PAR2 \
+          --out  $OUT_DIR
+    done
