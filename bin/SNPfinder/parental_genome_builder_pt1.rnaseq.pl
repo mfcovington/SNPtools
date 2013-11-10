@@ -11,10 +11,9 @@ use autodie;
 use feature 'say';
 use Getopt::Long;
 use File::Path 'make_path';
+use SNPtools::Coverage::DB::Main;
 
 # TODO: Make write_master_snp subroutine
-# TODO: Get coverage data from DB
-# TODO: (which requires:) Write coverage data to DB for par1/par2 combined sites of interest (in Coverage.pm)
 
 my $usage = <<USAGE_END;
 
@@ -61,20 +60,28 @@ die $usage
       && defined $par1_cov_file
       && defined $par2_cov_file;
 
-# snp/cov build hashes
-my %par1_cov  = cov_hash_builder($par1_cov_file);
-my %par2_cov  = cov_hash_builder($par2_cov_file);
 my %snps;
 snp_hash_builder( $par1, $par1_snp_file, \%snps);
 snp_hash_builder( $par2, $par2_snp_file, \%snps);
 
 # get snp positions with good coverage
-my @all_snp_pos = sort { $a <=> $b } keys %{ { %par1_snps, %par2_snps } };
+my $cov_dir     = "$out_dir/coverage";
+my $dbi         = 'SQLite';
+my $db          = "$cov_dir/coverage.db";
+my $schema      = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
+my @all_snp_pos = sort { $a <=> $b } keys %snps;
 my @good_cov_pos;
 for my $pos (@all_snp_pos) {
-    my $pos_par1_cov = $par1_cov{$pos} || next;    # || next bypasses if undef
-    my $pos_par2_cov = $par2_cov{$pos} || next;
-    next if $pos_par1_cov < $min_cov || $pos_par1_cov < $min_cov;
+
+    my $all_ref = get_cov( $chr, $pos, \$schema );
+
+    my %cov;
+    $cov{ $_->sample_id } = $_->gap_cov for @$all_ref;
+
+    my $par1_cov = $cov{$par1} // 0;
+    my $par2_cov = $cov{$par2} // 0;
+
+    next if $par1_cov < $min_cov || $par1_cov < $min_cov;
     push @good_cov_pos, $pos;
 }
 
@@ -133,12 +140,20 @@ sub snp_hash_builder {
     close $par_snps_fh;
 }
 
-sub cov_hash_builder {
-    my $par_cov_file = shift;
-    open my $par_cov_fh, "<", $par_cov_file;
-    my %par_cov = map { chomp; @{ [ split /\t/ ] }[ 1 .. 2 ] } <$par_cov_fh>;
-    close $par_cov_fh;
-    return %par_cov;
-}
+sub get_cov {
+    my ( $chr, $pos, $schema_ref ) = @_;
 
+    my $rs = $$schema_ref->resultset('Coverage')->search(
+        {
+            # 'sample_id'  => $sample_id,
+            'chromosome' => $chr,
+            'position'   => $pos,
+        },
+        { select => [qw/ sample_id gap_cov /] }
+    );
+
+    # TODO: Check whether I can just return $rs->all
+    my @all = $rs->all;
+
+    return \@all;
 }
