@@ -81,7 +81,7 @@ for my $pos (@all_snp_pos) {
     my $par1_cov = $cov{$par1} // 0;
     my $par2_cov = $cov{$par2} // 0;
 
-    next if $par1_cov < $min_cov || $par1_cov < $min_cov;
+    next if $par1_cov < $min_cov || $par2_cov < $min_cov;
     push @good_cov_pos, $pos;
 }
 
