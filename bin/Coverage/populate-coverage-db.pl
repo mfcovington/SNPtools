@@ -33,7 +33,7 @@ sub populate_CoverageDB_by_chr {
     my ( $chromosome, $cov_pos_ref ) = @_;
     my $bam_file = "test/test.bam";
 
-    my $sam_gap_cmd = "samtools mpileup -r $chromosome $bam_file | cut -f1-2,4";
+    my $sam_gap_cmd = "samtools mpileup -A -r $chromosome $bam_file | cut -f1-2,4";
     my $sam_nogap_cmd = "samtools depth -r $chromosome $bam_file";
 
     open my $gap_fh,   "-|", $sam_gap_cmd;

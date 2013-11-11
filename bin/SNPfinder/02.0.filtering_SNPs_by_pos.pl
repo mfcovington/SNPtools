@@ -30,24 +30,26 @@ foreach my $file (@files) {
 
     while (<$snp_fh>){
         $counter++;
-        my @elements = split ",", $_;
-        my ( $scaff_name, $snp_pos, $reference, $snp_base ) = @elements[ 0 .. 2, 8 ];
 
-        #REMOVE THE DOT DECIMAL FROM THE INSERTIONS: 1001.1 => 1001
-        my $short_snp_pos = $snp_pos;
-        $short_snp_pos =~ s/\..*//;
+        my @elements    = split /,/, $_;
+        my @acgt_counts = @elements[ 3 .. 6 ];
+        my $del_count   = $elements[7];
 
         # skip SNPs/indels supported by fewer than $coverage_threshold
-        next if ( sum( @elements[ 3 .. 6 ] ) < $coverage_threshold       #ACGT
-                 &&    $elements[7]          < $coverage_threshold );    #deletion
+        next if ( sum( @acgt_counts ) < $coverage_threshold
+                  &&   $del_count     < $coverage_threshold );
 
-        # print SNPs/indels to output unless they don't pass the flanking coverage test
-        unless (   $elements[10] == 0 || $elements[13] == 0                  #avoid illegal division by zero
-                || (   $elements[11] / $elements[10] > $ratio_threshold
-                    && $elements[14] / $elements[13] < $ratio_threshold )    #intron-exon junction
-                || (   $elements[9]  / $elements[10] > $ratio_threshold
-                    && $elements[12] / $elements[13] < $ratio_threshold )    #exon-intron junction
-               )
+        my ( $nogap_lt, $nogap_cov, $nogap_rt, $gap_lt, $gap_cov, $gap_rt ) =
+          @elements[ 9 .. 14 ];
+
+        # print SNPs/indels to output if they pass the flanking coverage test
+        unless (
+            $nogap_cov == 0 || $gap_cov == 0    #avoid illegal division by zero
+            || (   $nogap_rt / $nogap_cov > $ratio_threshold
+                && $gap_rt / $gap_cov < $ratio_threshold ) #intron-exon junction
+            || (   $nogap_lt / $nogap_cov > $ratio_threshold
+                && $gap_lt / $gap_cov < $ratio_threshold ) #exon-intron junction
+          )
         {
             print $out_fh join ",", @elements;
             $counter_passed++;

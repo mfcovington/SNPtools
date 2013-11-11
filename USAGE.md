@@ -45,7 +45,7 @@
           --seq_list  A01,A02,A03,A04,A05,A06,A07,A08,A09,A10 \
           --out_dir   $OUT_DIR \
           --snp_min   0.33 \
-          --indel_min 0.33 \
+          --indel_min 0.66 \
           --threads   3 \
           --verbose
 
@@ -73,4 +73,35 @@
           --par1 $PAR1 \
           --par2 $PAR2 \
           --out  $OUT_DIR
+    done
+
+## Do in R:
+
+    classify_snps <- function(filename_pattern) {
+      allDup <- function (value) { duplicated(value) | duplicated(value, fromLast = TRUE) }
+      
+      foreach(file_name = list.files(pattern = filename_pattern)) %do% {
+        snps <- read.table(file_name, header = T)
+        snps <- cbind(snps,"SNP_CLASS" = factor(NA, levels = c("SNP", "DIFF_SNP", "NOT", "CONFLICT")))
+        try({snps[!allDup(snps[,c(1:2,6)]),]$SNP_CLASS = "SNP"}, silent = T)
+        try({snps[as.logical(allDup(snps[,c(1,2,6)]) - allDup(snps[,c(1:4,6)])), ]$SNP_CLASS = "DIFF_SNP"}, silent = T)
+        try({snps[as.logical(allDup(snps[,c(1:4,6)]) - allDup(snps[,1:6])), ]$SNP_CLASS = "NOT"}, silent = T)
+        try({snps[as.logical(allDup(snps[,c(1,2,5:6)]) - allDup(snps[,1:6])), ]$SNP_CLASS = "CONFLICT"}, silent = T)
+        print(summary(snps))
+        write.table(snps, file = paste(file_name, ".classified", sep = ""), quote = F, row.names = F, sep = "\t")
+      }
+    }
+
+    library("foreach")
+    setwd("~/git.repos/SNPtools/sample-files/output/master_snp_lists")
+    classify_snps("master_snp_list")
+
+
+## Make final SNP lists
+
+    mkdir $OUT_DIR/snp_master
+    for CHR in A0{1..9} A10; do
+        grep -ve "NOT" \
+        $OUT_DIR/master_snp_lists/master_snp_list.$PAR1.vs.$PAR2.$CHR.classified \
+        > $OUT_DIR/snp_master/polyDB.$CHR &
     done

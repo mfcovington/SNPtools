@@ -19,6 +19,7 @@ use DBI;
 #TODO: Do I need to make defaults lazy and uncomment UndefTolerant?
 # TODO: Remove need for both 'bam' and 'par1_bam'/'par2_bam' ('id' vs 'par1'/'par2')
 # TODO: Run _validity_tests on 'par1_bam'/'par2_bam'
+# TODO: Consistently use samtools cmd methods for setting samtools commands
 
 sub BUILD {
     my $self = shift;
@@ -29,7 +30,7 @@ sub BUILD {
 sub samtools_cmd_gaps {
     my $self = shift;
 
-    my $samtools_cmd = "samtools mpileup" . $self->_region . $self->bam . " | cut -f1-2,4 > " . $self->out_file . ".cov_gaps";
+    my $samtools_cmd = "samtools mpileup -A" . $self->_region . $self->bam . " | cut -f1-2,4 > " . $self->out_file . ".cov_gaps";
     return $samtools_cmd;
 }
 
@@ -248,7 +249,8 @@ sub add_positions {
     open my $snps_fh, "<", "$out_dir/snps/$sample_id.$chr.snps.csv"; #/genotyping/snp_master/polyDB.$chr.nr";
     <$snps_fh>;
     while (<$snps_fh>) {
-        my $snp_pos = [ split /,/ ]->[1];
+        my $snp_pos_raw = [ split /,/ ]->[1];
+        my ( $snp_pos ) = split /\./, $snp_pos_raw;
         $cov_pos{$chr}{$snp_pos}                 = 1;
         $cov_pos{$chr}{ $snp_pos - $flank_dist } = 1;
         $cov_pos{$chr}{ $snp_pos + $flank_dist } = 1;
@@ -307,7 +309,7 @@ sub populate_CoverageDB_by_chr {
 
     system("samtools index $bam_file") if ! -e "$bam_file.bai";
 
-    my $sam_gap_cmd = "samtools mpileup -r $chromosome $bam_file | cut -f1-2,4";
+    my $sam_gap_cmd = "samtools mpileup -A -r $chromosome $bam_file | cut -f1-2,4";
     my $sam_nogap_cmd = "samtools depth -r $chromosome $bam_file";
 
     my $gap_fh;
@@ -438,7 +440,7 @@ sub reciprocal_coverage {
         system("samtools index $bam_file") if ! -e "$bam_file.bai";
 
         my $sam_gap_cmd =
-          "samtools mpileup -r $chromosome $bam_file | cut -f1-2,4";
+          "samtools mpileup -A -r $chromosome $bam_file | cut -f1-2,4";
 
         my $gap_fh;
         capture_stderr {    # suppress mpileup output sent to stderr
