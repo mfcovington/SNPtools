@@ -249,7 +249,8 @@ sub add_positions {
     open my $snps_fh, "<", "$out_dir/snps/$sample_id.$chr.snps.csv"; #/genotyping/snp_master/polyDB.$chr.nr";
     <$snps_fh>;
     while (<$snps_fh>) {
-        my $snp_pos = [ split /,/ ]->[1];
+        my $snp_pos_raw = [ split /,/ ]->[1];
+        my ( $snp_pos ) = split /\./, $snp_pos_raw;
         $cov_pos{$chr}{$snp_pos}                 = 1;
         $cov_pos{$chr}{ $snp_pos - $flank_dist } = 1;
         $cov_pos{$chr}{ $snp_pos + $flank_dist } = 1;
