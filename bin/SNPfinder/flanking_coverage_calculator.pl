@@ -16,6 +16,7 @@ use FindBin qw($Bin);
 # TODO: fix paths
 use SNPtools::Coverage::DB::Main;
 
+# TODO: Get proper (flanking) coverage for inserts. (.XX seems to be causing a problem)
 
 my $usage = <<USAGE_END;
 
@@ -86,12 +87,12 @@ while ( my $snp_line = <$snp_in_fh> ) {
         $snp_chr,
         $snp_pos_unsplit,
         $snp_remainder,
-        $cov_hash{$lt_pos}{nogap}  // 0,
-        $cov_hash{$snp_pos}{nogap} // 0 + $del_cov,
-        $cov_hash{$rt_pos}{nogap}  // 0,
-        $cov_hash{$lt_pos}{gap}    // 0,
-        $cov_hash{$snp_pos}{gap}   // 0,
-        $cov_hash{$rt_pos}{gap}    // 0 );
+        $cov_hash{$lt_pos}{nogap}             // 0,
+        $cov_hash{$snp_pos}{nogap} + $del_cov // 0,
+        $cov_hash{$rt_pos}{nogap}             // 0,
+        $cov_hash{$lt_pos}{gap}               // 0,
+        $cov_hash{$snp_pos}{gap}              // 0,
+        $cov_hash{$rt_pos}{gap}               // 0 );
 }
 
 #close shop
