@@ -14,6 +14,7 @@ use FindBin qw($Bin);
 #TODO: generate log files??
 #TODO: verbose + very verbose
 #TODO: make _out_dir_snp, etc. subs
+#TODO: Integrate 01.1.SNP_calling_homos.pl functionality
 
 sub BUILD {
     my $self = shift;

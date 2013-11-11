@@ -16,6 +16,7 @@ use FindBin qw($Bin);
 # TODO: fix paths
 use SNPtools::Coverage::DB::Main;
 
+# TODO: Get proper (flanking) coverage for inserts. (.XX seems to be causing a problem)
 
 my $usage = <<USAGE_END;
 
