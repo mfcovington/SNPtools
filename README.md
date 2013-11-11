@@ -1,4 +1,4 @@
-# SNPtools (v0.1.2)
+# SNPtools (v0.1.3)
 
 The master branches from the following repositories have been [subtree merged](https://help.github.com/articles/working-with-subtree-merge) so that the code can be refactored and more easily maintained.
 
