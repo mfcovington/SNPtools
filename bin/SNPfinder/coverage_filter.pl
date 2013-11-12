@@ -61,21 +61,20 @@ snp_hash_builder( $par1, $par1_snp_file, \%snps);
 snp_hash_builder( $par2, $par2_snp_file, \%snps);
 
 # get snp positions with good coverage
-my $cov_dir     = "$out_dir/coverage";
-my $dbi         = 'SQLite';
-my $db          = "$cov_dir/coverage.db";
-my $schema      = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
+my $cov_dir = "$out_dir/coverage";
+my $dbi     = 'SQLite';
+my $db      = "$cov_dir/coverage.db";
+my $schema  = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
+
+my $coverage_ref = get_cov( $chr, \$schema, $min_cov );
+
 my @all_snp_pos = sort { $a <=> $b } keys %snps;
 my @good_cov_pos;
+
 for my $pos (@all_snp_pos) {
 
-    my @cov_db_rows = get_cov( $chr, $pos, \$schema );
-
-    my %cov;
-    $cov{ $_->sample_id } = $_->gap_cov for @cov_db_rows;
-
-    my $par1_cov = $cov{$par1} // 0;
-    my $par2_cov = $cov{$par2} // 0;
+    my $par1_cov = $$coverage_ref{$pos}{$par1} // 0;
+    my $par2_cov = $$coverage_ref{$pos}{$par2} // 0;
 
     next if $par1_cov < $min_cov || $par2_cov < $min_cov;
     push @good_cov_pos, $pos;
@@ -145,15 +144,20 @@ sub snp_hash_builder {
 }
 
 sub get_cov {
-    my ( $chr, $pos, $schema_ref ) = @_;
+    my ( $chr, $schema_ref, $min_cov ) = @_;
+
+    $min_cov = ">= $min_cov";
 
     my $rs = $$schema_ref->resultset('Coverage')->search(
         {
             'chromosome' => $chr,
-            'position'   => $pos,
+            'gap_cov' => \$min_cov,
         },
-        { select => [qw/ sample_id gap_cov /] }
+        { select => [qw/ sample_id position gap_cov /] }
     );
 
-    return $rs->all;
+    my %coverage;
+    $coverage{$_->position}{$_->sample_id} = $_->gap_cov for $rs->all;
+
+    return \%coverage;
 }
