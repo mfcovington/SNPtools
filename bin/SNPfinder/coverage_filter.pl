@@ -66,7 +66,7 @@ my $dbi     = 'SQLite';
 my $db      = "$cov_dir/coverage.db";
 my $schema  = SNPtools::Coverage::DB::Main->connect("dbi:$dbi:$db");
 
-my $coverage_ref = get_cov( $chr, \$schema );
+my $coverage_ref = get_cov( $chr, \$schema, $min_cov );
 
 my @all_snp_pos = sort { $a <=> $b } keys %snps;
 my @good_cov_pos;
@@ -144,11 +144,14 @@ sub snp_hash_builder {
 }
 
 sub get_cov {
-    my ( $chr, $schema_ref ) = @_;
+    my ( $chr, $schema_ref, $min_cov ) = @_;
+
+    $min_cov = ">= $min_cov";
 
     my $rs = $$schema_ref->resultset('Coverage')->search(
         {
             'chromosome' => $chr,
+            'gap_cov' => \$min_cov,
         },
         { select => [qw/ sample_id position gap_cov /] }
     );
