@@ -42,9 +42,14 @@ foreach my $file (@files) {
         my ( $nogap_lt, $nogap_cov, $nogap_rt, $gap_lt, $gap_cov, $gap_rt ) =
           @elements[ 9 .. 14 ];
 
-        # next if $gap_rt == 0;
-        # next if $gap_lt == 0;
-        if ( $gap_rt == 0 || $gap_lt == 0 ) {
+        my $nogap_rt_ratio = $nogap_rt / $nogap_cov;
+        my $nogap_lt_ratio = $nogap_lt / $nogap_cov;
+        my $gap_rt_ratio   = $gap_rt / $gap_cov;
+        my $gap_lt_ratio   = $gap_lt / $gap_cov;
+
+        # next if $gap_rt_ratio == 0;
+        # next if $gap_lt_ratio == 0;
+        if ( $gap_rt_ratio == 0 || $gap_lt_ratio == 0 ) {
             chomp @elements;
             say $out_fh join ",", @elements, "BADCOV";
             next;
@@ -53,12 +58,12 @@ foreach my $file (@files) {
         # print SNPs/indels to output if they pass the flanking coverage test
         unless (
             $nogap_cov == 0 || $gap_cov == 0    #avoid illegal division by zero
-            # || (   $nogap_rt / $nogap_cov > $ratio_threshold
-            #     && $gap_rt / $gap_cov < $ratio_threshold ) #intron-exon junction
-            # || (   $nogap_lt / $nogap_cov > $ratio_threshold
-            #     && $gap_lt / $gap_cov < $ratio_threshold ) #exon-intron junction
-            || ( ( $nogap_rt / $nogap_cov ) / ( $gap_rt / $gap_cov ) > $ratio_threshold ) #intron-exon junction
-            || ( ( $nogap_lt / $nogap_cov ) / ( $gap_lt / $gap_cov ) > $ratio_threshold ) #exon-intron junction
+            # || (   $nogap_lt_ratio > $ratio_threshold
+            #     && $gap_rt_ratio < $ratio_threshold ) #intron-exon junction
+            # || (   $nogap_lt_ratio > $ratio_threshold
+            #     && $gap_lt_ratio < $ratio_threshold ) #exon-intron junction
+            || $nogap_lt_ratio / $gap_rt_ratio > $ratio_threshold #intron-exon junction
+            || $nogap_lt_ratio / $gap_lt_ratio > $ratio_threshold #exon-intron junction
           )
         {
             print $out_fh join ",", @elements;
