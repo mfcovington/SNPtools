@@ -58,11 +58,11 @@ foreach my $file (@files) {
         # print SNPs/indels to output if they pass the flanking coverage test
         unless (
             $nogap_cov == 0 || $gap_cov == 0    #avoid illegal division by zero
-            # || (   $nogap_lt_ratio > $ratio_threshold
+            # || (   $nogap_rt_ratio > $ratio_threshold
             #     && $gap_rt_ratio < $ratio_threshold ) #intron-exon junction
             # || (   $nogap_lt_ratio > $ratio_threshold
             #     && $gap_lt_ratio < $ratio_threshold ) #exon-intron junction
-            || $nogap_lt_ratio / $gap_rt_ratio > $ratio_threshold #intron-exon junction
+            || $nogap_rt_ratio / $gap_rt_ratio > $ratio_threshold #intron-exon junction
             || $nogap_lt_ratio / $gap_lt_ratio > $ratio_threshold #exon-intron junction
           )
         {
