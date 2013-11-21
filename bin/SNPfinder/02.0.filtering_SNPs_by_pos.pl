@@ -49,18 +49,26 @@ foreach my $file (@files) {
         # Avoid illegal division by zero (is this necessary w/ coverage check?)
         next if $nogap_cov == 0 || $gap_cov == 0;
 
-        my $nogap_rt_ratio = sprintf( '%.2f', $nogap_rt / $nogap_cov );
-        my $nogap_lt_ratio = sprintf( '%.2f', $nogap_lt / $nogap_cov );
-        my $gap_rt_ratio   = sprintf( '%.2f', $gap_rt / $gap_cov );
-        my $gap_lt_ratio   = sprintf( '%.2f', $gap_lt / $gap_cov );
+        my $nogap_lt_ratio = $nogap_lt / $nogap_cov;
+        my $nogap_rt_ratio = $nogap_rt / $nogap_cov;
+        my $gap_lt_ratio   = $gap_lt / $gap_cov;
+        my $gap_rt_ratio   = $gap_rt / $gap_cov;
+
+        # my $nogap_lt_ratio = sprintf( '%.3f', $nogap_lt / $nogap_cov );
+        # my $nogap_rt_ratio = sprintf( '%.3f', $nogap_rt / $nogap_cov );
+        # my $gap_lt_ratio   = sprintf( '%.3f', $gap_lt / $gap_cov );
+        # my $gap_rt_ratio   = sprintf( '%.3f', $gap_rt / $gap_cov );
 
         my $lt_ratio;
         my $rt_ratio;
         my $filter = 0;
 
         if ( $gap_lt_ratio > 0 && $gap_rt_ratio > 0 ) {
-            $lt_ratio = sprintf( '%.2f', $nogap_lt_ratio / $gap_lt_ratio );
-            $rt_ratio = sprintf( '%.2f', $nogap_rt_ratio / $gap_rt_ratio );
+            # $lt_ratio = $nogap_lt_ratio / $gap_lt_ratio;
+            # $rt_ratio = $nogap_rt_ratio / $gap_rt_ratio;
+
+            $lt_ratio = sprintf( '%.3f', $nogap_lt_ratio / $gap_lt_ratio );
+            $rt_ratio = sprintf( '%.3f', $nogap_rt_ratio / $gap_rt_ratio );
 
             # 1: exon-intron junction
             # 2: intron-exon junction
