@@ -28,7 +28,8 @@ foreach my $file (@files) {
     open my $out_fh, ">", $out_file;
 
     my $header = <$snp_fh>;
-    print $out_fh $header;
+    chomp $header;
+    say $out_fh join ",", $header, "lt_ratio", "rt_ratio";
 
     while (<$snp_fh>){
         $counter++;
