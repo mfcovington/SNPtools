@@ -44,6 +44,8 @@ foreach my $file (@files) {
         my ( $nogap_lt, $nogap_cov, $nogap_rt, $gap_lt, $gap_cov, $gap_rt ) =
           @elements[ 9 .. 14 ];
 
+        my $alt = $elements[8];
+
         # Avoid illegal division by zero (is this necessary w/ coverage check?)
         next if $nogap_cov == 0 || $gap_cov == 0;
 
@@ -77,6 +79,7 @@ foreach my $file (@files) {
               || ( $nogap_rt_ratio > $alt_ratio && $gap_rt_ratio < $alt_ratio );
         }
 
+        $filter = 0 if $alt eq 'del';
         next if $filter;
         push @elements,
           $nogap_lt_ratio, $gap_lt_ratio, $nogap_rt_ratio,
