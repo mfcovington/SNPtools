@@ -128,12 +128,12 @@ foreach my $file (@files) {
     close $snp_fh;
     close $out_fh;
 
-    # my $counter_diff = $counter - $counter_passed;
-    # print "Filtered from $counter down to $counter_passed ("
-    #   . $counter_diff
-    #   . " SNPs/indels removed ("
-    #   . ( $counter - $counter_passed ) * 100 / $counter
-    #   . " %)) \n---Done!\n";
+    my $counter_diff = $counter - $counter_passed;
+    print "Filtered from $counter down to $counter_passed ("
+      . $counter_diff
+      . " SNPs/indels removed ("
+      . ( $counter - $counter_passed ) * 100 / $counter
+      . " %)) \n---Done!\n";
 }
 
 exit;
