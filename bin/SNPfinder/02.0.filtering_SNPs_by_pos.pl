@@ -83,9 +83,7 @@ foreach my $file (@files) {
         # Skip if filtered
         next if $filter;
 
-        push @elements,
-          $nogap_lt_ratio, $gap_lt_ratio, $nogap_rt_ratio,
-          $gap_rt_ratio,   $lt_ratio,     $rt_ratio;
+        push @elements, $lt_ratio, $rt_ratio;
         chomp @elements;
         say $out_fh join ",", @elements;
         $counter_passed++;
