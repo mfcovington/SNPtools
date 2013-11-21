@@ -41,10 +41,8 @@ foreach my $file (@files) {
         next if ( sum( @acgt_counts ) < $cov_min
                   &&   $del_count     < $cov_min );
 
-        my ( $nogap_lt, $nogap_cov, $nogap_rt, $gap_lt, $gap_cov, $gap_rt ) =
-          @elements[ 9 .. 14 ];
-
-        my $alt = $elements[8];
+        my ( $alt, $nogap_lt, $nogap_cov, $nogap_rt, $gap_lt, $gap_cov, $gap_rt ) =
+          @elements[ 8 .. 14 ];
 
         # Avoid illegal division by zero (is this necessary w/ coverage check?)
         next if $nogap_cov == 0 || $gap_cov == 0;
@@ -54,19 +52,11 @@ foreach my $file (@files) {
         my $gap_lt_ratio   = $gap_lt / $gap_cov;
         my $gap_rt_ratio   = $gap_rt / $gap_cov;
 
-        # my $nogap_lt_ratio = sprintf( '%.3f', $nogap_lt / $nogap_cov );
-        # my $nogap_rt_ratio = sprintf( '%.3f', $nogap_rt / $nogap_cov );
-        # my $gap_lt_ratio   = sprintf( '%.3f', $gap_lt / $gap_cov );
-        # my $gap_rt_ratio   = sprintf( '%.3f', $gap_rt / $gap_cov );
-
         my $lt_ratio;
         my $rt_ratio;
         my $filter = 0;
 
         if ( $gap_lt_ratio > 0 && $gap_rt_ratio > 0 ) {
-            # $lt_ratio = $nogap_lt_ratio / $gap_lt_ratio;
-            # $rt_ratio = $nogap_rt_ratio / $gap_rt_ratio;
-
             $lt_ratio = sprintf( '%.3f', $nogap_lt_ratio / $gap_lt_ratio );
             $rt_ratio = sprintf( '%.3f', $nogap_rt_ratio / $gap_rt_ratio );
 
@@ -87,49 +77,18 @@ foreach my $file (@files) {
               || ( $nogap_rt_ratio > $alt_ratio && $gap_rt_ratio < $alt_ratio );
         }
 
+        # Don't apply filter for deletions
         $filter = 0 if $alt eq 'del';
+
+        # Skip if filtered
         next if $filter;
+
         push @elements,
           $nogap_lt_ratio, $gap_lt_ratio, $nogap_rt_ratio,
           $gap_rt_ratio,   $lt_ratio,     $rt_ratio;
         chomp @elements;
         say $out_fh join ",", @elements;
         $counter_passed++;
-
-
-        # # next if $gap_rt_ratio == 0;
-        # # next if $gap_lt_ratio == 0;
-        # if ( $gap_rt_ratio == 0 || $gap_lt_ratio == 0 ) {
-        #     chomp @elements;
-        #     say $out_fh join ",", @elements, "BADCOV";
-        #     next;
-        # }
-
-        # my $lt_ratio = 'BADCOV';
-        # my $rt_ratio = 'BADCOV';
-        # $lt_ratio = sprintf( '%.2f', $nogap_lt_ratio / $gap_lt_ratio )
-        #   unless $gap_lt_ratio == 0;
-        # $rt_ratio = sprintf( '%.2f', $nogap_rt_ratio / $gap_rt_ratio )
-        #   unless $gap_rt_ratio == 0;
-
-#         push @elements, $nogap_lt_ratio, $gap_lt_ratio, $nogap_rt_ratio, $gap_rt_ratio, $lt_ratio, $rt_ratio;
-# chomp @elements;
-#         say $out_fh join "\t", @elements;
-
-        # # print SNPs/indels to output if they pass the flanking coverage test
-        # unless (
-        #     $nogap_cov == 0 || $gap_cov == 0    #avoid illegal division by zero
-        #     # || (   $nogap_rt_ratio > $alt_ratio
-        #     #     && $gap_rt_ratio < $alt_ratio ) #intron-exon junction
-        #     # || (   $nogap_lt_ratio > $alt_ratio
-        #     #     && $gap_lt_ratio < $alt_ratio ) #exon-intron junction
-        #     || $rt_ratio > $ratio_1 #intron-exon junction
-        #     || $lt_ratio > $ratio_1 #exon-intron junction
-        #   )
-        # {
-        #     print $out_fh join ",", @elements;
-        #     $counter_passed++;
-        # }
 
     }
 
