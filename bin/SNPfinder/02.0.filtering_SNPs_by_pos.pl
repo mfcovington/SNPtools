@@ -85,7 +85,7 @@ foreach my $file (@files) {
           $nogap_lt_ratio, $gap_lt_ratio, $nogap_rt_ratio,
           $gap_rt_ratio,   $lt_ratio,     $rt_ratio;
         chomp @elements;
-        print $out_fh join ",", @elements;
+        say $out_fh join ",", @elements;
         $counter_passed++;
 
 
