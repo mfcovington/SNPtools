@@ -11,8 +11,8 @@ use autodie;
 use List::Util qw( sum );
 use File::Basename;
 
-my $ratio_1   = 1.5;
-my $ratio_2   = 0.75;
+my $ratio_1   = 1.2;
+my $ratio_2   = 0.8;
 my $alt_ratio = 2;
 my $cov_min   = 4;
 
