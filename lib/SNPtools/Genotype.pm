@@ -7,6 +7,7 @@ use File::Path 'make_path';
 use Parallel::ForkManager;
 use Statistics::R;
 use autodie;
+use FindBin qw($Bin);
 # use Data::Printer;
 
 #TODO:
@@ -53,7 +54,7 @@ sub genotype {
     $self->_make_dir( $self->_genotyped_dir );
 
     my $genotyping_cmd =
-      "./genotyping_pileups.pl \\
+      "$Bin/Genotype/genotyping_pileups.pl \\
     --mpileup  ${ \$self->_pileup_path } \\
     --snp      ${ \$self->_snp_path } \\
     --par1_id  ${ \$self->par1 } \\

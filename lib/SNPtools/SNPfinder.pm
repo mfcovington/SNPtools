@@ -63,7 +63,7 @@ sub identify_snps {
     $self->_make_dir();
 
     my $identify_snps_cmd =
-      "~/git.repos/SNPtools/bin/SNPfinder/01.1.SNP_calling_homos.pl \\
+      "$Bin/SNPfinder/01.1.SNP_calling_homos.pl \\
     --chromosome " . $self->_chromosome . " \\
     --o " . $self->out_file . " \\
     --n_reads " . $self->cov_min . " \\

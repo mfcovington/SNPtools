@@ -8,6 +8,7 @@ use autodie;
 use Statistics::R;
 use feature 'say';
 use List::Util 'max';
+use FindBin qw($Bin);
 # use Data::Printer;
 
 # TODO:
@@ -37,9 +38,10 @@ sub genoplot_by_chr {
     # $self->_make_tmp_dir;
     my $R = Statistics::R->new();
 
-    $R->run_from_file("genoplot_by_chr.build_df.R");
-    $R->run_from_file("genoplot_by_chr.build_plot.R");
-    $R->run_from_file("genoplot_by_chr.add_summary.R") if $self->plot_summary;
+    $R->run_from_file("$Bin/Plot/genoplot_by_chr.build_df.R");
+    $R->run_from_file("$Bin/Plot/genoplot_by_chr.build_plot.R");
+    $R->run_from_file("$Bin/Plot/genoplot_by_chr.add_summary.R")
+        if $self->plot_summary;
     $R->run(
         qq`ggsave(
           filename = paste($id, $chromosome, "$plot_format", sep = "."),
@@ -91,15 +93,15 @@ sub genoplot_by_id {
         $R->set( 'end',   $end );
         my $region = $self->region;
         say "  Building data frame for $id plot ($region)." if $self->verbose;
-        $R->run_from_file("genoplot_by_id.region.build_df.R");
+        $R->run_from_file("$Bin/Plot/genoplot_by_id.region.build_df.R");
         say "  Generating plot for $id ($region)." if $self->verbose;
-        $R->run_from_file("genoplot_by_id.build_plot.R");
+        $R->run_from_file("$Bin/Plot/genoplot_by_id.build_plot.R");
     }
     else {
         say "  Building data frame for $id plot." if $self->verbose;
-        $R->run_from_file("genoplot_by_id.build_df.R");
+        $R->run_from_file("$Bin/Plot/genoplot_by_id.build_df.R");
         say "  Generating plot for $id." if $self->verbose;
-        $R->run_from_file("genoplot_by_id.build_plot.R");
+        $R->run_from_file("$Bin/Plot/genoplot_by_id.build_plot.R");
     }
 
     my $plot_path = $self->_plot_path;
