@@ -17,11 +17,13 @@ use autodie;
 # Update "  Need samtools version 0.1.XX+" in sub _valid_samtools_version
 # Add method that returns full usage statement
 
-sub BUILD {
-    my $self = shift;
+#TODO: Fix build-time validity tests (currently incompatible with `genotype_parents+nr.pl` script)
 
-    $self->_validity_tests;
-}
+# sub BUILD {
+#     my $self = shift;
+
+#     $self->_validity_tests;
+# }
 
 sub extract_mpileup {
     my $self = shift;

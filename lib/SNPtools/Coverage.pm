@@ -367,6 +367,8 @@ sub populate_and_reset {
     @$cov_data_ref = ();
 }
 
+# TODO: Should reciprocal_coverage really be threads / 2 ?
+
 sub reciprocal_coverage {
     my $self = shift;
 
