@@ -43,40 +43,6 @@ sub samtools_cmd_nogaps {
     return $samtools_cmd;
 }
 
-sub bam_index {
-    my $self = shift;
-
-    $self->_validity_tests_samtools;
-    $self->_valid_bam;
-    say "  Building index for " . $self->bam if $self->verbose;
-    my $samtools_cmd = "samtools index " . $self->bam;
-    system( $samtools_cmd );
-}
-
-sub get_seq_names {
-    my $self = shift;
-
-    my @seq_names;
-    if ( defined $self->seq_list ) {
-        @seq_names = split /,/, $self->seq_list;
-    }
-    else {
-        say "  Getting sequence names from bam file" if $self->verbose;
-        my @header = $self->_get_header;
-        @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
-    }
-    return @seq_names;
-}
-
-sub get_seq_lengths {
-    my $self = shift;
-
-    say "  Getting sequence lengths from bam file" if $self->verbose;
-    my @header = $self->_get_header;
-    my @seq_lengths = map { $_ =~ m/\t SN: .* \t LN: (.*)/x } @header;
-    return @seq_lengths;
-}
-
 sub get_coverage {
     my $self = shift;
 

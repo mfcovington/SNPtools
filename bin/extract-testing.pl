@@ -71,6 +71,7 @@ sub report {
     say "_snp_dir: ",       $self->_snp_dir       // "MISSING";
 
     say $_ for $self->get_seq_names;
+    say $_ for $self->get_seq_lengths;
     say "----------"
 }
 

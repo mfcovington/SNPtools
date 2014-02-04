@@ -121,16 +121,6 @@ sub genoplot_by_id {
     );
 }
 
-sub bam_index {
-    my $self = shift;
-
-    $self->_validity_tests_samtools;
-    $self->_valid_bam;
-    say "  Building index for " . $self->bam if $self->verbose;
-    my $samtools_cmd = "samtools index " . $self->bam;
-    system( $samtools_cmd );
-}
-
 sub get_seq_names {
     my $self = shift;
 
@@ -156,15 +146,6 @@ sub get_seq_names {
         @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
     }
     return @seq_names;
-}
-
-sub get_seq_lengths {
-    my $self = shift;
-
-    say "  Getting sequence lengths from bam file" if $self->verbose;
-    my @header = $self->_get_header;
-    my @seq_lengths = map { $_ =~ m/\t SN: .* \t LN: (.*)/x } @header;
-    return @seq_lengths;
 }
 
 sub _get_genofile {
