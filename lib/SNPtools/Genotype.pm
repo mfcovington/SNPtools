@@ -161,44 +161,6 @@ sub get_seq_names {
     return @seq_names;
 }
 
-has '_chromosome' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has '_genotyped_dir' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => sub {
-        my $self = shift;
-
-        return $self->out_dir . "/genotyped/";
-    },
-    lazy => 1,
-);
-
-has '_mpileup_dir' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => sub {
-        my $self = shift;
-
-        return $self->out_dir . "/mpileup/";
-    },
-    lazy => 1,
-);
-
-has '_snp_dir' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => sub {
-        my $self = shift;
-
-        return $self->out_dir . "/snp_master/";
-    },
-    lazy => 1,
-);
-
 has 'nr_ratio' => (
     is      => 'rw',
     isa     => 'Num',

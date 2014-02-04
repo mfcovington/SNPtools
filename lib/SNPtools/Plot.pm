@@ -254,33 +254,6 @@ has '_region_end' => (
     isa => 'Int',
 );
 
-has '_chromosome' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has '_plot_dir' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => sub {
-        my $self = shift;
-
-        return $self->out_dir . "/genoplot/";
-    },
-    lazy => 1,
-);
-
-has '_genotyped_dir' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => sub {
-        my $self = shift;
-
-        return $self->out_dir . "/genotyped/";
-    },
-    lazy => 1,
-);
-
 sub _plot_path {
     my $self = shift;
 

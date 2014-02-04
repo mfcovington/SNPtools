@@ -154,11 +154,6 @@ has 'par2_bam' => (
     isa => 'Str',
 );
 
-has '_chromosome' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
 has 'pos_start' => (
     is  => 'rw',
     isa => 'Int',

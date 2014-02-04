@@ -72,4 +72,56 @@ has 'verbose' => (
     lazy    => 1,
 );
 
+
+# Private Attributes
+
+has '_chromosome' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+has '_genotyped_dir' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => sub {
+        my $self = shift;
+
+        return $self->out_dir . "/genotyped/";
+    },
+    lazy => 1,
+);
+
+has '_plot_dir' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => sub {
+        my $self = shift;
+
+        return $self->out_dir . "/genoplot/";
+    },
+    lazy => 1,
+);
+
+has '_mpileup_dir' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => sub {
+        my $self = shift;
+
+        return $self->out_dir . "/mpileup/";
+    },
+    lazy => 1,
+);
+
+has '_snp_dir' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => sub {
+        my $self = shift;
+
+        return $self->out_dir . "/snp_master/";
+    },
+    lazy => 1,
+);
+
 __PACKAGE__->meta->make_immutable;

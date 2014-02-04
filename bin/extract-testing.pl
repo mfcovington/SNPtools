@@ -64,6 +64,12 @@ sub report {
     say "threads: ",  $self->threads  // "MISSING";
     say "verbose: ",  $self->verbose  // "MISSING";
 
+    say "_chromosome: ",    $self->_chromosome    // "MISSING";
+    say "_genotyped_dir: ", $self->_genotyped_dir // "MISSING";
+    say "_plot_dir: ",      $self->_plot_dir      // "MISSING";
+    say "_mpileup_dir: ",   $self->_mpileup_dir   // "MISSING";
+    say "_snp_dir: ",       $self->_snp_dir       // "MISSING";
+
     say $_ for $self->get_seq_names;
     say "----------"
 }

@@ -149,11 +149,6 @@ around 'flanking_cov' => sub {
     $pm->wait_all_children;
 };
 
-has '_chromosome' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
 has 'cov_min' => (
     is      => 'rw',
     isa     => 'Int',
