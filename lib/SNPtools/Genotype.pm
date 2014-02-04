@@ -1,4 +1,5 @@
 package SNPtools::Genotype;
+use namespace::autoclean;
 use Moose;
 use MooseX::UndefTolerant;
 use Modern::Perl;
@@ -401,7 +402,4 @@ sub _valid_samtools_version {
         or $version_parsed[1] == 1 and $version_parsed[2] >= 18 );
 }
 
-no Moose;
 __PACKAGE__->meta->make_immutable;
-
-
