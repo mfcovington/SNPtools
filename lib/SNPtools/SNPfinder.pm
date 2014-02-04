@@ -1,6 +1,7 @@
 package SNPtools::SNPfinder;
 use namespace::autoclean;
 use Moose;
+extends 'SNPtools';
 use MooseX::UndefTolerant;
 use Modern::Perl;
 use File::Basename;
@@ -148,11 +149,6 @@ around 'flanking_cov' => sub {
     $pm->wait_all_children;
 };
 
-has 'id' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
 has 'bam' => (
     is  => 'ro',
     isa => 'Str',
@@ -197,12 +193,6 @@ has 'indel_min' => (
 has 'out_file' => (
     is  => 'rw',
     isa => 'Str',
-);
-
-has 'out_dir' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => "./",
 );
 
 has 'threads' => (

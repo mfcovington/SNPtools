@@ -1,6 +1,7 @@
 package SNPtools::Plot;
 use namespace::autoclean;
 use Moose;
+extends 'SNPtools';
 use MooseX::UndefTolerant;
 use File::Basename;
 use File::Path 'make_path';
@@ -217,11 +218,6 @@ has 'plot_height' => (
     lazy    => 1,
 );
 
-has 'id' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
 has 'par1' => (
     is  => 'ro',
     isa => 'Str',
@@ -291,13 +287,6 @@ has '_chromosome' => (
 has 'out_file' => (
     is  => 'rw',
     isa => 'Str',
-);
-
-has 'out_dir' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => "./",
-    lazy    => 1,
 );
 
 has 'threads' => (

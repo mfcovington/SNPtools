@@ -1,6 +1,7 @@
 package SNPtools::Coverage;
 use namespace::autoclean;
 use Moose;
+extends 'SNPtools';
 # use MooseX::UndefTolerant;
 use Modern::Perl;
 use File::Basename;
@@ -143,12 +144,6 @@ has 'flank_dist' => (
     default => 8,
 );
 
-has 'id' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => "unidentified",
-);
-
 has 'bam' => (
     is  => 'ro',
     isa => 'Str',
@@ -192,12 +187,6 @@ has 'pos_start' => (
 has 'pos_end' => (
     is  => 'rw',
     isa => 'Int',
-);
-
-has 'out_dir' => (
-    is  => 'rw',
-    isa => 'Str',
-    default => "./",
 );
 
 has 'out_file' => (

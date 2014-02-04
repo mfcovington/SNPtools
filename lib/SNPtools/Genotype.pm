@@ -1,6 +1,7 @@
 package SNPtools::Genotype;
 use namespace::autoclean;
 use Moose;
+extends 'SNPtools';
 use MooseX::UndefTolerant;
 use Modern::Perl;
 use File::Basename;
@@ -160,11 +161,6 @@ sub get_seq_names {
     return @seq_names;
 }
 
-has 'id' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
 has 'par1' => (
     is  => 'ro',
     isa => 'Str',
@@ -198,13 +194,6 @@ has '_chromosome' => (
 has 'out_file' => (
     is  => 'rw',
     isa => 'Str',
-);
-
-has 'out_dir' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => "./",
-    lazy => 1,
 );
 
 has '_genotyped_dir' => (
