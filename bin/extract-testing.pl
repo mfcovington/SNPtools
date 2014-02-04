@@ -53,8 +53,17 @@ sub report {
     my ( $class_id, $self ) = @_;
 
     say $class_id;
-    say "ID: ", $self->id;
-    say "OUT_DIR: ", $self->out_dir;
+    say "bam: ",      $self->bam      // "MISSING";
+    say "fasta: ",    $self->fasta    // "MISSING";
+    say "id: ",       $self->id       // "MISSING";
+    say "out_dir: ",  $self->out_dir  // "MISSING";
+    say "out_file: ", $self->out_file // "MISSING";
+    say "par1: ",     $self->par1     // "MISSING";
+    say "par2: ",     $self->par2     // "MISSING";
+    say "seq_list: ", $self->seq_list // "MISSING";
+    say "threads: ",  $self->threads  // "MISSING";
+    say "verbose: ",  $self->verbose  // "MISSING";
+
     say $_ for $self->get_seq_names;
     say "----------"
 }

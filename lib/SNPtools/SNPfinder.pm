@@ -149,21 +149,6 @@ around 'flanking_cov' => sub {
     $pm->wait_all_children;
 };
 
-has 'bam' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'fasta' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'seq_list' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
 has '_chromosome' => (
     is  => 'rw',
     isa => 'Str',
@@ -188,23 +173,6 @@ has 'indel_min' => (
     isa     => 'Num',
     default => 0.66,
     lazy    => 1,
-);
-
-has 'out_file' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'threads' => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => 1,
-);
-
-has 'verbose' => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 0,
 );
 
 sub _make_dir {

@@ -218,16 +218,6 @@ has 'plot_height' => (
     lazy    => 1,
 );
 
-has 'par1' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'par2' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
 has 'col_par1' => (
     is      => 'ro',
     isa     => 'Str',
@@ -249,16 +239,6 @@ has 'col_het' => (
     lazy    => 1,
 );
 
-has 'bam' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'fasta' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
 has 'region' => (
     is  => 'rw',
     isa => 'Str',
@@ -274,33 +254,9 @@ has '_region_end' => (
     isa => 'Int',
 );
 
-has 'seq_list' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
 has '_chromosome' => (
     is  => 'rw',
     isa => 'Str',
-);
-
-has 'out_file' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'threads' => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => 1,
-    lazy    => 1,
-);
-
-has 'verbose' => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 0,
-    lazy    => 1,
 );
 
 has '_plot_dir' => (

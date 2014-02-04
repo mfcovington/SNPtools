@@ -161,37 +161,7 @@ sub get_seq_names {
     return @seq_names;
 }
 
-has 'par1' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'par2' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'bam' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'fasta' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'seq_list' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
 has '_chromosome' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'out_file' => (
     is  => 'rw',
     isa => 'Str',
 );
@@ -229,25 +199,11 @@ has '_snp_dir' => (
     lazy => 1,
 );
 
-has 'threads' => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => 1,
-    lazy => 1,
-);
-
 has 'nr_ratio' => (
     is      => 'rw',
     isa     => 'Num',
     default => 0.7,
     lazy    => 1,
-);
-
-has 'verbose' => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 0,
-    lazy => 1,
 );
 
 has 'before_noise_reduction' => (

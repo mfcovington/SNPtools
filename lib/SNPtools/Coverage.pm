@@ -144,21 +144,6 @@ has 'flank_dist' => (
     default => 8,
 );
 
-has 'bam' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'par1' => (
-    is      => 'ro',
-    isa     => 'Str',
-);
-
-has 'par2' => (
-    is      => 'ro',
-    isa     => 'Str',
-);
-
 has 'par1_bam' => (
     is  => 'ro',
     isa => 'Str',
@@ -166,11 +151,6 @@ has 'par1_bam' => (
 
 has 'par2_bam' => (
     is  => 'ro',
-    isa => 'Str',
-);
-
-has 'seq_list' => (
-    is  => 'rw',
     isa => 'Str',
 );
 
@@ -187,11 +167,6 @@ has 'pos_start' => (
 has 'pos_end' => (
     is  => 'rw',
     isa => 'Int',
-);
-
-has 'out_file' => (
-    is  => 'rw',
-    isa => 'Str',
 );
 
 has 'db' => (
@@ -211,19 +186,6 @@ has 'nogap' => (
     isa     => 'Bool',
     default => 1,
 );
-
-has 'threads' => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => 1,
-);
-
-has 'verbose' => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 0,
-);
-
 
 sub add_positions {
     my $self = shift;
