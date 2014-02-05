@@ -7,6 +7,9 @@
 #
 use feature 'say';
 use Data::Printer;
+
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
 use SNPtools::Coverage;
 
 

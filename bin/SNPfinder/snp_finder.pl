@@ -10,6 +10,8 @@ use warnings;
 use autodie;
 use Getopt::Long;
 
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
 use SNPtools::SNPfinder;
 use SNPtools::Coverage;
 
