@@ -5,7 +5,7 @@
 #
 # Description:
 #
-use Modern::Perl;
+use feature 'say';
 use Data::Printer;
 use SNPtools::Coverage;
 
