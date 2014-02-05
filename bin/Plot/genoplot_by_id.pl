@@ -10,6 +10,9 @@ use warnings;
 use autodie;
 use feature 'say';
 use Getopt::Long;
+
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
 use SNPtools::Plot;
 
 my $usage = <<USAGE_END;

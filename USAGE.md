@@ -28,11 +28,11 @@
 
 # Identify Polymorphisms
 
-## Find SNPs/indels and filter
-
     BIN=/Users/mfc/git.repos/SNPtools/bin
-    DB_DIR=/Users/mfc/git.repos/SNPtools/sample-files
-    OUT_DIR=/Users/mfc/git.repos/SNPtools/sample-files/output
+    BASE_DIR=/Users/mfc/git.repos/SNPtools/sample-files
+    FA_DIR=$BASE_DIR/fa
+    BAM_DIR=$BASE_DIR/bam
+    OUT_DIR=$BASE_DIR/output
     PAR1=R500
     PAR2=IMB211
 
@@ -40,8 +40,8 @@
     do
         $BIN/SNPfinder/snp_finder.pl \
           --id        $ID \
-          --bam       $DB_DIR/bam/$ID.10kb.bam \
-          --fasta     $DB_DIR/fa/B.rapa_genome_sequence_0830.fa \
+          --bam       $BAM_DIR/$ID.10kb.bam \
+          --fasta     $FA_DIR/B.rapa_genome_sequence_0830.fa \
           --seq_list  A01,A02,A03,A04,A05,A06,A07,A08,A09,A10 \
           --out_dir   $OUT_DIR \
           --snp_min   0.33 \
@@ -55,11 +55,11 @@
     done
 
     $BIN/Coverage/reciprocal_coverage.pl \
-      --bam      $DB_DIR/bam/$PAR1.10kb.bam \
+      --bam      $BAM_DIR/$PAR1.10kb.bam \
       --par1     $PAR1 \
       --par2     $PAR2 \
-      --par1_bam $DB_DIR/bam/$PAR1.10kb.bam \
-      --par2_bam $DB_DIR/bam/$PAR2.10kb.bam \
+      --par1_bam $BAM_DIR/$PAR1.10kb.bam \
+      --par2_bam $BAM_DIR/$PAR2.10kb.bam \
       --seq_list A01,A02,A03,A04,A05,A06,A07,A08,A09,A10 \
       --out_dir  $OUT_DIR \
       --threads  3 \
@@ -75,29 +75,7 @@
           --out  $OUT_DIR
     done
 
-## Do in R:
-
-    classify_snps <- function(filename_pattern) {
-      allDup <- function (value) { duplicated(value) | duplicated(value, fromLast = TRUE) }
-      
-      foreach(file_name = list.files(pattern = filename_pattern)) %do% {
-        snps <- read.table(file_name, header = T)
-        snps <- cbind(snps,"SNP_CLASS" = factor(NA, levels = c("SNP", "DIFF_SNP", "NOT", "CONFLICT")))
-        try({snps[!allDup(snps[,c(1:2,6)]),]$SNP_CLASS = "SNP"}, silent = T)
-        try({snps[as.logical(allDup(snps[,c(1,2,6)]) - allDup(snps[,c(1:4,6)])), ]$SNP_CLASS = "DIFF_SNP"}, silent = T)
-        try({snps[as.logical(allDup(snps[,c(1:4,6)]) - allDup(snps[,1:6])), ]$SNP_CLASS = "NOT"}, silent = T)
-        try({snps[as.logical(allDup(snps[,c(1,2,5:6)]) - allDup(snps[,1:6])), ]$SNP_CLASS = "CONFLICT"}, silent = T)
-        print(summary(snps))
-        write.table(snps, file = paste(file_name, ".classified", sep = ""), quote = F, row.names = F, sep = "\t")
-      }
-    }
-
-    library("foreach")
-    setwd("~/git.repos/SNPtools/sample-files/output/master_snp_lists")
-    classify_snps("master_snp_list")
-
-
-## Make final SNP lists
+    $BIN/SNPfinder/classify-snps.r $OUT_DIR/master_snp_lists
 
     mkdir $OUT_DIR/snp_master
     for CHR in A0{1..9} A10; do

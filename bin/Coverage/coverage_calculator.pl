@@ -9,6 +9,9 @@ use strict;
 use warnings;
 use autodie;
 use Getopt::Long;
+
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
 use SNPtools::Coverage;
 
 my $usage = <<USAGE_END;

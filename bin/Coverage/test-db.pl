@@ -2,6 +2,9 @@
 use strict;
 use warnings;
 use feature 'say';
+
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
 use SNPtools::Coverage::DB::Main;
 
 my $schema = SNPtools::Coverage::DB::Main->connect('dbi:SQLite:db/coverage.db');
