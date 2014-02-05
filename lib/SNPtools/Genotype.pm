@@ -9,6 +9,7 @@ use File::Path 'make_path';
 use Parallel::ForkManager;
 use Statistics::R;
 use autodie;
+use FindBin qw($Bin);
 
 #TODO:
 # add relevant validity tests for extract_mpileup
@@ -25,6 +26,8 @@ use autodie;
 
 #     $self->_validity_tests;
 # }
+
+my $bin_dir = "$Bin/../../bin";
 
 
 # Public Attributes
@@ -74,7 +77,7 @@ sub genotype {
     $self->_make_dir( $self->_genotyped_dir );
 
     my $genotyping_cmd =
-      "../../bin/Genotype/genotyping_pileups.pl \\
+      "$bin_dir/Genotype/genotyping_pileups.pl \\
     --mpileup  ${ \$self->_pileup_path } \\
     --snp      ${ \$self->_snp_path } \\
     --par1_id  ${ \$self->par1 } \\
