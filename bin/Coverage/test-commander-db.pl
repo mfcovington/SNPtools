@@ -9,7 +9,11 @@ use strict;
 use warnings;
 use autodie;
 use feature 'say';
+
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
 use SNPtools::Coverage;
+
 my $seq_list = 'A01,A02,A03,A04,A05,A06,A07,A08,A09,A10';
 my $out_dir = '/Users/mfc/git.repos/SNPtools/sample-files/output';
 my $coverage = SNPtools::Coverage->new(

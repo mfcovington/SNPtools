@@ -9,6 +9,8 @@ use strict;
 use warnings;
 use Getopt::Long;
 
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
 use SNPtools::Genotype;
 
 my $usage = <<USAGE_END;

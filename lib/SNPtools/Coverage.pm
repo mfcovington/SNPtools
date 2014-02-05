@@ -1,12 +1,13 @@
 package SNPtools::Coverage;
+use namespace::autoclean;
 use Moose;
+extends 'SNPtools';
 # use MooseX::UndefTolerant;
-use Modern::Perl;
-use File::Basename;
+use feature 'say';
+use feature 'switch';
 use File::Path 'make_path';
 use Parallel::ForkManager;
 use autodie;
-# use Data::Printer;
 use Capture::Tiny 'capture_stderr';
 use SNPtools::Coverage::DB::Main;
 use POSIX;
@@ -27,52 +28,108 @@ sub BUILD {
     $self->_validity_tests;
 }
 
-sub samtools_cmd_gaps {
+
+# Public Attributes
+
+has 'cov_data' => (
+    is  => 'ro',
+    isa => 'ArrayRef'
+);
+
+has 'cov_pos' => (
+    is  => 'rw',
+    isa => 'HashRef'
+);
+
+has 'db' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 1,
+);
+
+has 'flank_dist' => (
+    is      => 'rw',
+    isa     => 'Int',
+    default => 8,
+);
+
+has 'gap' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 1,
+);
+
+has 'nogap' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 1,
+);
+
+has 'par1_bam' => (
+    is  => 'ro',
+    isa => 'Str',
+);
+
+has 'par2_bam' => (
+    is  => 'ro',
+    isa => 'Str',
+);
+
+has 'pos_end' => (
+    is  => 'rw',
+    isa => 'Int',
+);
+
+has 'pos_start' => (
+    is  => 'rw',
+    isa => 'Int',
+);
+
+
+# Public Methods
+
+sub add_positions {
     my $self = shift;
 
-    my $samtools_cmd = "samtools mpileup -A" . $self->_region . $self->bam . " | cut -f1-2,4 > " . $self->out_file . ".cov_gaps";
-    return $samtools_cmd;
-}
+    my $chr = $self->_chromosome;
+    my $flank_dist = $self->flank_dist;
+    my $out_dir = $self->out_dir;
+    my $sample_id = $self->id;
 
-sub samtools_cmd_nogaps {
-    my $self = shift;
+    my %cov_pos; # = $self->cov_pos;
 
-    my $samtools_cmd = "samtools depth" . $self->_region . $self->bam . " > " . $self->out_file . ".cov_nogaps";
-    return $samtools_cmd;
-}
-
-sub bam_index {
-    my $self = shift;
-
-    $self->_validity_tests_samtools;
-    $self->_valid_bam;
-    say "  Building index for " . $self->bam if $self->verbose;
-    my $samtools_cmd = "samtools index " . $self->bam;
-    system( $samtools_cmd );
-}
-
-sub get_seq_names {
-    my $self = shift;
-
-    my @seq_names;
-    if ( defined $self->seq_list ) {
-        @seq_names = split /,/, $self->seq_list;
+# TODO: custom path
+    open my $snps_fh, "<", "$out_dir/snps/$sample_id.$chr.snps.csv"; #/genotyping/snp_master/polyDB.$chr.nr";
+    <$snps_fh>;
+    while (<$snps_fh>) {
+        my $snp_pos_raw = [ split /,/ ]->[1];
+        my ( $snp_pos ) = split /\./, $snp_pos_raw;
+        $cov_pos{$chr}{$snp_pos}                 = 1;
+        $cov_pos{$chr}{ $snp_pos - $flank_dist } = 1;
+        $cov_pos{$chr}{ $snp_pos + $flank_dist } = 1;
     }
-    else {
-        say "  Getting sequence names from bam file" if $self->verbose;
-        my @header = $self->_get_header;
-        @seq_names = map { $_ =~ m/\t SN: (.*) \t LN:/x } @header;
-    }
-    return @seq_names;
+    close $snps_fh;
+    # print scalar keys $cov_pos{$chr}, "\n";
+    $self->cov_pos( \%cov_pos );
 }
 
-sub get_seq_lengths {
-    my $self = shift;
-
-    say "  Getting sequence lengths from bam file" if $self->verbose;
-    my @header = $self->_get_header;
-    my @seq_lengths = map { $_ =~ m/\t SN: .* \t LN: (.*)/x } @header;
-    return @seq_lengths;
+# TODO: Convert create_db into OO method
+sub create_db {
+    my ( $db, $dbi, $db_dir, $verbose ) = @_;
+    say "  Creating coverage database: $db" if $verbose;
+    make_path( $db_dir );
+    my $dbh = DBI->connect("dbi:$dbi:$db");
+    $dbh->do(<<'END_SQL');
+CREATE TABLE coverage (
+sample_id  TEXT    NOT NULL,
+chromosome TEXT    NOT NULL,
+position   INTEGER NOT NULL,
+gap_cov    INTEGER NOT NULL,
+nogap_cov  INTEGER,
+PRIMARY KEY ( sample_id, chromosome, position )
+);
+END_SQL
+    $dbh->disconnect();
 }
 
 sub get_coverage {
@@ -104,162 +161,6 @@ sub get_coverage_all {
     }
 }
 
-around 'get_coverage_all' => sub {
-    my $orig = shift;
-    my $self = shift;
-
-    $self->_validity_tests();
-
-    my @chromosomes = $self->get_seq_names;
-    my $pm = new Parallel::ForkManager($self->threads);
-    foreach my $chr (@chromosomes) {
-        $pm->start and next;
-
-        $self->_chromosome($chr);
-        $self->out_file( $self->out_dir . "/coverage/" . $self->id . "." . $self->_chromosome . ".coverage" );
-        $self->_make_dir();
-
-        $self->$orig(@_);
-
-        $pm->finish;
-    }
-    $pm->wait_all_children;
-};
-
-has 'cov_pos' => (
-    is  => 'rw',
-    isa => 'HashRef'
-);
-
-has 'cov_data' => (
-    is  => 'ro',
-    isa => 'ArrayRef'
-);
-
-has 'flank_dist' => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => 8,
-);
-
-has 'id' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => "unidentified",
-);
-
-has 'bam' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'par1' => (
-    is      => 'ro',
-    isa     => 'Str',
-);
-
-has 'par2' => (
-    is      => 'ro',
-    isa     => 'Str',
-);
-
-has 'par1_bam' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'par2_bam' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'seq_list' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has '_chromosome' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'pos_start' => (
-    is  => 'rw',
-    isa => 'Int',
-);
-
-has 'pos_end' => (
-    is  => 'rw',
-    isa => 'Int',
-);
-
-has 'out_dir' => (
-    is  => 'rw',
-    isa => 'Str',
-    default => "./",
-);
-
-has 'out_file' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'db' => (
-    is      => 'rw',
-    isa     => 'Bool',
-    default => 1,
-);
-
-has 'gap' => (
-    is      => 'rw',
-    isa     => 'Bool',
-    default => 1,
-);
-
-has 'nogap' => (
-    is      => 'rw',
-    isa     => 'Bool',
-    default => 1,
-);
-
-has 'threads' => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => 1,
-);
-
-has 'verbose' => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 0,
-);
-
-
-sub add_positions {
-    my $self = shift;
-
-    my $chr = $self->_chromosome;
-    my $flank_dist = $self->flank_dist;
-    my $out_dir = $self->out_dir;
-    my $sample_id = $self->id;
-
-    my %cov_pos; # = $self->cov_pos;
-
-# TODO: custom path
-    open my $snps_fh, "<", "$out_dir/snps/$sample_id.$chr.snps.csv"; #/genotyping/snp_master/polyDB.$chr.nr";
-    <$snps_fh>;
-    while (<$snps_fh>) {
-        my $snp_pos_raw = [ split /,/ ]->[1];
-        my ( $snp_pos ) = split /\./, $snp_pos_raw;
-        $cov_pos{$chr}{$snp_pos}                 = 1;
-        $cov_pos{$chr}{ $snp_pos - $flank_dist } = 1;
-        $cov_pos{$chr}{ $snp_pos + $flank_dist } = 1;
-    }
-    close $snps_fh;
-    # print scalar keys $cov_pos{$chr}, "\n";
-    $self->cov_pos( \%cov_pos );
-}
-
 sub get_coverage_db {
     my $self = shift;
 
@@ -267,25 +168,34 @@ sub get_coverage_db {
     $self->populate_CoverageDB_by_chr;
 }
 
-around [ 'get_coverage_db', 'reciprocal_coverage' ] => sub {
-    my $orig = shift;
-    my $self = shift;
+sub get_pos_from_cov_db {
+    my ( $sample_id, $chr, $schema_ref ) = @_;
 
-    $self->_validity_tests();
+    my $rs = $$schema_ref->resultset('Coverage')->search(
+        {
+            'sample_id'  => $sample_id,
+            'chromosome' => $chr,
+        },
+        { select => [qw/ position /] }
+    );
 
-    my @chromosomes = $self->get_seq_names;
-    my $pm = new Parallel::ForkManager( floor $self->threads / 2 );
-    foreach my $chr (@chromosomes) {
-        $pm->start and next;
+    my @all = $rs->all;
 
-        $self->_chromosome($chr);
+    return \@all;
+}
 
-        $self->$orig(@_);
-
-        $pm->finish;
-    }
-    $pm->wait_all_children;
-};
+sub populate_and_reset {
+    my ( $count_ref, $cov_data_ref, $schema_ref ) = @_;
+    $$count_ref = 1;
+    $$schema_ref->populate(
+        'Coverage',
+        [
+            [qw/sample_id chromosome position gap_cov nogap_cov/],
+            @$cov_data_ref
+        ]
+    );
+    @$cov_data_ref = ();
+}
 
 sub populate_CoverageDB_by_chr {
     my $self = shift;
@@ -335,40 +245,7 @@ sub populate_CoverageDB_by_chr {
     populate_and_reset( \$count, \@cov_data, \$schema ) if scalar @cov_data;
 }
 
-# TODO: Convert create_db into OO method
-sub create_db {
-    my ( $db, $dbi, $db_dir, $verbose ) = @_;
-    say "  Creating coverage database: $db" if $verbose;
-    make_path( $db_dir );
-    my $dbh = DBI->connect("dbi:$dbi:$db");
-    $dbh->do(<<'END_SQL');
-CREATE TABLE coverage (
-sample_id  TEXT    NOT NULL,
-chromosome TEXT    NOT NULL,
-position   INTEGER NOT NULL,
-gap_cov    INTEGER NOT NULL,
-nogap_cov  INTEGER,
-PRIMARY KEY ( sample_id, chromosome, position )
-);
-END_SQL
-    $dbh->disconnect();
-}
-
-sub populate_and_reset {
-    my ( $count_ref, $cov_data_ref, $schema_ref ) = @_;
-    $$count_ref = 1;
-    $$schema_ref->populate(
-        'Coverage',
-        [
-            [qw/sample_id chromosome position gap_cov nogap_cov/],
-            @$cov_data_ref
-        ]
-    );
-    @$cov_data_ref = ();
-}
-
 # TODO: Should reciprocal_coverage really be threads / 2 ?
-
 sub reciprocal_coverage {
     my $self = shift;
 
@@ -466,21 +343,64 @@ sub reciprocal_coverage {
     }
 }
 
-sub get_pos_from_cov_db {
-    my ( $sample_id, $chr, $schema_ref ) = @_;
+sub samtools_cmd_gaps {
+    my $self = shift;
 
-    my $rs = $$schema_ref->resultset('Coverage')->search(
-        {
-            'sample_id'  => $sample_id,
-            'chromosome' => $chr,
-        },
-        { select => [qw/ position /] }
-    );
-
-    my @all = $rs->all;
-
-    return \@all;
+    my $samtools_cmd = "samtools mpileup -A" . $self->_region . $self->bam . " | cut -f1-2,4 > " . $self->out_file . ".cov_gaps";
+    return $samtools_cmd;
 }
+
+sub samtools_cmd_nogaps {
+    my $self = shift;
+
+    my $samtools_cmd = "samtools depth" . $self->_region . $self->bam . " > " . $self->out_file . ".cov_nogaps";
+    return $samtools_cmd;
+}
+
+around 'get_coverage_all' => sub {
+    my $orig = shift;
+    my $self = shift;
+
+    $self->_validity_tests();
+
+    my @chromosomes = $self->get_seq_names;
+    my $pm = new Parallel::ForkManager($self->threads);
+    foreach my $chr (@chromosomes) {
+        $pm->start and next;
+
+        $self->_chromosome($chr);
+        $self->out_file( $self->out_dir . "/coverage/" . $self->id . "." . $self->_chromosome . ".coverage" );
+        $self->_make_dir();
+
+        $self->$orig(@_);
+
+        $pm->finish;
+    }
+    $pm->wait_all_children;
+};
+
+around [ 'get_coverage_db', 'reciprocal_coverage' ] => sub {
+    my $orig = shift;
+    my $self = shift;
+
+    $self->_validity_tests();
+
+    my @chromosomes = $self->get_seq_names;
+    my $pm = new Parallel::ForkManager( floor $self->threads / 2 );
+    foreach my $chr (@chromosomes) {
+        $pm->start and next;
+
+        $self->_chromosome($chr);
+
+        $self->$orig(@_);
+
+        $pm->finish;
+    }
+    $pm->wait_all_children;
+};
+
+
+# Private Methods
 
 sub _region {
     my $self = shift;
@@ -499,13 +419,6 @@ sub _region {
     return $region;
 }
 
-sub _make_dir {
-    my $self = shift;
-
-    my ( $filename, $dir_name ) = fileparse( $self->out_file );
-    make_path( $dir_name );
-}
-
 sub _validity_tests {
     my $self = shift;
 
@@ -514,73 +427,4 @@ sub _validity_tests {
     $self->_valid_bam_index;
 }
 
-sub _validity_tests_samtools {
-    my $self = shift;
-
-    $self->_valid_samtools_path;
-    $self->_valid_samtools_version;
-}
-
-sub _get_header {
-    my $self = shift;
-
-    # $self->_validity_tests();
-    my $get_header_cmd = "samtools view -H " . $self->bam;
-    my @header = `$get_header_cmd`;
-    return @header;
-}
-
-sub _valid_bam {
-    my $self = shift;
-
-    if ( -e $self->bam and $self->bam =~ m/ \.bam$ /ix ) {
-        say "  Found valid bam file: " . $self->bam if $self->verbose;
-        return 1;
-    }
-    else {
-        die "  Can't find valid bam file: " . $self->bam;
-    }
-}
-
-sub _valid_bam_index {
-    my $self = shift;
-
-    my ( $bam_prefix, $bam_dir ) = fileparse( $self->bam, ".bam" );
-    if ( -e "$bam_dir/$bam_prefix.bai" or -e "$bam_dir/$bam_prefix.bam.bai" ) {
-        say "  Found valid index for " . $self->bam if $self->verbose;
-        return 1;
-    }
-    else {
-        say "  Can't find valid index for " . $self->bam;
-        $self->bam_index;
-    }
-}
-
-sub _valid_samtools_path {
-    my $self = shift;
-
-    my $sam_status = `which samtools`;
-    die "  Samtools not found in PATH" unless $sam_status =~ m/samtools/i;
-    say "  Samtools looks good!" if $self->verbose;
-}
-
-sub _valid_samtools_version {
-    my $self = shift;
-
-    my @usage = `samtools 2>&1`; #change to samtools
-    my $version;
-    for (@usage) {
-        $_ =~ m/Version: ([\d\.].*) /i;
-        $version = $1 and last if $1;
-    }
-    my @version_parsed = $version =~ m/ (\d*) \. (\d*) \. (\d*) /x;
-    say "  Samtools is version $version" if $self->verbose;
-    die "  Need samtools version 0.1.XX+"
-      unless ( $version_parsed[0] >= 1
-        or $version_parsed[1] >= 2
-        or $version_parsed[1] == 1 and $version_parsed[2] >= 18 );
-}
-
-no Moose;
 __PACKAGE__->meta->make_immutable;
-

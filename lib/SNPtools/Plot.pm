@@ -1,15 +1,14 @@
 package SNPtools::Plot;
+use namespace::autoclean;
 use Moose;
+extends 'SNPtools';
 use MooseX::UndefTolerant;
-use File::Basename;
 use File::Path 'make_path';
 use Parallel::ForkManager;
 use autodie;
 use Statistics::R;
 use feature 'say';
 use List::Util 'max';
-use FindBin qw($Bin);
-# use Data::Printer;
 
 # TODO:
 # - chromosome nicknames/abbreviations
@@ -26,6 +25,79 @@ sub BUILD {
     $self->_validity_tests;
 }
 
+
+# Public Attributes
+
+has 'before_noise_reduction' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 0,
+    lazy    => 1,
+);
+
+has 'col_het' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'black',
+    lazy    => 1,
+);
+
+has 'col_par1' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'orange',
+    lazy    => 1,
+);
+
+has 'col_par2' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'sky blue',
+    lazy    => 1,
+);
+
+has 'plot_format' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'png',
+    lazy    => 1,
+);
+
+has 'plot_height' => (
+    is      => 'ro',
+    isa     => 'Num',
+    default => 8,
+    lazy    => 1,
+);
+
+has 'plot_width' => (
+    is      => 'ro',
+    isa     => 'Num',
+    default => 10,
+    lazy    => 1,
+);
+
+has 'region' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+
+# Private Attributes
+
+has '_region_end' => (
+    is  => 'rw',
+    isa => 'Int',
+);
+
+has '_region_start' => (
+    is  => 'rw',
+    isa => 'Int',
+);
+
+
+# Public Methods
+
 sub genoplot_by_chr {
     my $self = shift;
 
@@ -38,9 +110,9 @@ sub genoplot_by_chr {
     # $self->_make_tmp_dir;
     my $R = Statistics::R->new();
 
-    $R->run_from_file("$Bin/Plot/genoplot_by_chr.build_df.R");
-    $R->run_from_file("$Bin/Plot/genoplot_by_chr.build_plot.R");
-    $R->run_from_file("$Bin/Plot/genoplot_by_chr.add_summary.R")
+    $R->run_from_file("../../bin/Plot/genoplot_by_chr.build_df.R");
+    $R->run_from_file("../../bin/Plot/genoplot_by_chr.build_plot.R");
+    $R->run_from_file("../../bin/Plot/genoplot_by_chr.add_summary.R")
         if $self->plot_summary;
     $R->run(
         qq`ggsave(
@@ -50,7 +122,6 @@ sub genoplot_by_chr {
           height = $plot_height)`
     );
 }
-
 
 sub genoplot_by_id {
     my $self = shift;
@@ -93,15 +164,15 @@ sub genoplot_by_id {
         $R->set( 'end',   $end );
         my $region = $self->region;
         say "  Building data frame for $id plot ($region)." if $self->verbose;
-        $R->run_from_file("$Bin/Plot/genoplot_by_id.region.build_df.R");
+        $R->run_from_file("../../bin/Plot/genoplot_by_id.region.build_df.R");
         say "  Generating plot for $id ($region)." if $self->verbose;
-        $R->run_from_file("$Bin/Plot/genoplot_by_id.build_plot.R");
+        $R->run_from_file("../../bin/Plot/genoplot_by_id.build_plot.R");
     }
     else {
         say "  Building data frame for $id plot." if $self->verbose;
-        $R->run_from_file("$Bin/Plot/genoplot_by_id.build_df.R");
+        $R->run_from_file("../../bin/Plot/genoplot_by_id.build_df.R");
         say "  Generating plot for $id." if $self->verbose;
-        $R->run_from_file("$Bin/Plot/genoplot_by_id.build_plot.R");
+        $R->run_from_file("../../bin/Plot/genoplot_by_id.build_plot.R");
     }
 
     my $plot_path = $self->_plot_path;
@@ -117,16 +188,6 @@ sub genoplot_by_id {
           width    = $plot_width,
           height   = $plot_height)`
     );
-}
-
-sub bam_index {
-    my $self = shift;
-
-    $self->_validity_tests_samtools;
-    $self->_valid_bam;
-    say "  Building index for " . $self->bam if $self->verbose;
-    my $samtools_cmd = "samtools index " . $self->bam;
-    system( $samtools_cmd );
 }
 
 sub get_seq_names {
@@ -156,14 +217,8 @@ sub get_seq_names {
     return @seq_names;
 }
 
-sub get_seq_lengths {
-    my $self = shift;
 
-    say "  Getting sequence lengths from bam file" if $self->verbose;
-    my @header = $self->_get_header;
-    my @seq_lengths = map { $_ =~ m/\t SN: .* \t LN: (.*)/x } @header;
-    return @seq_lengths;
-}
+# Private Methods
 
 sub _get_genofile {
     my $self = shift;
@@ -172,168 +227,6 @@ sub _get_genofile {
     $genofile .= ".nr" unless $self->before_noise_reduction;
     return $genofile;
 }
-
-# around [qw(extract_mpileup genotype noise_reduction)] => sub {
-#     my $orig = shift;
-#     my $self = shift;
-
-#     my @chromosomes = $self->get_seq_names;
-#     my $pm = new Parallel::ForkManager($self->threads);
-#     foreach my $chr (@chromosomes) {
-#         $pm->start and next;
-#         $self->_chromosome($chr);
-#         $self->$orig(@_);
-#         $pm->finish;
-#     }
-#     $pm->wait_all_children;
-# };
-
-has 'before_noise_reduction' => (
-    is      => 'rw',
-    isa     => 'Bool',
-    default => 0,
-    lazy    => 1,
-);
-
-has 'plot_format' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'png',
-    lazy    => 1,
-);
-
-has 'plot_width' => (
-    is      => 'ro',
-    isa     => 'Num',
-    default => 10,
-    lazy    => 1,
-);
-
-has 'plot_height' => (
-    is      => 'ro',
-    isa     => 'Num',
-    default => 8,
-    lazy    => 1,
-);
-
-has 'id' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'par1' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'par2' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'col_par1' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'orange',
-    lazy    => 1,
-);
-
-has 'col_par2' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'sky blue',
-    lazy    => 1,
-);
-
-has 'col_het' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'black',
-    lazy    => 1,
-);
-
-has 'bam' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'fasta' => (
-    is  => 'ro',
-    isa => 'Str',
-);
-
-has 'region' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has '_region_start' => (
-    is  => 'rw',
-    isa => 'Int',
-);
-
-has '_region_end' => (
-    is  => 'rw',
-    isa => 'Int',
-);
-
-has 'seq_list' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has '_chromosome' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'out_file' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'out_dir' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => "./",
-    lazy    => 1,
-);
-
-has 'threads' => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => 1,
-    lazy    => 1,
-);
-
-has 'verbose' => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 0,
-    lazy    => 1,
-);
-
-has '_plot_dir' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => sub {
-        my $self = shift;
-
-        return $self->out_dir . "/genoplot/";
-    },
-    lazy => 1,
-);
-
-has '_genotyped_dir' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => sub {
-        my $self = shift;
-
-        return $self->out_dir . "/genotyped/";
-    },
-    lazy => 1,
-);
 
 sub _plot_path {
     my $self = shift;
@@ -346,14 +239,6 @@ sub _plot_path {
     return $path;
 }
 
-sub _make_dir {
-    my $self = shift;
-
-    my ( $filename, $dir_name ) = fileparse( $self->out_file );
-    make_path( $dir_name );
-}
-
-
 sub _validity_tests {
     my $self = shift;
 
@@ -363,87 +248,4 @@ sub _validity_tests {
     # $self->_valid_bam_index;
 }
 
-sub _validity_tests_samtools {
-    my $self = shift;
-
-    $self->_valid_samtools_path;
-    $self->_valid_samtools_version;
-}
-
-sub _get_header {
-    my $self = shift;
-
-    $self->_validity_tests();
-    my $get_header_cmd = "samtools view -H " . $self->bam;
-    my @header = `$get_header_cmd`;
-    return @header;
-}
-
-sub _valid_bam {
-    my $self = shift;
-
-    if ( -e $self->bam and $self->bam =~ m/ \.bam$ /ix ) {
-        say "  Found valid bam file: " . $self->bam if $self->verbose;
-        return 1;
-    }
-    else {
-        die "  Can't find valid bam file: " . $self->bam;
-    }
-}
-
-sub _valid_bam_index {
-    my $self = shift;
-
-    my ( $bam_prefix, $bam_dir ) = fileparse( $self->bam, ".bam" );
-    if ( -e "$bam_dir/$bam_prefix.bai" or -e "$bam_dir/$bam_prefix.bam.bai" ) {
-        say "  Found valid index for " . $self->bam if $self->verbose;
-        return 1;
-    }
-    else {
-        say "  Can't find valid index for " . $self->bam;
-        $self->bam_index;
-    }
-}
-
-# sub _valid_fasta {
-#     my $self = shift;
-
-#     if ( -e $self->fasta and $self->fasta =~ m/ \.fasta$ | \.fa$ /ix ) {
-#         say "  Found valid fasta file: " . $self->fasta if $self->verbose;
-#         return 1;
-#     }
-#     else {
-#         die "  Can't find valid fasta file: " . $self->fasta;
-#     }
-# }
-
-sub _valid_samtools_path {
-    my $self = shift;
-
-    my $sam_status = `which samtools`;
-    die "  Samtools not found in PATH" unless $sam_status =~ m/samtools/i;
-    say "  Samtools looks good!" if $self->verbose;
-}
-
-sub _valid_samtools_version {
-    my $self = shift;
-
-    my @usage = `samtools 2>&1`; #change to samtools
-    my $version;
-    for (@usage) {
-        $_ =~ m/Version: ([\d\.].*) /i;
-        $version = $1 and last if $1;
-    }
-    my @version_parsed = $version =~ m/ (\d*) \. (\d*) \. (\d*) /x;
-    say "  Samtools is version $version" if $self->verbose;
-    die "  Need samtools version 0.1.XX+"
-      unless ( $version_parsed[0] >= 1
-        or $version_parsed[1] >= 2
-        or $version_parsed[1] == 1 and $version_parsed[2] >= 18 );
-}
-
-
-
-
-no Moose;
 __PACKAGE__->meta->make_immutable;
