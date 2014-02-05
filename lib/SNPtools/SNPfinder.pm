@@ -3,7 +3,7 @@ use namespace::autoclean;
 use Moose;
 extends 'SNPtools';
 use MooseX::UndefTolerant;
-use Modern::Perl;
+use feature 'say';
 use Parallel::ForkManager;
 use autodie;
 use FindBin qw($Bin);

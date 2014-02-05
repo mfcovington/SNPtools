@@ -3,7 +3,7 @@ use namespace::autoclean;
 use Moose;
 extends 'SNPtools';
 use MooseX::UndefTolerant;
-use Modern::Perl;
+use feature 'say';
 use File::Basename;
 use File::Path 'make_path';
 use Parallel::ForkManager;
