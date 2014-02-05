@@ -5,11 +5,7 @@ use MooseX::UndefTolerant;
 use File::Path 'make_path';
 use feature 'say';
 use File::Basename;
-# use Modern::Perl;
-# use Parallel::ForkManager;
-# use autodie;
-# use Data::Printer;
-# use FindBin qw($Bin);
+use autodie;
 
 
 # Public Attributes

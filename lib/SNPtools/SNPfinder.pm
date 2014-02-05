@@ -6,7 +6,6 @@ use MooseX::UndefTolerant;
 use Modern::Perl;
 use Parallel::ForkManager;
 use autodie;
-# use Data::Printer;
 use FindBin qw($Bin);
 
 #TODO: move common subroutines elsewhere (validation, mkdir, bam header-related, etc.)
@@ -20,6 +19,60 @@ sub BUILD {
     my $self = shift;
 
     $self->_validity_tests;
+}
+
+
+# Public Attributes
+
+has 'cov_min' => (
+    is      => 'rw',
+    isa     => 'Int',
+    default => 4,
+    lazy    => 1,
+);
+
+has 'indel_min' => (
+    is      => 'rw',
+    isa     => 'Num',
+    default => 0.66,
+    lazy    => 1,
+);
+
+has 'snp_min' => (
+    is      => 'rw',
+    isa     => 'Num',
+    default => 0.33,
+    lazy    => 1,
+);
+
+
+# Public Methods
+
+# TODO: Incorporate script into this module (or coverage module)
+sub flanking_cov {
+    my $self = shift;
+
+    $self->_validity_tests();
+    # $self->_make_dir();
+
+    my $out_dir    = $self->out_dir;
+    my $sample_id  = $self->id;
+    my $chromosome = $self->_chromosome;
+    my $snp_file   = "$out_dir/snps/$sample_id.$chromosome.snps.csv";
+    my $cov_dir    = "$out_dir/coverage";
+
+    my $flanking_cov_cmd = <<EOF;
+$Bin/flanking_coverage_calculator.pl \\
+    --snp_file   $snp_file   \\
+    --sample_id  $sample_id  \\
+    --chromosome $chromosome \\
+    --cov_db_dir $cov_dir
+EOF
+
+#ADD FLANK DIST
+
+    say "  Running:\n  " . $flanking_cov_cmd if $self->verbose();
+    system($flanking_cov_cmd );
 }
 
 sub identify_snps {
@@ -64,33 +117,6 @@ around 'identify_snps' => sub {
     $pm->wait_all_children;
 };
 
-# TODO: Incorporate script into this module (or coverage module)
-sub flanking_cov {
-    my $self = shift;
-
-    $self->_validity_tests();
-    # $self->_make_dir();
-
-    my $out_dir    = $self->out_dir;
-    my $sample_id  = $self->id;
-    my $chromosome = $self->_chromosome;
-    my $snp_file   = "$out_dir/snps/$sample_id.$chromosome.snps.csv";
-    my $cov_dir    = "$out_dir/coverage";
-
-    my $flanking_cov_cmd = <<EOF;
-$Bin/flanking_coverage_calculator.pl \\
-    --snp_file   $snp_file   \\
-    --sample_id  $sample_id  \\
-    --chromosome $chromosome \\
-    --cov_db_dir $cov_dir
-EOF
-
-#ADD FLANK DIST
-
-    say "  Running:\n  " . $flanking_cov_cmd if $self->verbose();
-    system($flanking_cov_cmd );
-}
-
 around 'flanking_cov' => sub {
     my $orig = shift;
     my $self = shift;
@@ -113,26 +139,8 @@ around 'flanking_cov' => sub {
     $pm->wait_all_children;
 };
 
-has 'cov_min' => (
-    is      => 'rw',
-    isa     => 'Int',
-    default => 4,
-    lazy    => 1,
-);
 
-has 'snp_min' => (
-    is      => 'rw',
-    isa     => 'Num',
-    default => 0.33,
-    lazy    => 1,
-);
-
-has 'indel_min' => (
-    is      => 'rw',
-    isa     => 'Num',
-    default => 0.66,
-    lazy    => 1,
-);
+# Private Methods
 
 sub _validity_tests {
     my $self = shift;

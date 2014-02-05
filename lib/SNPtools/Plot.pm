@@ -10,7 +10,6 @@ use Statistics::R;
 use feature 'say';
 use List::Util 'max';
 use FindBin qw($Bin);
-# use Data::Printer;
 
 # TODO:
 # - chromosome nicknames/abbreviations
@@ -26,6 +25,79 @@ sub BUILD {
 
     $self->_validity_tests;
 }
+
+
+# Public Attributes
+
+has 'before_noise_reduction' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 0,
+    lazy    => 1,
+);
+
+has 'col_het' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'black',
+    lazy    => 1,
+);
+
+has 'col_par1' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'orange',
+    lazy    => 1,
+);
+
+has 'col_par2' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'sky blue',
+    lazy    => 1,
+);
+
+has 'plot_format' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'png',
+    lazy    => 1,
+);
+
+has 'plot_height' => (
+    is      => 'ro',
+    isa     => 'Num',
+    default => 8,
+    lazy    => 1,
+);
+
+has 'plot_width' => (
+    is      => 'ro',
+    isa     => 'Num',
+    default => 10,
+    lazy    => 1,
+);
+
+has 'region' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+
+# Private Attributes
+
+has '_region_end' => (
+    is  => 'rw',
+    isa => 'Int',
+);
+
+has '_region_start' => (
+    is  => 'rw',
+    isa => 'Int',
+);
+
+
+# Public Methods
 
 sub genoplot_by_chr {
     my $self = shift;
@@ -51,7 +123,6 @@ sub genoplot_by_chr {
           height = $plot_height)`
     );
 }
-
 
 sub genoplot_by_id {
     my $self = shift;
@@ -147,6 +218,9 @@ sub get_seq_names {
     return @seq_names;
 }
 
+
+# Private Methods
+
 sub _get_genofile {
     my $self = shift;
 
@@ -154,85 +228,6 @@ sub _get_genofile {
     $genofile .= ".nr" unless $self->before_noise_reduction;
     return $genofile;
 }
-
-# around [qw(extract_mpileup genotype noise_reduction)] => sub {
-#     my $orig = shift;
-#     my $self = shift;
-
-#     my @chromosomes = $self->get_seq_names;
-#     my $pm = new Parallel::ForkManager($self->threads);
-#     foreach my $chr (@chromosomes) {
-#         $pm->start and next;
-#         $self->_chromosome($chr);
-#         $self->$orig(@_);
-#         $pm->finish;
-#     }
-#     $pm->wait_all_children;
-# };
-
-has 'before_noise_reduction' => (
-    is      => 'rw',
-    isa     => 'Bool',
-    default => 0,
-    lazy    => 1,
-);
-
-has 'plot_format' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'png',
-    lazy    => 1,
-);
-
-has 'plot_width' => (
-    is      => 'ro',
-    isa     => 'Num',
-    default => 10,
-    lazy    => 1,
-);
-
-has 'plot_height' => (
-    is      => 'ro',
-    isa     => 'Num',
-    default => 8,
-    lazy    => 1,
-);
-
-has 'col_par1' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'orange',
-    lazy    => 1,
-);
-
-has 'col_par2' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'sky blue',
-    lazy    => 1,
-);
-
-has 'col_het' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'black',
-    lazy    => 1,
-);
-
-has 'region' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has '_region_start' => (
-    is  => 'rw',
-    isa => 'Int',
-);
-
-has '_region_end' => (
-    is  => 'rw',
-    isa => 'Int',
-);
 
 sub _plot_path {
     my $self = shift;

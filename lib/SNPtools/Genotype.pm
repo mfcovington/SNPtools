@@ -10,7 +10,6 @@ use Parallel::ForkManager;
 use Statistics::R;
 use autodie;
 use FindBin qw($Bin);
-# use Data::Printer;
 
 #TODO:
 # add relevant validity tests for extract_mpileup
@@ -27,6 +26,26 @@ use FindBin qw($Bin);
 
 #     $self->_validity_tests;
 # }
+
+
+# Public Attributes
+
+has 'before_noise_reduction' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 0,
+    lazy    => 1,
+);
+
+has 'nr_ratio' => (
+    is      => 'rw',
+    isa     => 'Num',
+    default => 0.7,
+    lazy    => 1,
+);
+
+
+# Public Methods
 
 sub extract_mpileup {
     my $self = shift;
@@ -136,48 +155,14 @@ around [qw(extract_mpileup genotype noise_reduction)] => sub {
     $pm->wait_all_children;
 };
 
-has 'nr_ratio' => (
-    is      => 'rw',
-    isa     => 'Num',
-    default => 0.7,
-    lazy    => 1,
-);
 
-has 'before_noise_reduction' => (
-    is      => 'rw',
-    isa     => 'Bool',
-    default => 0,
-    lazy    => 1,
-);
-
-sub _pileup_path {
-    my $self = shift;
-
-    return $self->_mpileup_dir . "/"
-      . join( '.', $self->id, $self->_chromosome, $self->_mpileup_suffix );
-}
-
-sub _snp_path {
-    my $self = shift;
-
-    my $path = $self->_snp_dir . "/polyDB." . $self->_chromosome;
-    $path .= ".nr" unless $self->before_noise_reduction;
-    return $path;
-}
+# Private Methods
 
 sub _genotyped_path {
     my $self = shift;
 
     return $self->_genotyped_dir . "/"
       . join( '.', $self->id, $self->_chromosome, $self->_genotyped_suffix );
-}
-
-sub _mpileup_suffix {
-    my $self = shift;
-
-    my $suffix = "mpileup";
-    $suffix .= ".nr" unless $self->before_noise_reduction;
-    return $suffix;
 }
 
 sub _genotyped_suffix {
@@ -194,6 +179,29 @@ sub _make_dir {
 
     ( my $filename, $dir_name ) = fileparse( $self->out_file ) unless defined $dir_name;
     make_path( $dir_name ) unless -e $dir_name;
+}
+
+sub _mpileup_suffix {
+    my $self = shift;
+
+    my $suffix = "mpileup";
+    $suffix .= ".nr" unless $self->before_noise_reduction;
+    return $suffix;
+}
+
+sub _pileup_path {
+    my $self = shift;
+
+    return $self->_mpileup_dir . "/"
+      . join( '.', $self->id, $self->_chromosome, $self->_mpileup_suffix );
+}
+
+sub _snp_path {
+    my $self = shift;
+
+    my $path = $self->_snp_dir . "/polyDB." . $self->_chromosome;
+    $path .= ".nr" unless $self->before_noise_reduction;
+    return $path;
 }
 
 sub _validity_tests {
