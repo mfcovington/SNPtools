@@ -21,6 +21,8 @@ sub BUILD {
     $self->_validity_tests;
 }
 
+my $bin_dir = "$Bin/../../bin";
+
 
 # Public Attributes
 
@@ -62,7 +64,7 @@ sub flanking_cov {
     my $cov_dir    = "$out_dir/coverage";
 
     my $flanking_cov_cmd = <<EOF;
-$Bin/flanking_coverage_calculator.pl \\
+$bin_dir/SNPfinder/flanking_coverage_calculator.pl \\
     --snp_file   $snp_file   \\
     --sample_id  $sample_id  \\
     --chromosome $chromosome \\
@@ -82,7 +84,7 @@ sub identify_snps {
     $self->_make_dir();
 
     my $identify_snps_cmd =
-      "$Bin/SNPfinder/01.1.SNP_calling_homos.pl \\
+      "$bin_dir/SNPfinder/01.1.SNP_calling_homos.pl \\
     --chromosome " . $self->_chromosome . " \\
     --o " . $self->out_file . " \\
     --n_reads " . $self->cov_min . " \\

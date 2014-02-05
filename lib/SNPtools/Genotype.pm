@@ -27,6 +27,8 @@ use FindBin qw($Bin);
 #     $self->_validity_tests;
 # }
 
+my $bin_dir = "$Bin/../../bin";
+
 
 # Public Attributes
 
@@ -75,7 +77,7 @@ sub genotype {
     $self->_make_dir( $self->_genotyped_dir );
 
     my $genotyping_cmd =
-      "$Bin/Genotype/genotyping_pileups.pl \\
+      "$bin_dir/Genotype/genotyping_pileups.pl \\
     --mpileup  ${ \$self->_pileup_path } \\
     --snp      ${ \$self->_snp_path } \\
     --par1_id  ${ \$self->par1 } \\
