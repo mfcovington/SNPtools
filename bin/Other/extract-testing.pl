@@ -9,13 +9,14 @@
 use strict;
 use warnings;
 use autodie;
+use feature 'say';
 
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
 use SNPtools::SNPfinder;
 use SNPtools::Coverage;
 use SNPtools::Genotype;
 use SNPtools::Plot;
-use feature 'say';
-
 
 my $id       = "test_id";
 my $base_dir = "/Users/mfc/git.repos";
