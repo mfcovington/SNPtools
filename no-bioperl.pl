@@ -24,31 +24,18 @@ open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome -f $fasta_ref $ba
 # open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19001-19300 -f $fasta_ref $bam_file";
 # open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19262-19262 -f $fasta_ref $bam_file";
 # open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:10197-10197 -f $fasta_ref $bam_file";
-# my $stop = 0;
 
 say "seq_id,pos,ref,a,c,g,t,del,consensus";
 
 while (<$mpileup_fh>) {
     my ( $seqid, $pos, $ref, $depth, $read_bases, $read_quals ) = split;
 
-    # say "------------------------------------";
-    # say "depth: $depth";
     $read_bases =~ tr/acgt/ACGT/;
-    # say $read_bases;
 
     my ( $inserts, $read_bases_no_ins ) = get_inserts($read_bases);
     my $ins_counts = get_insert_counts($inserts);
 
-    # p $inserts;
-    # p $ins_counts;
-    # say scalar keys $inserts;
-    # say $read_bases_no_ins;
-
     clean_deletions(\$read_bases_no_ins);
-
-    # p %counts;
-    # my @vals = values %counts;
-    # say "vals: @vals";
 
     my ( $total_counts, $counts ) = count_bases($ref, $read_bases_no_ins);
 
@@ -75,7 +62,7 @@ while (<$mpileup_fh>) {
 
 close $mpileup_fh;
 
-
+exit;
 
 sub get_inserts {    # Capture sequences of variable length inserts
                      # and remove them from $read_bases
