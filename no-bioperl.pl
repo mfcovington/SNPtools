@@ -30,11 +30,6 @@ say "seq_id,pos,ref,a,c,g,t,del,consensus";
 
 while (<$mpileup_fh>) {
     my ( $seqid, $pos, $ref, $depth, $read_bases, $read_quals ) = split;
-    my %counts;
-
-    for my $base (qw(A C G T del)) {
-        $counts{$base} = 0;
-    }
 
     # say "------------------------------------";
     # say "depth: $depth";
@@ -51,32 +46,25 @@ while (<$mpileup_fh>) {
 
     clean_deletions(\$read_bases_no_ins);
 
-    $counts{A}++    for $read_bases_no_ins =~ m/A/ig;
-    $counts{C}++    for $read_bases_no_ins =~ m/C/ig;
-    $counts{G}++    for $read_bases_no_ins =~ m/G/ig;
-    $counts{T}++    for $read_bases_no_ins =~ m/T/ig;
-    $counts{$ref}++ for $read_bases_no_ins =~ m/[.,]/g;
-    $counts{del}++  for $read_bases_no_ins =~ m/\*/ig;
-
-    my $total_counts = sum values %counts;
-
     # p %counts;
     # my @vals = values %counts;
     # say "vals: @vals";
 
-    my $consensus = get_consensus_base(\%counts);
+    my ( $total_counts, $counts ) = count_bases($ref, $read_bases_no_ins);
 
-    say join ",", $seqid, $pos, $ref, $counts{A}, $counts{C}, $counts{G},
-        $counts{T}, $counts{del}, $consensus
+    my $consensus = get_consensus_base($counts);
+
+    say join ",", $seqid, $pos, $ref, $$counts{A}, $$counts{C}, $$counts{G},
+        $$counts{T}, $$counts{del}, $consensus
         if ( $ref ne $consensus
         && $total_counts >= $min_cov
-        && $counts{$consensus} >= $min_snp_ratio * $total_counts );
+        && $$counts{$consensus} >= $min_snp_ratio * $total_counts );
 
     for my $ins_pos ( sort { $a <=> $b } keys $ins_counts ) {
         my ($ins_base)
             = sort { $$ins_counts{$ins_pos}{$b} <=> $$ins_counts{$ins_pos}{$a} }
             keys $$ins_counts{$ins_pos};
-        next unless $$ins_counts{$ins_pos}{$ins_base} >= $counts{$ref} * $min_ins_ratio;
+        next unless $$ins_counts{$ins_pos}{$ins_base} >= $$counts{$ref} * $min_ins_ratio;
         say join ",", $seqid, "$pos.$ins_pos", "INS",
             $$ins_counts{$ins_pos}{A} // 0, $$ins_counts{$ins_pos}{C} // 0,
             $$ins_counts{$ins_pos}{G} // 0, $$ins_counts{$ins_pos}{T} // 0,
@@ -120,6 +108,27 @@ sub clean_deletions {    # Keep '*' deletion indicator, but remove '-1A'-type
     for my $del_len ( $$pileup_ref =~ m/\-(\d+)/g ) {
         $$pileup_ref =~ s/\-(?:$del_len)[ACGT]{$del_len}//;
     }
+}
+
+sub count_bases {
+    my ( $ref, $read_bases_no_ins ) = @_;
+
+    my %counts;
+
+    for my $base (qw(A C G T del)) {
+        $counts{$base} = 0;
+    }
+
+    $counts{A}++    for $read_bases_no_ins =~ m/A/ig;
+    $counts{C}++    for $read_bases_no_ins =~ m/C/ig;
+    $counts{G}++    for $read_bases_no_ins =~ m/G/ig;
+    $counts{T}++    for $read_bases_no_ins =~ m/T/ig;
+    $counts{$ref}++ for $read_bases_no_ins =~ m/[.,]/g;
+    $counts{del}++  for $read_bases_no_ins =~ m/\*/ig;
+
+    my $total_counts = sum values %counts;
+
+    return $total_counts, \%counts;
 }
 
 sub get_consensus_base {
