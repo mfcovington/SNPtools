@@ -18,6 +18,7 @@ my $chromosome = "A01";
 
 my $min_cov = 4;
 my $min_snp_ratio = 0.66;
+my $min_ins_ratio = 0.5;
 
 open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome -f $fasta_ref $bam_file";
 # open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19001-19300 -f $fasta_ref $bam_file";
@@ -74,13 +75,13 @@ while (<$mpileup_fh>) {
         $counts{T}, $counts{del}, $consensus
         if ( $ref ne $consensus
         && $total_counts >= $min_cov
-        && $counts{$consensus} > $min_snp_ratio * $total_counts );
+        && $counts{$consensus} >= $min_snp_ratio * $total_counts );
 
     for my $ins_pos ( sort { $a <=> $b } keys $ins_counts ) {
         my ($ins_base)
             = sort { $$ins_counts{$ins_pos}{$b} <=> $$ins_counts{$ins_pos}{$a} }
             keys $$ins_counts{$ins_pos};
-        next unless $$ins_counts{$ins_pos}{$ins_base} > $counts{$ref} * 0.5;
+        next unless $$ins_counts{$ins_pos}{$ins_base} >= $counts{$ref} * $min_ins_ratio;
         say join ",", $seqid, "$pos.$ins_pos", "INS",
             $$ins_counts{$ins_pos}{A} // 0, $$ins_counts{$ins_pos}{C} // 0,
             $$ins_counts{$ins_pos}{G} // 0, $$ins_counts{$ins_pos}{T} // 0,
