@@ -16,7 +16,8 @@ my $bam_file = "sample-files/bam/R500.10kb.bam";
 my $fasta_ref = "sample-files/fa/B.rapa_genome_sequence_0830.fa";
 my $chromosome = "A01";
 
-open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19262-19262 -f $fasta_ref $bam_file";
+open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19001-19120 -f $fasta_ref $bam_file";
+# open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19262-19262 -f $fasta_ref $bam_file";
 # open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:10197-10197 -f $fasta_ref $bam_file";
 # my $stop = 0;
 
@@ -28,51 +29,41 @@ while (<$mpileup_fh>) {
         $counts{$base} = 0;
     }
 
-say "------------------------------------";
-say "depth: $depth";
-$read_bases =~ tr/acgt/ACGT/;
-say $read_bases;
+    # say "------------------------------------";
+    # say "depth: $depth";
+    $read_bases =~ tr/acgt/ACGT/;
+    # say $read_bases;
 
-my ($inserts, $read_bases_no_ins) = get_inserts($read_bases);
-p $inserts;
+    my ( $inserts, $read_bases_no_ins ) = get_inserts($read_bases);
+    my $ins_counts = get_insert_counts($inserts);
 
-my $ins_counts = get_insert_counts($inserts);
-p $ins_counts;
+    # p $inserts;
+    # p $ins_counts;
+    # say scalar keys $inserts;
+    # say $read_bases_no_ins;
 
-say scalar keys $inserts;
-
-# exit;
-# my %inserts;
-
-# my ($insert) = sort { $inserts{$b} <=> $inserts{$a} } keys %inserts;
-# my $insert_count = defined $insert ? $inserts{$insert} : 0;
-# # my ( $insert ) = keys %inserts;
-# say "insert: ", defined $insert ? $insert : "NA";
-# say "insert count: ", defined $insert ? $inserts{$insert} : "NA";
-
-
-say $read_bases_no_ins;
-    $counts{A}++ for $read_bases_no_ins =~ m/A/ig;
-    $counts{C}++ for $read_bases_no_ins =~ m/C/ig;
-    $counts{G}++ for $read_bases_no_ins =~ m/G/ig;
-    $counts{T}++ for $read_bases_no_ins =~ m/T/ig;
+    $counts{A}++    for $read_bases_no_ins =~ m/A/ig;
+    $counts{C}++    for $read_bases_no_ins =~ m/C/ig;
+    $counts{G}++    for $read_bases_no_ins =~ m/G/ig;
+    $counts{T}++    for $read_bases_no_ins =~ m/T/ig;
     $counts{$ref}++ for $read_bases_no_ins =~ m/[.,]/g;
-    $counts{del}++ for $read_bases_no_ins =~ m/\*/ig;
-    # $counts{ins} += $inserts{$_} for keys %inserts;
-    # $counts{ins} = sum values %inserts // 0;
-    # $counts{ins} = ( sum values %inserts ) // 0;
-p %counts;
-my @vals = values %counts;
-say "vals: @vals";
-# my $consensus;
-my ($consensus) = scalar keys %counts == 1 ? keys %counts : sort { $counts{$b} <=> $counts{$a} } keys %counts;
-say "consensus: $consensus";
-# exit;
+    $counts{del}++  for $read_bases_no_ins =~ m/\*/ig;
+
+    # p %counts;
+    # my @vals = values %counts;
+    # say "vals: @vals";
+
+    my ($consensus)
+        = scalar keys %counts == 1
+        ? keys %counts
+        : sort { $counts{$b} <=> $counts{$a} } keys %counts;
+    # say "consensus: $consensus";
 
 
-    say join ",", $seqid, $pos, $ref, $counts{A}, $counts{C}, $counts{G}, $counts{T}, $counts{del}, $consensus;
+    say join ",", $seqid, $pos, $ref, $counts{A}, $counts{C}, $counts{G},
+        $counts{T}, $counts{del}, $consensus;
 
-    for my $ins_pos (sort {$a <=> $b} keys $ins_counts) {
+    for my $ins_pos ( sort { $a <=> $b } keys $ins_counts ) {
         my ($ins_base)
             = sort { $$ins_counts{$ins_pos}{$b} <=> $$ins_counts{$ins_pos}{$a} }
             keys $$ins_counts{$ins_pos};
@@ -83,11 +74,6 @@ say "consensus: $consensus";
             0, $ins_base;
     }
 
-
-    # say join ",", $seqid, $pos, $ref, $counts{A}, $counts{C}, $counts{G}, $counts{T}, $counts{del}, $counts{ins}, "consensus";
-
-    # $stop++;
-    # die if $stop == 10;
 }
 
 close $mpileup_fh;
@@ -112,7 +98,6 @@ sub get_insert_counts {    # Get insert counts by position and nucleotide
     for my $insert ( keys $inserts ) {
         my $ins_pos = sprintf "%02d", 1;
         for my $nt ( split //, $insert ) {
-            say "$ins_pos: $nt x $$inserts{$insert}";
             $ins_counts{$ins_pos}{$nt} += $$inserts{$insert};
             $ins_pos++;
         }
