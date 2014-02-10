@@ -41,23 +41,10 @@ while (<$mpileup_fh>) {
 
     my $consensus = get_consensus_base($counts);
 
-    say join ",", $seqid, $pos, $ref, $$counts{A}, $$counts{C}, $$counts{G},
-        $$counts{T}, $$counts{del}, $consensus
-        if ( $ref ne $consensus
-        && $total_counts >= $min_cov
-        && $$counts{$consensus} >= $min_snp_ratio * $total_counts );
+    output_snp( $seqid, $pos, $ref, $counts, $consensus, $total_counts,
+        $min_cov, $min_snp_ratio );
 
-    for my $ins_pos ( sort { $a <=> $b } keys $ins_counts ) {
-        my ($ins_base)
-            = sort { $$ins_counts{$ins_pos}{$b} <=> $$ins_counts{$ins_pos}{$a} }
-            keys $$ins_counts{$ins_pos};
-        next unless $$ins_counts{$ins_pos}{$ins_base} >= $$counts{$ref} * $min_ins_ratio;
-        say join ",", $seqid, "$pos.$ins_pos", "INS",
-            $$ins_counts{$ins_pos}{A} // 0, $$ins_counts{$ins_pos}{C} // 0,
-            $$ins_counts{$ins_pos}{G} // 0, $$ins_counts{$ins_pos}{T} // 0,
-            0, $ins_base;
-    }
-
+    output_insert( $seqid, $pos, $ref, $ins_counts, $counts, $min_ins_ratio );
 }
 
 close $mpileup_fh;
@@ -127,4 +114,33 @@ sub get_consensus_base {
         : sort { $$counts{$b} <=> $$counts{$a} } keys $counts;
 
     return $consensus;
+}
+
+sub output_snp {
+    my ( $seqid, $pos, $ref, $counts, $consensus, $total_counts, $min_cov,
+        $min_snp_ratio )
+        = @_;
+
+    say join ",", $seqid, $pos, $ref, $$counts{A}, $$counts{C}, $$counts{G},
+        $$counts{T}, $$counts{del}, $consensus
+        if ( $ref ne $consensus
+        && $total_counts >= $min_cov
+        && $$counts{$consensus} >= $min_snp_ratio * $total_counts );
+}
+
+sub output_insert {
+    my ( $seqid, $pos, $ref, $ins_counts, $counts, $min_ins_ratio ) = @_;
+
+    for my $ins_pos ( sort { $a <=> $b } keys $ins_counts ) {
+        my ($ins_base)
+            = sort { $$ins_counts{$ins_pos}{$b} <=> $$ins_counts{$ins_pos}{$a} }
+            keys $$ins_counts{$ins_pos};
+        next
+            unless $$ins_counts{$ins_pos}{$ins_base}
+            >= $$counts{$ref} * $min_ins_ratio;
+        say join ",", $seqid, "$pos.$ins_pos", "INS",
+            $$ins_counts{$ins_pos}{A} // 0, $$ins_counts{$ins_pos}{C} // 0,
+            $$ins_counts{$ins_pos}{G} // 0, $$ins_counts{$ins_pos}{T} // 0,
+            0, $ins_base;
+    }
 }
