@@ -40,6 +40,19 @@ for my $ins_len ($read_bases =~ m/\+(\d+)/g) {
 }
 p %inserts;
 
+my %ins_counts;
+for my $insert (keys %inserts) {
+    my $ins_pos = sprintf "%02d", 1;
+    for my $nt (split //, $insert) {
+        say "$ins_pos: $nt x $inserts{$insert}";
+        $ins_counts{$ins_pos}{$nt} += $inserts{$insert};
+        $ins_pos++;
+    }
+}
+p %ins_counts;
+
+exit;
+
 my ($insert) = sort { $inserts{$b} <=> $inserts{$a} } keys %inserts;
 my $insert_count = defined $insert ? $inserts{$insert} : 0;
 # my ( $insert ) = keys %inserts;
