@@ -64,12 +64,7 @@ while (<$mpileup_fh>) {
     # my @vals = values %counts;
     # say "vals: @vals";
 
-    my ($consensus)
-        = scalar keys %counts == 1
-        ? keys %counts
-        : sort { $counts{$b} <=> $counts{$a} } keys %counts;
-    # say "consensus: $consensus";
-
+    my $consensus = get_consensus_base(\%counts);
 
     say join ",", $seqid, $pos, $ref, $counts{A}, $counts{C}, $counts{G},
         $counts{T}, $counts{del}, $consensus
@@ -125,4 +120,15 @@ sub clean_deletions {    # Keep '*' deletion indicator, but remove '-1A'-type
     for my $del_len ( $$pileup_ref =~ m/\-(\d+)/g ) {
         $$pileup_ref =~ s/\-(?:$del_len)[ACGT]{$del_len}//;
     }
+}
+
+sub get_consensus_base {
+    my $counts = shift;
+
+    my ($consensus)
+        = scalar keys $counts == 1
+        ? keys $counts
+        : sort { $$counts{$b} <=> $$counts{$a} } keys $counts;
+
+    return $consensus;
 }
