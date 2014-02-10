@@ -16,7 +16,8 @@ my $bam_file = "sample-files/bam/R500.10kb.bam";
 my $fasta_ref = "sample-files/fa/B.rapa_genome_sequence_0830.fa";
 my $chromosome = "A01";
 
-open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:11562-11572 -f $fasta_ref $bam_file";
+open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19262-19262 -f $fasta_ref $bam_file";
+# open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:10197-10197 -f $fasta_ref $bam_file";
 # my $stop = 0;
 
 while (<$mpileup_fh>) {
@@ -32,14 +33,12 @@ say "depth: $depth";
 $read_bases =~ tr/acgt/ACGT/;
 say $read_bases;
 
+# Capture sequences of variable length inserts and remove them from $read_bases
 my %inserts;
-$inserts{$_}++ for $read_bases =~ m/\+\d+([ACGT]+)/ig;
-# $inserts{$_}++ for $read_bases =~ m/[.,]\+\d+([ACGT]+)/ig;
+for my $ins_len ($read_bases =~ m/\+(\d+)/g) {
+    $inserts{$1}++ if $read_bases =~ s/\+(?:$ins_len)([ACGT]{$ins_len})//;
+}
 p %inserts;
-$read_bases =~ s/\+\d+([ACGT]+)//ig;
-# $read_bases =~ s/[.,]\+\d+([ACGT]+)//ig;
-
-# tr/acgt/ACGT/ for @inserts;
 
 my ($insert) = sort { $inserts{$b} <=> $inserts{$a} } keys %inserts;
 my $insert_count = defined $insert ? $inserts{$insert} : 0;
