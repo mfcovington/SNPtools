@@ -33,25 +33,14 @@ say "depth: $depth";
 $read_bases =~ tr/acgt/ACGT/;
 say $read_bases;
 
-# Capture sequences of variable length inserts and remove them from $read_bases
-my %inserts;
-for my $ins_len ($read_bases =~ m/\+(\d+)/g) {
-    $inserts{$1}++ if $read_bases =~ s/\+(?:$ins_len)([ACGT]{$ins_len})//;
-}
-p %inserts;
+my ($inserts, $read_bases_no_ins) = get_inserts($read_bases);
+p $inserts;
 
-my %ins_counts;
-for my $insert (keys %inserts) {
-    my $ins_pos = sprintf "%02d", 1;
-    for my $nt (split //, $insert) {
-        say "$ins_pos: $nt x $inserts{$insert}";
-        $ins_counts{$ins_pos}{$nt} += $inserts{$insert};
-        $ins_pos++;
-    }
-}
-p %ins_counts;
+my $ins_counts = get_insert_counts($inserts);
+p $ins_counts;
 
 exit;
+my %inserts;
 
 my ($insert) = sort { $inserts{$b} <=> $inserts{$a} } keys %inserts;
 my $insert_count = defined $insert ? $inserts{$insert} : 0;
@@ -60,13 +49,13 @@ say "insert: ", defined $insert ? $insert : "NA";
 say "insert count: ", defined $insert ? $inserts{$insert} : "NA";
 
 
-say $read_bases;
-    $counts{A}++ for $read_bases =~ m/A/ig;
-    $counts{C}++ for $read_bases =~ m/C/ig;
-    $counts{G}++ for $read_bases =~ m/G/ig;
-    $counts{T}++ for $read_bases =~ m/T/ig;
-    $counts{$ref}++ for $read_bases =~ m/[.,]/g;
-    $counts{del}++ for $read_bases =~ m/\*/ig;
+say $read_bases_no_ins;
+    $counts{A}++ for $read_bases_no_ins =~ m/A/ig;
+    $counts{C}++ for $read_bases_no_ins =~ m/C/ig;
+    $counts{G}++ for $read_bases_no_ins =~ m/G/ig;
+    $counts{T}++ for $read_bases_no_ins =~ m/T/ig;
+    $counts{$ref}++ for $read_bases_no_ins =~ m/[.,]/g;
+    $counts{del}++ for $read_bases_no_ins =~ m/\*/ig;
     # $counts{ins} += $inserts{$_} for keys %inserts;
     # $counts{ins} = sum values %inserts // 0;
     # $counts{ins} = ( sum values %inserts ) // 0;
@@ -104,3 +93,29 @@ say "consensus: $consensus";
 close $mpileup_fh;
 
 
+
+sub get_inserts {    # Capture sequences of variable length inserts
+                     # and remove them from $read_bases
+    my $read_bases = shift;
+
+    my %inserts;
+    for my $ins_len ( $read_bases =~ m/\+(\d+)/g ) {
+        $inserts{$1}++ if $read_bases =~ s/\+(?:$ins_len)([ACGT]{$ins_len})//;
+    }
+    return \%inserts, $read_bases;
+}
+
+sub get_insert_counts {    # Get insert counts by position and nucleotide
+    my $inserts = shift;
+
+    my %ins_counts;
+    for my $insert ( keys $inserts ) {
+        my $ins_pos = sprintf "%02d", 1;
+        for my $nt ( split //, $insert ) {
+            say "$ins_pos: $nt x $$inserts{$insert}";
+            $ins_counts{$ins_pos}{$nt} += $$inserts{$insert};
+            $ins_pos++;
+        }
+    }
+    return \%ins_counts;
+}
