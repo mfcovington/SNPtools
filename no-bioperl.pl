@@ -45,6 +45,8 @@ while (<$mpileup_fh>) {
     # say scalar keys $inserts;
     # say $read_bases_no_ins;
 
+    clean_deletions(\$read_bases_no_ins);
+
     $counts{A}++    for $read_bases_no_ins =~ m/A/ig;
     $counts{C}++    for $read_bases_no_ins =~ m/C/ig;
     $counts{G}++    for $read_bases_no_ins =~ m/G/ig;
@@ -111,4 +113,12 @@ sub get_insert_counts {    # Get insert counts by position and nucleotide
         }
     }
     return \%ins_counts;
+}
+
+sub clean_deletions {    # Keep '*' deletion indicator, but remove '-1A'-type
+    my $pileup_ref = shift;
+
+    for my $del_len ( $$pileup_ref =~ m/\-(\d+)/g ) {
+        $$pileup_ref =~ s/\-(?:$del_len)[ACGT]{$del_len}//;
+    }
 }
