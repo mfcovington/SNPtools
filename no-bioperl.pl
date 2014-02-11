@@ -127,12 +127,13 @@ sub output_snp {
     my ( $seqid, $pos, $ref, $counts, $consensus, $total_counts, $min_cov,
         $min_snp_ratio )
         = @_;
-
-    say join ",", $seqid, $pos, $ref, $$counts{A}, $$counts{C}, $$counts{G},
-        $$counts{T}, $$counts{del}, $consensus
-        if ( $ref ne $consensus
+    return
+        unless ( $ref ne $consensus
         && $total_counts >= $min_cov
         && $$counts{$consensus} >= $min_snp_ratio * $total_counts );
+
+    say join ",", $seqid, $pos, $ref, $$counts{A}, $$counts{C}, $$counts{G},
+        $$counts{T}, $$counts{del}, $consensus;
 }
 
 sub output_insert {
