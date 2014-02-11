@@ -18,7 +18,7 @@ my $chromosome = "A01";
 
 my $min_cov = 4;
 my $min_snp_ratio = 0.66;
-my $min_ins_ratio = 0.5;
+my $min_ins_ratio = 0.33;
 
 open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome -f $fasta_ref $bam_file";
 # open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19001-19300 -f $fasta_ref $bam_file";
