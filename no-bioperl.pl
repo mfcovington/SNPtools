@@ -44,7 +44,8 @@ while (<$mpileup_fh>) {
     output_snp( $seqid, $pos, $ref, $counts, $consensus, $total_counts,
         $min_cov, $min_snp_ratio );
 
-    output_insert( $seqid, $pos, $ref, $ins_counts, $counts, $min_ins_ratio );
+    output_insert( $seqid, $pos, $ref, $ins_counts, $counts, $min_cov,
+        $min_ins_ratio );
 }
 
 close $mpileup_fh;
@@ -137,15 +138,21 @@ sub output_snp {
 }
 
 sub output_insert {
-    my ( $seqid, $pos, $ref, $ins_counts, $counts, $min_ins_ratio ) = @_;
+    my ( $seqid, $pos, $ref, $ins_counts, $counts, $min_cov, $min_ins_ratio )
+        = @_;
 
     for my $ins_pos ( sort { $a <=> $b } keys $ins_counts ) {
         my ($ins_base)
             = sort { $$ins_counts{$ins_pos}{$b} <=> $$ins_counts{$ins_pos}{$a} }
             keys $$ins_counts{$ins_pos};
+
         next
             unless $$ins_counts{$ins_pos}{$ins_base}
             >= $$counts{$ref} * $min_ins_ratio;
+
+        my $total_ins_counts = sum values $$ins_counts{$ins_pos};
+        next unless $total_ins_counts >= $min_cov;
+
         say join ",", $seqid, "$pos.$ins_pos", "INS",
             $$ins_counts{$ins_pos}{A} // 0, $$ins_counts{$ins_pos}{C} // 0,
             $$ins_counts{$ins_pos}{G} // 0, $$ins_counts{$ins_pos}{T} // 0,
