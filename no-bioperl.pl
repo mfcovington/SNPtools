@@ -30,7 +30,7 @@ say "seq_id,pos,ref,a,c,g,t,del,consensus";
 while (<$mpileup_fh>) {
     my ( $seqid, $pos, $ref, $depth, $read_bases, $read_quals ) = split;
 
-    $read_bases =~ tr/acgt/ACGT/;
+    clean_pileup(\$read_bases);
 
     my ( $inserts, $read_bases_no_ins ) = get_inserts($read_bases);
     my $ins_counts = get_insert_counts($inserts);
@@ -50,6 +50,13 @@ while (<$mpileup_fh>) {
 close $mpileup_fh;
 
 exit;
+
+sub clean_pileup {
+    my $read_bases = shift;
+
+    $$read_bases =~ tr/acgt/ACGT/;
+    $$read_bases =~ s/\^.|\$//g;    # Start of read + MapQ score | end of read
+}
 
 sub get_inserts {    # Capture sequences of variable length inserts
                      # and remove them from $read_bases
