@@ -46,6 +46,9 @@ while (<$mpileup_fh>) {
 
     output_insert( $seqid, $pos, $ref, $ins_counts, $counts, $min_cov,
         $min_ins_ratio );
+
+    output_insert2( $seqid, $pos, $ref, $inserts, $top_ins, $counts, $min_cov,
+        $min_ins_ratio );
 }
 
 close $mpileup_fh;
@@ -159,6 +162,46 @@ sub output_insert {
         say join ",", $seqid, "$pos.$ins_pos", "INS",
             $$ins_counts{$ins_pos}{A} // 0, $$ins_counts{$ins_pos}{C} // 0,
             $$ins_counts{$ins_pos}{G} // 0, $$ins_counts{$ins_pos}{T} // 0,
+            0, $ins_base;
+    }
+}
+
+sub output_insert2 {
+    my ( $seqid, $pos, $ref, $inserts, $top_ins, $counts, $min_cov,
+        $min_ins_ratio )
+        = @_;
+
+    return unless scalar keys $inserts > 0;
+
+    my $top_count = $$inserts{$top_ins};
+
+    return
+        unless $top_count
+        >= $$counts{$ref} * $min_ins_ratio;
+
+    my $total_ins_counts = sum values $inserts;
+    return unless $total_ins_counts >= $min_cov;
+
+    return unless $top_count > 0.5 * $total_ins_counts;
+
+    my @ins_bases = split //, $top_ins;
+
+    my %ins_counts;
+    my $ins_pos = sprintf "%02d", 1;
+    for my $nt ( split //, $top_ins ) {
+        $ins_counts{$ins_pos}{$nt} += $top_count;
+        $ins_pos++;
+    }
+
+    for my $ins_pos ( sort { $a <=> $b } keys %ins_counts ) {
+
+        my ($ins_base)
+            = sort { $ins_counts{$ins_pos}{$b} <=> $ins_counts{$ins_pos}{$a} }
+            keys $ins_counts{$ins_pos};
+
+        say join ",", $seqid, "$pos.$ins_pos", "INS",
+            $ins_counts{$ins_pos}{A} // 0, $ins_counts{$ins_pos}{C} // 0,
+            $ins_counts{$ins_pos}{G} // 0, $ins_counts{$ins_pos}{T} // 0,
             0, $ins_base;
     }
 }
