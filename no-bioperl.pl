@@ -9,6 +9,7 @@ use warnings;
 use autodie;
 use feature 'say';
 use List::Util 'sum';
+use Getopt::Long;
 
 use Data::Printer;
 $|++;
@@ -21,6 +22,18 @@ my $min_snp_ratio = 0.66;
 my $min_ins_ratio = 0.33;
 
 open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome -f $fasta_ref $bam_file";
+my $outputfile = "$chromosome.snps";    # Temporary file name
+
+my $options = GetOptions(
+    "chromosome=s"    => \$chromosome,
+    "outputfile=s"    => \$outputfile,
+    "min_cov=i"       => \$min_cov,
+    "min_snp_ratio=f" => \$min_snp_ratio,
+    "min_ins_ratio=f" => \$min_ins_ratio,
+    "fasta_ref=s"     => \$fasta_ref,
+    "bam_file=s"      => \$bam_file,
+);
+
 # open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19001-19300 -f $fasta_ref $bam_file";
 # open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19262-19262 -f $fasta_ref $bam_file";
 # open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:10197-10197 -f $fasta_ref $bam_file";
