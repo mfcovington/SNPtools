@@ -65,6 +65,9 @@ while (<$mpileup_fh>) {
 
     output_insert( $seqid, $pos, $ref, $ins_counts, $counts, $min_cov,
         $min_ins_ratio );
+    output_deletions( $seqid, $pos, $ref, $counts, $total_counts, $min_cov,
+        $min_ins_ratio, $out_fh );
+
 
     output_insert2( $seqid, $pos, $ref, $inserts, $top_ins, $counts, $min_cov,
         $min_ins_ratio, $out_fh );
@@ -154,6 +157,9 @@ sub output_snp {
     my ( $seqid, $pos, $ref, $counts, $consensus, $total_counts, $min_cov,
         $min_snp_ratio, $out_fh )
         = @_;
+
+    return if $consensus eq "del";
+
     return
         unless ( $ref ne $consensus
         && $total_counts >= $min_cov
@@ -161,6 +167,25 @@ sub output_snp {
 
     say $out_fh join ",", $seqid, $pos, $ref, $$counts{A}, $$counts{C},
         $$counts{G}, $$counts{T}, $$counts{del}, $consensus;
+}
+
+sub output_deletions {
+    my ( $seqid, $pos, $ref, $counts, $total_counts,
+        $min_cov, $min_ins_ratio, $out_fh )
+        = @_;
+
+    my $del_counts = $$counts{del};
+
+    return unless $del_counts > 0;
+
+    return
+        unless $del_counts
+        >= $$counts{$ref} * $min_ins_ratio;
+
+    return unless $del_counts >= $min_cov;
+
+    say $out_fh join ",", $seqid, $pos, $ref, $$counts{A}, $$counts{C},
+        $$counts{G}, $$counts{T}, $$counts{del}, "del";
 }
 
 sub output_insert {
