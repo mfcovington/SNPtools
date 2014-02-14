@@ -40,6 +40,10 @@ my $options = GetOptions(
 
 say "seq_id,pos,ref,a,c,g,t,del,consensus";
 
+open my $out_fh, ">", $outputfile;
+
+say $out_fh "seq_id,pos,ref,a,c,g,t,del,consensus";
+
 while (<$mpileup_fh>) {
     my ( $seqid, $pos, $ref, $depth, $read_bases, $read_quals ) = split;
 
@@ -55,16 +59,17 @@ while (<$mpileup_fh>) {
     my $consensus = get_consensus_base($counts);
 
     output_snp( $seqid, $pos, $ref, $counts, $consensus, $total_counts,
-        $min_cov, $min_snp_ratio );
+        $min_cov, $min_snp_ratio, $out_fh );
 
     output_insert( $seqid, $pos, $ref, $ins_counts, $counts, $min_cov,
         $min_ins_ratio );
 
     output_insert2( $seqid, $pos, $ref, $inserts, $top_ins, $counts, $min_cov,
-        $min_ins_ratio );
+        $min_ins_ratio, $out_fh );
 }
 
 close $mpileup_fh;
+close $out_fh;
 
 exit;
 
@@ -145,15 +150,15 @@ sub get_consensus_base {
 
 sub output_snp {
     my ( $seqid, $pos, $ref, $counts, $consensus, $total_counts, $min_cov,
-        $min_snp_ratio )
+        $min_snp_ratio, $out_fh )
         = @_;
     return
         unless ( $ref ne $consensus
         && $total_counts >= $min_cov
         && $$counts{$consensus} >= $min_snp_ratio * $total_counts );
 
-    say join ",", $seqid, $pos, $ref, $$counts{A}, $$counts{C}, $$counts{G},
-        $$counts{T}, $$counts{del}, $consensus;
+    say $out_fh join ",", $seqid, $pos, $ref, $$counts{A}, $$counts{C},
+        $$counts{G}, $$counts{T}, $$counts{del}, $consensus;
 }
 
 sub output_insert {
@@ -181,7 +186,7 @@ sub output_insert {
 
 sub output_insert2 {
     my ( $seqid, $pos, $ref, $inserts, $top_ins, $counts, $min_cov,
-        $min_ins_ratio )
+        $min_ins_ratio, $out_fh )
         = @_;
 
     return unless scalar keys $inserts > 0;
@@ -212,7 +217,7 @@ sub output_insert2 {
             = sort { $ins_counts{$ins_pos}{$b} <=> $ins_counts{$ins_pos}{$a} }
             keys $ins_counts{$ins_pos};
 
-        say join ",", $seqid, "$pos.$ins_pos", "INS",
+        say $out_fh join ",", $seqid, "$pos.$ins_pos", "INS",
             $ins_counts{$ins_pos}{A} // 0, $ins_counts{$ins_pos}{C} // 0,
             $ins_counts{$ins_pos}{G} // 0, $ins_counts{$ins_pos}{T} // 0,
             0, $ins_base;
