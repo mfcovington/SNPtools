@@ -85,7 +85,8 @@ my $coverage = SNPtools::Coverage->new(
     verbose  => $verbose,
 );
 
-$snps->identify_snps;
+# $snps->identify_snps;
+$snps->identify_snps_v2;
 $coverage->get_coverage_db;
 $snps->flanking_cov;
 
