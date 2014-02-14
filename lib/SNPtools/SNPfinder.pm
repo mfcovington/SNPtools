@@ -97,7 +97,27 @@ sub identify_snps {
     system($identify_snps_cmd );
 }
 
-around 'identify_snps' => sub {
+sub identify_snps_v2 {
+    my $self = shift;
+
+    $self->_validity_tests();
+    $self->_make_dir();
+
+    my $identify_snps_cmd =
+      "$bin_dir/SNPfinder/identify-polymorphisms.pl \\
+    --chromosome " . $self->_chromosome . " \\
+    --outputfile " . $self->out_file . " \\
+    --min_cov " . $self->cov_min . " \\
+    --min_snp_ratio " . $self->snp_min . " \\
+    --min_ins_ratio " . $self->indel_min . " \\
+    --fasta_ref " . $self->fasta . " \\
+    --bam_file " . $self->bam;
+
+    say "  Running:\n  " . $identify_snps_cmd if $self->verbose();
+    system($identify_snps_cmd );
+}
+
+around qw(identify_snps identify_snps_v2) => sub {
     my $orig = shift;
     my $self = shift;
 
