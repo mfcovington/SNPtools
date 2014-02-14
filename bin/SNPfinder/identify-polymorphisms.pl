@@ -34,6 +34,8 @@ my $options = GetOptions(
     "bam_file=s"      => \$bam_file,
 );
 
+$outputfile = "$outputfile.csv";
+
 # open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19001-19300 -f $fasta_ref $bam_file";
 # open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19262-19262 -f $fasta_ref $bam_file";
 # open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:10197-10197 -f $fasta_ref $bam_file";
