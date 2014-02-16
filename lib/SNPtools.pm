@@ -21,7 +21,7 @@ has 'fasta' => (
 );
 
 has 'id' => (
-    is      => 'ro',
+    is      => 'rw',
     isa     => 'Str',
     default => "unidentified",
     lazy    => 1,
