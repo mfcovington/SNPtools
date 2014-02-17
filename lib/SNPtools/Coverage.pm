@@ -10,7 +10,6 @@ use Parallel::ForkManager;
 use autodie;
 use Capture::Tiny 'capture_stderr';
 use SNPtools::Coverage::DB::Main;
-use POSIX;
 use DBI;
 
 #TODO: check for presence of valid region!!!!
@@ -245,7 +244,6 @@ sub populate_CoverageDB_by_chr {
     populate_and_reset( \$count, \@cov_data, \$schema ) if scalar @cov_data;
 }
 
-# TODO: Should reciprocal_coverage really be threads / 2 ?
 sub reciprocal_coverage {
     my $self = shift;
 
@@ -386,7 +384,7 @@ around [ 'get_coverage_db', 'reciprocal_coverage' ] => sub {
     $self->_validity_tests();
 
     my @chromosomes = $self->get_seq_names;
-    my $pm = new Parallel::ForkManager( floor $self->threads / 2 );
+    my $pm = new Parallel::ForkManager($self->threads);
     foreach my $chr (@chromosomes) {
         $pm->start and next;
 
