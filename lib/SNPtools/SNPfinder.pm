@@ -13,7 +13,7 @@ use FindBin qw($Bin);
 #TODO: generate log files??
 #TODO: verbose + very verbose
 #TODO: make _out_dir_snp, etc. subs
-#TODO: Integrate 01.1.SNP_calling_homos.pl functionality
+#TODO: Integrate identify-polymorphisms.pl functionality
 
 sub BUILD {
     my $self = shift;
@@ -84,26 +84,6 @@ sub identify_snps {
     $self->_make_dir();
 
     my $identify_snps_cmd =
-      "$bin_dir/SNPfinder/01.1.SNP_calling_homos.pl \\
-    --chromosome " . $self->_chromosome . " \\
-    --o " . $self->out_file . " \\
-    --n_reads " . $self->cov_min . " \\
-    --ref_freq " . $self->snp_min . " \\
-    --indel_freq " . $self->indel_min . " \\
-    --fasta_ref " . $self->fasta . " \\
-    --bam_file " . $self->bam;
-
-    say "  Running:\n  " . $identify_snps_cmd if $self->verbose();
-    system($identify_snps_cmd );
-}
-
-sub identify_snps_v2 {
-    my $self = shift;
-
-    $self->_validity_tests();
-    $self->_make_dir();
-
-    my $identify_snps_cmd =
       "$bin_dir/SNPfinder/identify-polymorphisms.pl \\
     --chromosome " . $self->_chromosome . " \\
     --outputfile " . $self->out_file . " \\
@@ -117,7 +97,7 @@ sub identify_snps_v2 {
     system($identify_snps_cmd );
 }
 
-around qw(identify_snps identify_snps_v2) => sub {
+around 'identify_snps' => sub {
     my $orig = shift;
     my $self = shift;
 
