@@ -54,7 +54,6 @@ while (<$mpileup_fh>) {
     clean_pileup(\$read_bases);
 
     my ( $inserts, $top_ins, $read_bases_no_ins ) = get_inserts($read_bases);
-    my $ins_counts = get_insert_counts($inserts);
 
     clean_deletions(\$read_bases_no_ins);
 
@@ -96,20 +95,6 @@ sub get_inserts {    # Capture sequences of variable length inserts
     my ($top_ins) = sort { $inserts{$b} <=> $inserts{$a} } keys %inserts;
 
     return \%inserts, $top_ins, $read_bases;
-}
-
-sub get_insert_counts {    # Get insert counts by position and nucleotide
-    my $inserts = shift;
-
-    my %ins_counts;
-    for my $insert ( keys $inserts ) {
-        my $ins_pos = sprintf "%02d", 1;
-        for my $nt ( split //, $insert ) {
-            $ins_counts{$ins_pos}{$nt} += $$inserts{$insert};
-            $ins_pos++;
-        }
-    }
-    return \%ins_counts;
 }
 
 sub clean_deletions {    # Keep '*' deletion indicator, but remove '-1A'-type
