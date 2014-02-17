@@ -219,28 +219,28 @@ sub populate_CoverageDB_by_chr {
 
     system("samtools index $bam_file") if ! -e "$bam_file.bai";
 
-    my $sam_gap_cmd = "samtools mpileup -A -r $chromosome $bam_file | cut -f1-2,4";
-    my $sam_nogap_cmd = "samtools depth -r $chromosome $bam_file";
+    my $sam_gap_cmd = "samtools mpileup -A -r $chromosome $bam_file | cut -f1-2,4-5";
 
     my $gap_fh;
     capture_stderr {    # suppress mpileup output sent to stderr
         open $gap_fh,   "-|", $sam_gap_cmd;
     };
-    open my $nogap_fh, "-|", $sam_nogap_cmd;
     while ( my $gap_line = <$gap_fh> ) {
-        my $nogap_line = <$nogap_fh>;
-        chomp( $gap_line, $nogap_line );
-        my ( $chr, $pos, $gap_cov ) = split /\t/, $gap_line;
-        my $nogap_cov = [ split /\t/, $nogap_line ]->[2];
+        my ( $chr, $pos, $gap_cov, $read_bases ) = split /\t/, $gap_line;
+
         if ( exists $$cov_pos_ref{$chr}{$pos} ) {
             $count++;
+
+            # nogap coverage == gap coverage minus # of ref skips
+            my $nogap_cov = $gap_cov;
+            $nogap_cov-- for $read_bases =~ m/(?<!\^)[<>]/g;
+
             push @cov_data, [ $sample_id, $chr, $pos, $gap_cov, $nogap_cov ];
         }
 
         populate_and_reset( \$count, \@cov_data, \$schema ) if $count % 100000 == 0;
     }
     close $gap_fh;
-    close $nogap_fh;
 
     populate_and_reset( \$count, \@cov_data, \$schema ) if scalar @cov_data;
 }
