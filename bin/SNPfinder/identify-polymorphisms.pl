@@ -11,17 +11,14 @@ use feature 'say';
 use List::Util 'sum';
 use Getopt::Long;
 
-use Data::Printer;
-$|++;
-my $bam_file = "sample-files/bam/R500.10kb.bam";
-my $fasta_ref = "sample-files/fa/B.rapa_genome_sequence_0830.fa";
+my $bam_file   = "../../sample-files/bam/R500.10kb.bam";
+my $fasta_ref  = "../../sample-files/fa/B.rapa_genome_sequence_0830.fa";
 my $chromosome = "A01";
 
-my $min_cov = 4;
+my $min_cov       = 4;
 my $min_snp_ratio = 0.66;
 my $min_ins_ratio = 0.33;
 
-open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome -f $fasta_ref $bam_file";
 my $outputfile = "$chromosome.snps";    # Temporary file name
 
 my $options = GetOptions(
@@ -36,12 +33,7 @@ my $options = GetOptions(
 
 $outputfile = "$outputfile.csv";
 
-# open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19001-19300 -f $fasta_ref $bam_file";
-# open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:19262-19262 -f $fasta_ref $bam_file";
-# open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome:10197-10197 -f $fasta_ref $bam_file";
-
-say "seq_id,pos,ref,a,c,g,t,del,consensus";
-
+open my $mpileup_fh, "-|", "samtools mpileup -A -r $chromosome -f $fasta_ref $bam_file";
 open my $out_fh, ">", $outputfile;
 
 say $out_fh "seq_id,pos,ref,a,c,g,t,del,consensus";
