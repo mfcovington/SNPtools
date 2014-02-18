@@ -98,17 +98,6 @@ has '_plot_dir' => (
     lazy => 1,
 );
 
-has '_mpileup_dir' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => sub {
-        my $self = shift;
-
-        return $self->out_dir . "/mpileup/";
-    },
-    lazy => 1,
-);
-
 has '_snp_dir' => (
     is      => 'rw',
     isa     => 'Str',

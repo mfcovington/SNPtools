@@ -15,19 +15,22 @@ use Getopt::Long;
 
 ###TODO: ¿¿¿¿incorporate into commander as sub????
 
-my ( $mpileup_file, $snp_file, $par1_id, $par2_id, $out_file, $no_indels );
+my ($snp_file,  $par1_id,   $par2_id, $out_file,
+    $no_indels, $fasta_ref, $bam_file
+);
 
 my $options = GetOptions(
-    "mpileup=s"  => \$mpileup_file,
-    "snp=s"      => \$snp_file,
-    "par1_id=s"  => \$par1_id,
-    "par2_id=s"  => \$par2_id,
-    "out_file=s" => \$out_file,
-    "no_indels"  => \$no_indels,
+    "snp=s"       => \$snp_file,
+    "par1_id=s"   => \$par1_id,
+    "par2_id=s"   => \$par2_id,
+    "out_file=s"  => \$out_file,
+    "no_indels"   => \$no_indels,
+    "fasta_ref=s" => \$fasta_ref,
+    "bam_file=s"  => \$bam_file,
 );
 
 # build mpileup hash
-open my $mpileup_fh, "<", $mpileup_file;
+open my $mpileup_fh, "-|", "samtools mpileup -A -l $snp_file -f $fasta_ref $bam_file";
 my %mpileups = map {
     chomp;
     my @delim = split /\t/;
