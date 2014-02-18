@@ -10,3 +10,5 @@
 *.bcf
 master_snp_list.*
 polyDB.*
+*.genotyped*
+*.mpileup*

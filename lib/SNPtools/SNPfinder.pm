@@ -6,19 +6,22 @@ use MooseX::UndefTolerant;
 use feature 'say';
 use Parallel::ForkManager;
 use autodie;
+use FindBin qw($Bin);
 
 #TODO: move common subroutines elsewhere (validation, mkdir, bam header-related, etc.)
 #TODO: require certain arguments to be defined
 #TODO: generate log files??
 #TODO: verbose + very verbose
 #TODO: make _out_dir_snp, etc. subs
-#TODO: Integrate 01.1.SNP_calling_homos.pl functionality
+#TODO: Integrate identify-polymorphisms.pl functionality
 
 sub BUILD {
     my $self = shift;
 
     $self->_validity_tests;
 }
+
+my $bin_dir = "$Bin/../../bin";
 
 
 # Public Attributes
@@ -61,7 +64,7 @@ sub flanking_cov {
     my $cov_dir    = "$out_dir/coverage";
 
     my $flanking_cov_cmd = <<EOF;
-../../bin/SNPfinder/flanking_coverage_calculator.pl \\
+$bin_dir/SNPfinder/flanking_coverage_calculator.pl \\
     --snp_file   $snp_file   \\
     --sample_id  $sample_id  \\
     --chromosome $chromosome \\
@@ -81,12 +84,12 @@ sub identify_snps {
     $self->_make_dir();
 
     my $identify_snps_cmd =
-      "../../bin/SNPfinder/01.1.SNP_calling_homos.pl \\
+      "$bin_dir/SNPfinder/identify-polymorphisms.pl \\
     --chromosome " . $self->_chromosome . " \\
-    --o " . $self->out_file . " \\
-    --n_reads " . $self->cov_min . " \\
-    --ref_freq " . $self->snp_min . " \\
-    --indel_freq " . $self->indel_min . " \\
+    --outputfile " . $self->out_file . " \\
+    --min_cov " . $self->cov_min . " \\
+    --min_snp_ratio " . $self->snp_min . " \\
+    --min_ins_ratio " . $self->indel_min . " \\
     --fasta_ref " . $self->fasta . " \\
     --bam_file " . $self->bam;
 
