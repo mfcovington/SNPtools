@@ -44,8 +44,8 @@
           --fasta     $FA_DIR/B.rapa_genome_sequence_0830.fa \
           --seq_list  A01,A02,A03,A04,A05,A06,A07,A08,A09,A10 \
           --out_dir   $OUT_DIR \
-          --snp_min   0.33 \
-          --indel_min 0.66 \
+          --snp_min   0.66 \
+          --indel_min 0.33 \
           --threads   3 \
           --verbose
 

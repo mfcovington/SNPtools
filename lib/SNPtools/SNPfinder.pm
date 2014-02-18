@@ -13,7 +13,7 @@ use FindBin qw($Bin);
 #TODO: generate log files??
 #TODO: verbose + very verbose
 #TODO: make _out_dir_snp, etc. subs
-#TODO: Integrate 01.1.SNP_calling_homos.pl functionality
+#TODO: Integrate identify-polymorphisms.pl functionality
 
 sub BUILD {
     my $self = shift;
@@ -84,12 +84,12 @@ sub identify_snps {
     $self->_make_dir();
 
     my $identify_snps_cmd =
-      "$bin_dir/SNPfinder/01.1.SNP_calling_homos.pl \\
+      "$bin_dir/SNPfinder/identify-polymorphisms.pl \\
     --chromosome " . $self->_chromosome . " \\
-    --o " . $self->out_file . " \\
-    --n_reads " . $self->cov_min . " \\
-    --ref_freq " . $self->snp_min . " \\
-    --indel_freq " . $self->indel_min . " \\
+    --outputfile " . $self->out_file . " \\
+    --min_cov " . $self->cov_min . " \\
+    --min_snp_ratio " . $self->snp_min . " \\
+    --min_ins_ratio " . $self->indel_min . " \\
     --fasta_ref " . $self->fasta . " \\
     --bam_file " . $self->bam;
 
