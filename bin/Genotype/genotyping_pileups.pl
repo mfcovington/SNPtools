@@ -30,17 +30,7 @@ my $options = GetOptions(
 );
 
 # build mpileup hash
-open my $mpileup_fh, "-|", "samtools mpileup -A -l $snp_file -f $fasta_ref $bam_file";
-my %mpileups = map {
-    chomp;
-    my @delim = split /\t/;
-    (
-        $delim[1] => {
-            'ref_base' => $delim[2],
-            'mpileup'  => $delim[4],
-        }
-      )
-} <$mpileup_fh>;
+my $mpileups = get_mpileups( $snp_file, $fasta_ref, $bam_file );
 
 # build SNP/indel hash
 open my $snp_fh, "<", $snp_file;
@@ -62,7 +52,7 @@ while (<$snp_fh>) {
 }
 
 open my $out_fh, ">", $out_file;
-for my $position ( sort { $a <=> $b } keys %mpileups ) {
+for my $position ( sort { $a <=> $b } keys $mpileups ) {
 
     # skip positions for which snp record does not exist
     # - these should actually indicate an error, right?
@@ -79,20 +69,20 @@ for my $position ( sort { $a <=> $b } keys %mpileups ) {
     # < and > are CIGAR Ns (or reference skips)
     # ^ and $ denote that the base is at the start or end of a read
     # the character after ^ indicates mapping quality for the read
-    $mpileups{$position}->{'mpileup'} =~ s/ < | > | \^.{1} | \$ //gx;
+    $$mpileups{$position}->{'mpileup'} =~ s/ < | > | \^.{1} | \$ //gx;
 
     # remove mpileups with deletions marked with a - sign.  They make no sense when I look at IGV, etc
-    $mpileups{$position}->{'mpileup'} = "" if $mpileups{$position}->{'mpileup'} =~ m/ [\.,] - \d+ [ACGT]+ /gix;
+    $$mpileups{$position}->{'mpileup'} = "" if $$mpileups{$position}->{'mpileup'} =~ m/ [\.,] - \d+ [ACGT]+ /gix;
 
     # collect insertions
     my @insertions;
-    push ( @insertions, $1 ) while $mpileups{$position}->{'mpileup'} =~ m/ [\.,] \+ \d+ ([ACGT]+) /gix;
+    push ( @insertions, $1 ) while $$mpileups{$position}->{'mpileup'} =~ m/ [\.,] \+ \d+ ([ACGT]+) /gix;
 
     # remove insertions
-    $mpileups{$position}->{'mpileup'} =~ s/ [\.,] \+ \d+ [ACGT]+ //gix;
+    $$mpileups{$position}->{'mpileup'} =~ s/ [\.,] \+ \d+ [ACGT]+ //gix;
 
     # convert , and . to ref_base
-    $mpileups{$position}->{'mpileup'} =~ s/ \. | , /$mpileups{$position}->{'ref_base'}/gix;
+    $$mpileups{$position}->{'mpileup'} =~ s/ \. | , /$$mpileups{$position}->{'ref_base'}/gix;
 
     # at least for now, skip polymorphisms where
     # one parent is a SNP/del and the other is an insertion
@@ -145,11 +135,11 @@ for my $position ( sort { $a <=> $b } keys %mpileups ) {
     else { die "SOMETHING IS WRONG!!!"; }
 
     # count stuff up
-    my $A_count   = $mpileups{$position}->{'mpileup'} =~ tr/Aa//;
-    my $C_count   = $mpileups{$position}->{'mpileup'} =~ tr/Cc//;
-    my $T_count   = $mpileups{$position}->{'mpileup'} =~ tr/Tt//;
-    my $G_count   = $mpileups{$position}->{'mpileup'} =~ tr/Gg//;
-    my $del_count = $mpileups{$position}->{'mpileup'} =~ tr/*//;
+    my $A_count   = $$mpileups{$position}->{'mpileup'} =~ tr/Aa//;
+    my $C_count   = $$mpileups{$position}->{'mpileup'} =~ tr/Cc//;
+    my $T_count   = $$mpileups{$position}->{'mpileup'} =~ tr/Tt//;
+    my $G_count   = $$mpileups{$position}->{'mpileup'} =~ tr/Gg//;
+    my $del_count = $$mpileups{$position}->{'mpileup'} =~ tr/*//;
     my $insert_count = scalar @insertions;
     my $total_count =
       $A_count + $C_count + $T_count + $G_count + $del_count + $insert_count;
@@ -175,21 +165,21 @@ for my $position ( sort { $a <=> $b } keys %mpileups ) {
         if ( $del_parent eq $par1_id ) {
             $par1_count = $del_count;
             $par2_count =
-              $mpileups{$position}->{'mpileup'} =~ s/$par2_base/$par2_base/gi;
+              $$mpileups{$position}->{'mpileup'} =~ s/$par2_base/$par2_base/gi;
         }
         elsif ( $del_parent eq $par2_id ) {
             $par1_count =
-              $mpileups{$position}->{'mpileup'} =~ s/$par1_base/$par1_base/gi;
+              $$mpileups{$position}->{'mpileup'} =~ s/$par1_base/$par1_base/gi;
             $par2_count = $del_count;
         }
         else { die "SOMETHING IS WRONG!!!"; }
     }
     else {
         $par1_count =
-          $mpileups{$position}->{'mpileup'} =~ s/$par1_base/$par1_base/gi
+          $$mpileups{$position}->{'mpileup'} =~ s/$par1_base/$par1_base/gi
           if defined $par1_base;   # reminder: parent base undefined for inserts
         $par2_count =
-          $mpileups{$position}->{'mpileup'} =~ s/$par2_base/$par2_base/gi
+          $$mpileups{$position}->{'mpileup'} =~ s/$par2_base/$par2_base/gi
           if defined $par2_base;   # reminder: parent base undefined for inserts
     }
 
@@ -200,7 +190,25 @@ for my $position ( sort { $a <=> $b } keys %mpileups ) {
 
 }
 
-close $mpileup_fh;
 close $snp_fh;
 close $out_fh;
 exit;
+
+sub get_mpileups {
+    my ( $snp_file, $fasta_ref, $bam_file ) = @_;
+
+    open my $mpileup_fh, "-|", "samtools mpileup -A -l $snp_file -f $fasta_ref $bam_file";
+    my %mpileups = map {
+        chomp;
+        my @delim = split /\t/;
+        (
+            $delim[1] => {
+                'ref_base' => $delim[2],
+                'mpileup'  => $delim[4],
+            }
+          )
+    } <$mpileup_fh>;
+    close $mpileup_fh;
+
+    return \%mpileups;
+}
