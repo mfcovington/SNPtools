@@ -197,17 +197,16 @@ exit;
 sub get_mpileups {
     my ( $snp_file, $fasta_ref, $bam_file ) = @_;
 
-    open my $mpileup_fh, "-|", "samtools mpileup -A -l $snp_file -f $fasta_ref $bam_file";
-    my %mpileups = map {
-        chomp;
+    my %mpileups;
+    open my $mpileup_fh, "-|",
+        "samtools mpileup -A -l $snp_file -f $fasta_ref $bam_file";
+    for (<$mpileup_fh>) {
         my @delim = split /\t/;
-        (
-            $delim[1] => {
-                'ref_base' => $delim[2],
-                'mpileup'  => $delim[4],
-            }
-          )
-    } <$mpileup_fh>;
+        $mpileups{ $delim[1] } = {
+            'ref_base' => $delim[2],
+            'mpileup'  => $delim[4]
+        };
+    }
     close $mpileup_fh;
 
     return \%mpileups;
