@@ -33,23 +33,7 @@ my $options = GetOptions(
 my $mpileups = get_mpileups( $snp_file, $fasta_ref, $bam_file );
 
 # build SNP/indel hash
-open my $snp_fh, "<", $snp_file;
-my $header = <$snp_fh>; # 0 = chr, 1 = pos, 2 = ref_base, 3 = snp_base, 4 = genotype, 5 = insert_position, 6 = SNP_CLASS
-my %snps;
-my $chromosome;
-while (<$snp_fh>) {
-    chomp;
-    my @delim_snp = split /\t/;
-    push @{ $snps{ $delim_snp[1] } },
-      {
-        'ref_base'   => $delim_snp[2],
-        'snp_base'   => $delim_snp[3],
-        'genotype'   => $delim_snp[4],
-        'insert_pos' => $delim_snp[5],
-        'snp_class'  => $delim_snp[6],
-      };
-    $chromosome = $delim_snp[0] unless defined $chromosome;
-}
+my ( $snps, $chromosome ) = get_snps( $snp_file );
 
 open my $out_fh, ">", $out_file;
 for my $position ( sort { $a <=> $b } keys $mpileups ) {
@@ -57,13 +41,13 @@ for my $position ( sort { $a <=> $b } keys $mpileups ) {
     # skip positions for which snp record does not exist
     # - these should actually indicate an error, right?
     # - since that is the case, test to see how much overhead this check uses
-    next unless exists $snps{$position};
+    next unless exists $$snps{$position};
 
     # skip indels if ignoring indels
     next
       if $no_indels
-      && ( ${ $snps{$position} }[0]->{'ref_base'} eq 'INS'
-        || ${ $snps{$position} }[0]->{'snp_base'} eq 'del' );
+      && ( ${ $$snps{$position} }[0]->{'ref_base'} eq 'INS'
+        || ${ $$snps{$position} }[0]->{'snp_base'} eq 'del' );
 
     # remove "junk" characters from mpileups:
     # < and > are CIGAR Ns (or reference skips)
@@ -88,14 +72,14 @@ for my $position ( sort { $a <=> $b } keys $mpileups ) {
     # one parent is a SNP/del and the other is an insertion
     # (very rare and not labeled as DIFF_SNPs)
     next
-      if scalar @{ $snps{$position} } > 1
-      && ${ $snps{$position} }[0]->{'insert_pos'} eq 'NA';
+      if scalar @{ $$snps{$position} } > 1
+      && ${ $$snps{$position} }[0]->{'insert_pos'} eq 'NA';
 
     # skip positions with problematic artifact created by removing "NOT" polymorphisms
     # that were actually "DIFF_SNPS" with inserts of varying size
     next
-      if looks_like_number( ${ $snps{$position} }[0]->{'insert_pos'} )
-      && ${ $snps{$position} }[0]->{'insert_pos'} > 1;
+      if looks_like_number( ${ $$snps{$position} }[0]->{'insert_pos'} )
+      && ${ $$snps{$position} }[0]->{'insert_pos'} > 1;
 
     # separate snp classes and determine genotype of parents from snp hash
     my (
@@ -104,33 +88,33 @@ for my $position ( sort { $a <=> $b } keys $mpileups ) {
         $del_parent,    $is_del,    $skip
     );
 
-    if ( ${ $snps{$position} }[0]->{'snp_class'} eq 'DIFF_SNP' ) {
-        $par1_base = ${ $snps{$position} }[0]->{'snp_base'}
-          if ${ $snps{$position} }[0]->{'genotype'} eq $par1_id;
-        $par2_base = ${ $snps{$position} }[0]->{'snp_base'}
-          if ${ $snps{$position} }[0]->{'genotype'} eq $par2_id;
+    if ( ${ $$snps{$position} }[0]->{'snp_class'} eq 'DIFF_SNP' ) {
+        $par1_base = ${ $$snps{$position} }[0]->{'snp_base'}
+          if ${ $$snps{$position} }[0]->{'genotype'} eq $par1_id;
+        $par2_base = ${ $$snps{$position} }[0]->{'snp_base'}
+          if ${ $$snps{$position} }[0]->{'genotype'} eq $par2_id;
     }
-    elsif ( ${ $snps{$position} }[0]->{'ref_base'} eq 'INS' ) {
+    elsif ( ${ $$snps{$position} }[0]->{'ref_base'} eq 'INS' ) {
         $is_insert     = 1;
-        $insert_parent = ${ $snps{$position} }[0]->{'genotype'};
-        push( @insert_bases, ${ $snps{$position} }[$_]->{'snp_base'} )
-          for ( 0 .. $#{ $snps{$position} } );
+        $insert_parent = ${ $$snps{$position} }[0]->{'genotype'};
+        push( @insert_bases, ${ $$snps{$position} }[$_]->{'snp_base'} )
+          for ( 0 .. $#{ $$snps{$position} } );
     }
-    elsif ( ${ $snps{$position} }[0]->{'snp_base'} eq 'del' ) {
+    elsif ( ${ $$snps{$position} }[0]->{'snp_base'} eq 'del' ) {
         $is_del     = 1;
-        $del_parent = ${ $snps{$position} }[0]->{'genotype'};
-        $par1_base  = ${ $snps{$position} }[0]->{'ref_base'}
+        $del_parent = ${ $$snps{$position} }[0]->{'genotype'};
+        $par1_base  = ${ $$snps{$position} }[0]->{'ref_base'}
           if $del_parent eq $par2_id;
-        $par2_base = ${ $snps{$position} }[0]->{'ref_base'}
+        $par2_base = ${ $$snps{$position} }[0]->{'ref_base'}
           if $del_parent eq $par1_id;
     }
-    elsif ( ${ $snps{$position} }[0]->{'genotype'} eq $par1_id ) {
-        $par1_base = ${ $snps{$position} }[0]->{'snp_base'};
-        $par2_base = ${ $snps{$position} }[0]->{'ref_base'};
+    elsif ( ${ $$snps{$position} }[0]->{'genotype'} eq $par1_id ) {
+        $par1_base = ${ $$snps{$position} }[0]->{'snp_base'};
+        $par2_base = ${ $$snps{$position} }[0]->{'ref_base'};
     }
-    elsif ( ${ $snps{$position} }[0]->{'genotype'} eq $par2_id ) {
-        $par1_base = ${ $snps{$position} }[0]->{'ref_base'};
-        $par2_base = ${ $snps{$position} }[0]->{'snp_base'};
+    elsif ( ${ $$snps{$position} }[0]->{'genotype'} eq $par2_id ) {
+        $par1_base = ${ $$snps{$position} }[0]->{'ref_base'};
+        $par2_base = ${ $$snps{$position} }[0]->{'snp_base'};
     }
     else { die "SOMETHING IS WRONG!!!"; }
 
@@ -190,7 +174,6 @@ for my $position ( sort { $a <=> $b } keys $mpileups ) {
 
 }
 
-close $snp_fh;
 close $out_fh;
 exit;
 
@@ -210,4 +193,29 @@ sub get_mpileups {
     close $mpileup_fh;
 
     return \%mpileups;
+}
+
+sub get_snps {
+    my $snp_file = shift;
+
+    open my $snp_fh, "<", $snp_file;
+    my $header = <$snp_fh>; # 0 = chr, 1 = pos, 2 = ref_base, 3 = snp_base, 4 = genotype, 5 = insert_position, 6 = SNP_CLASS
+    my %snps;
+    my $chromosome;
+    while (<$snp_fh>) {
+        chomp;
+        my @delim_snp = split /\t/;
+        push @{ $snps{ $delim_snp[1] } },
+          {
+            'ref_base'   => $delim_snp[2],
+            'snp_base'   => $delim_snp[3],
+            'genotype'   => $delim_snp[4],
+            'insert_pos' => $delim_snp[5],
+            'snp_class'  => $delim_snp[6],
+          };
+        $chromosome = $delim_snp[0] unless defined $chromosome;
+    }
+    close $snp_fh;
+
+    return \%snps, $chromosome;
 }
