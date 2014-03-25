@@ -12,7 +12,6 @@ use autodie;
 use FindBin qw($Bin);
 
 #TODO:
-# add relevant validity tests for extract_mpileup
 # make so that validity tests are done once and remembered
 # allow override of samtools version check
 # TO DO: incorporate option to ignore indels (do for snp ID, too?) (see line 60)
@@ -49,28 +48,6 @@ has 'nr_ratio' => (
 
 # Public Methods
 
-sub extract_mpileup {
-    my $self = shift;
-
-    $self->_make_dir( $self->_mpileup_dir );
-
-    my $samtools_cmd =
-        "samtools mpileup \\
-      -l ${ \$self->_snp_path } \\
-      -f ${ \$self->fasta } \\
-         ${ \$self->bam } \\
-      >  ${ \$self->_pileup_path }";
-
-    if ( ! -e $self->_snp_path ) {
-        say "  SNP file not found: ${ \$self->_snp_path }" if $self->verbose();
-        return;
-    }
-    else {
-        say "  Running: $samtools_cmd" if $self->verbose();
-        system( $samtools_cmd );
-    }
-}
-
 sub genotype {
     my $self = shift;
 
@@ -78,21 +55,18 @@ sub genotype {
 
     my $genotyping_cmd =
       "$bin_dir/Genotype/genotyping_pileups.pl \\
-    --mpileup  ${ \$self->_pileup_path } \\
-    --snp      ${ \$self->_snp_path } \\
-    --par1_id  ${ \$self->par1 } \\
-    --par2_id  ${ \$self->par2 } \\
-    --out_file ${ \$self->_genotyped_path }";
+    --snp       ${ \$self->_snp_path } \\
+    --par1_id   ${ \$self->par1 } \\
+    --par2_id   ${ \$self->par2 } \\
+    --out_file  ${ \$self->_genotyped_path } \\
+    --fasta_ref ${ \$self->fasta } \\
+    --bam_file  ${ \$self->bam }";
 
     # TO DO: incorporate option to ignore indels (do for snp ID, too?):
     # $genotyping_cmd .= " --no_indels" if $no_indels;
 
     if ( ! -e $self->_snp_path ) {
         say "  SNP file not found: ${ \$self->_snp_path }" if $self->verbose();
-        return;
-    }
-    elsif ( ! -e $self->_pileup_path ) {
-        say "  Pileup file not found: ${ \$self->_pileup_path }" if $self->verbose();
         return;
     }
     else {
@@ -142,7 +116,7 @@ EOF
     }
 };
 
-around [qw(extract_mpileup genotype noise_reduction)] => sub {
+around [qw(genotype noise_reduction)] => sub {
     my $orig = shift;
     my $self = shift;
 
@@ -181,21 +155,6 @@ sub _make_dir {
 
     ( my $filename, $dir_name ) = fileparse( $self->out_file ) unless defined $dir_name;
     make_path( $dir_name ) unless -e $dir_name;
-}
-
-sub _mpileup_suffix {
-    my $self = shift;
-
-    my $suffix = "mpileup";
-    $suffix .= ".nr" unless $self->before_noise_reduction;
-    return $suffix;
-}
-
-sub _pileup_path {
-    my $self = shift;
-
-    return $self->_mpileup_dir . "/"
-      . join( '.', $self->id, $self->_chromosome, $self->_mpileup_suffix );
 }
 
 sub _snp_path {

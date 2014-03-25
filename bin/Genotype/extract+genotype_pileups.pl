@@ -65,7 +65,6 @@ my $geno = SNPtools::Genotype->new(
     verbose  => $verbose,
 );
 
-$geno->extract_mpileup;
 $geno->genotype;
 
 exit;
