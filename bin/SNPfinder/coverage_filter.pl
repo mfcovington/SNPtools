@@ -9,6 +9,7 @@ use strict;
 use warnings;
 use autodie;
 use feature 'say';
+use Log::Reproducible;
 use Getopt::Long;
 use File::Path 'make_path';
 

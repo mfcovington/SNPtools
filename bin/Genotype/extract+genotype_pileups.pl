@@ -7,6 +7,7 @@
 #
 use strict;
 use warnings;
+use Log::Reproducible;
 use Getopt::Long;
 
 use FindBin qw($Bin);
@@ -64,7 +65,6 @@ my $geno = SNPtools::Genotype->new(
     verbose  => $verbose,
 );
 
-$geno->extract_mpileup;
 $geno->genotype;
 
 exit;

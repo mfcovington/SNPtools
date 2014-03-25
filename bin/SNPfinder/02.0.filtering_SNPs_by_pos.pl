@@ -8,6 +8,7 @@
 use strict;
 use warnings;
 use autodie;
+use Log::Reproducible;
 use List::Util qw( sum );
 use File::Basename;
 

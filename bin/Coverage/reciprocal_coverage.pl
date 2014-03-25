@@ -7,6 +7,7 @@
 #
 use strict;
 use warnings;
+use Log::Reproducible;
 use Getopt::Long;
 
 use FindBin qw($Bin);

@@ -7,6 +7,7 @@
 #
 use strict;
 use warnings;
+use Log::Reproducible;
 use Getopt::Long;
 
 use FindBin qw($Bin);
@@ -88,7 +89,6 @@ for ( sort keys %parents ) {
     $geno->id( $parents{$_}->{id} );
     $geno->bam( $parents{$_}->{bam} );
     $geno->before_noise_reduction(1);
-    $geno->extract_mpileup;
     $geno->genotype;
 }
 

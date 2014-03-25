@@ -12,3 +12,6 @@ master_snp_list.*
 polyDB.*
 *.genotyped*
 *.mpileup*
+troubleshooting/
+repro-archive/
+sample-files/

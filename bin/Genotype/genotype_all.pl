@@ -59,7 +59,6 @@ for (@ids) {
         threads => $threads,
         verbose => $verbose,
     );
-    $geno->extract_mpileup;
     $geno->genotype;
 }
 
