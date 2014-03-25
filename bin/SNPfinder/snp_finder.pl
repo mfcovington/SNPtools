@@ -8,6 +8,7 @@
 use strict;
 use warnings;
 use autodie;
+use Log::Reproducible;
 use Getopt::Long;
 
 use FindBin qw($Bin);
