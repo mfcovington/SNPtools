@@ -36,14 +36,14 @@ has 'cov_min' => (
 has 'indel_min' => (
     is      => 'rw',
     isa     => 'Num',
-    default => 0.66,
+    default => 0.33,
     lazy    => 1,
 );
 
 has 'snp_min' => (
     is      => 'rw',
     isa     => 'Num',
-    default => 0.33,
+    default => 0.66,
     lazy    => 1,
 );
 

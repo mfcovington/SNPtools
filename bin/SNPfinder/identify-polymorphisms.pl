@@ -6,6 +6,7 @@
 #
 use strict;
 use warnings;
+use Log::Reproducible;
 use autodie;
 use feature 'say';
 use List::Util 'sum';
@@ -41,6 +42,7 @@ say $out_fh "seq_id,pos,ref,a,c,g,t,del,consensus";
 while (<$mpileup_fh>) {
     my ( $seqid, $pos, $ref, $depth, $read_bases, $read_quals ) = split;
 
+    $ref =~ tr/acgtn/ACGTN/;
     next if $ref eq "N";
 
     clean_pileup(\$read_bases);
@@ -134,12 +136,11 @@ sub output_snp {
         $min_snp_ratio, $out_fh )
         = @_;
 
-    return if $consensus eq "del";
-
     return
-        unless ( $ref ne $consensus
-        && $total_counts >= $min_cov
-        && $$counts{$consensus} >= $min_snp_ratio * $total_counts );
+        if $consensus eq "del"
+        || $ref eq $consensus
+        || $total_counts < $min_cov
+        || $$counts{$consensus} < $min_snp_ratio * $total_counts;
 
     say $out_fh join ",", $seqid, $pos, $ref, $$counts{A}, $$counts{C},
         $$counts{G}, $$counts{T}, $$counts{del}, $consensus;
@@ -152,13 +153,10 @@ sub output_deletions {
 
     my $del_counts = $$counts{del};
 
-    return unless $del_counts > 0;
-
     return
-        unless $del_counts
-        >= $$counts{$ref} * $min_ins_ratio;
-
-    return unless $del_counts >= $min_cov;
+        if $del_counts == 0
+        || $del_counts < $$counts{$ref} * $min_ins_ratio
+        || $del_counts < $min_cov;
 
     say $out_fh join ",", $seqid, $pos, $ref, $$counts{A}, $$counts{C},
         $$counts{G}, $$counts{T}, $$counts{del}, "del";
@@ -169,18 +167,15 @@ sub output_insert {
         $min_ins_ratio, $out_fh )
         = @_;
 
-    return unless scalar keys $inserts > 0;
+    return if scalar keys $inserts == 0;
 
     my $top_count = $$inserts{$top_ins};
+    my $total_ins_counts = sum values $inserts;
 
     return
-        unless $top_count
-        >= $$counts{$ref} * $min_ins_ratio;
-
-    my $total_ins_counts = sum values $inserts;
-    return unless $total_ins_counts >= $min_cov;
-
-    return unless $top_count > 0.5 * $total_ins_counts;
+        if $top_count < $$counts{$ref} * $min_ins_ratio
+        || $top_count <= 0.5 * $total_ins_counts;
+        || $total_ins_counts < $min_cov
 
     my @ins_bases = split //, $top_ins;
 
