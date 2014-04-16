@@ -41,6 +41,7 @@ say $out_fh "seq_id,pos,ref,a,c,g,t,del,consensus";
 while (<$mpileup_fh>) {
     my ( $seqid, $pos, $ref, $depth, $read_bases, $read_quals ) = split;
 
+    $ref =~ tr/acgtn/ACGTN/;
     next if $ref eq "N";
 
     clean_pileup(\$read_bases);
