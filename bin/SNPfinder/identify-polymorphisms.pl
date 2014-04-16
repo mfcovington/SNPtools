@@ -174,8 +174,8 @@ sub output_insert {
 
     return
         if $top_count < $$counts{$ref} * $min_ins_ratio
-        || $top_count <= 0.5 * $total_ins_counts;
-        || $total_ins_counts < $min_cov
+        || $top_count <= 0.5 * $total_ins_counts
+        || $total_ins_counts < $min_cov;
 
     my @ins_bases = split //, $top_ins;
 
