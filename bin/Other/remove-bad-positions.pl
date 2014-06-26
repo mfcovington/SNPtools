@@ -12,13 +12,15 @@ use autodie;
 use feature 'say';
 use File::Path 'make_path';
 
-# TODO: Make source/output directories customizable at CLI
+# TODO: Make output directories customizable at CLI
+# TODO: Use Getopt::Long
+
+die "Specify 'bad positions file' and 'source directory'"
+    unless scalar @ARGV == 2;
 
 my $bad_positions_file = $ARGV[0];
-die unless defined $bad_positions_file;
-
-my $source_dir = "../clean";
-my $output_dir = ".";
+my $source_dir         = $ARGV[1];
+my $output_dir         = "$source_dir/clean";
 
 my $snp_dir  = "$source_dir/snp_master";
 my $geno_dir = "$source_dir/genotyped";
