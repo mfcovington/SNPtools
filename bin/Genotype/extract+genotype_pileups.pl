@@ -32,7 +32,9 @@ $0
 
 USAGE_END
 
-my ( $id, $par1, $par2, $bam_file, $fasta_file, $seq_list, $out_dir, $threads, $verbose, $help );
+my ($id,      $par1,  $par2,    $bam_file, $fasta_file, $seq_list,
+    $out_dir, $no_nr, $threads, $verbose,  $help
+);
 my $options = GetOptions(
     "id=s"       => \$id,
     "par1=s"     => \$par1,
@@ -41,6 +43,7 @@ my $options = GetOptions(
     "fasta=s"    => \$fasta_file,
     "seq_list=s" => \$seq_list,
     "out_dir=s"  => \$out_dir,
+    "no_nr"      => \$no_nr,
     "threads=i"  => \$threads,
     "verbose"    => \$verbose,
     "help"       => \$help,
@@ -64,6 +67,8 @@ my $geno = SNPtools::Genotype->new(
     threads  => $threads,
     verbose  => $verbose,
 );
+
+$geno->before_noise_reduction(1) if $no_nr;
 
 $geno->genotype;
 

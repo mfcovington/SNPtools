@@ -20,12 +20,6 @@ use FindBin qw($Bin);
 # - fix x-axis labels when plotting regions
 # - add option to change backgorund color
 
-sub BUILD {
-    my $self = shift;
-
-    $self->_validity_tests;
-}
-
 my $bin_dir = "$Bin/../../bin";
 
 
@@ -240,15 +234,6 @@ sub _plot_path {
       if defined $self->region;
     $path .= ".before_nr" if $self->before_noise_reduction;
     return $path;
-}
-
-sub _validity_tests {
-    my $self = shift;
-
-    $self->_validity_tests_samtools;
-    # $self->_valid_fasta;
-    $self->_valid_bam;
-    # $self->_valid_bam_index;
 }
 
 __PACKAGE__->meta->make_immutable;
