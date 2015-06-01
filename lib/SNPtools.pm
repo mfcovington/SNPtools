@@ -215,7 +215,7 @@ sub _valid_samtools_version {
     my @usage = `samtools 2>&1`; #change to samtools
     my $version;
     for (@usage) {
-        $_ =~ m/Version: ([\d\.].*) /i;
+        $_ =~ m/Version: ([\d\.].*)/i;
         $version = $1 and last if $1;
     }
     my @version_parsed = $version =~ m/ (\d*) \. (\d*) \. (\d*) /x;
