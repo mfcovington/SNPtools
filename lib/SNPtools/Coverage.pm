@@ -108,7 +108,7 @@ sub add_positions {
         $cov_pos{$chr}{ $snp_pos + $flank_dist } = 1;
     }
     close $snps_fh;
-    # print scalar keys $cov_pos{$chr}, "\n";
+    # print scalar keys %{ $cov_pos{$chr} }, "\n";
     $self->cov_pos( \%cov_pos );
 }
 

@@ -88,7 +88,7 @@ sub genotype {
     my ( $mpileups, $snps, $chromosome, $out_file ) = @_;
 
     open my $out_fh, ">", $out_file;
-    for my $position ( sort { $a <=> $b } keys $mpileups ) {
+    for my $position ( sort { $a <=> $b } keys %$mpileups ) {
 
         # skip positions for which snp record does not exist
         # - these should actually indicate an error, right?

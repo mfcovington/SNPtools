@@ -96,7 +96,7 @@ for my $pos (@good_cov_pos) {
 
     next unless defined $snps{$pos};
 
-    for my $par_id ( sort keys $snps{$pos} ) {
+    for my $par_id ( sort keys %{ $snps{$pos} } ) {
 
         # TODO: Check whether the next line should be '|| 0' or '// 0'
         my $insert_length = $snps{$pos}{$par_id}{insert} || 0;

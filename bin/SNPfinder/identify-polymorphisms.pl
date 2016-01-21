@@ -124,9 +124,9 @@ sub get_consensus_base {
     my $counts = shift;
 
     my ($consensus)
-        = scalar keys $counts == 1
-        ? keys $counts
-        : sort { $$counts{$b} <=> $$counts{$a} } keys $counts;
+        = scalar keys %$counts == 1
+        ? keys %$counts
+        : sort { $$counts{$b} <=> $$counts{$a} } keys %$counts;
 
     return $consensus;
 }
@@ -167,7 +167,7 @@ sub output_insert {
         $min_ins_ratio, $out_fh )
         = @_;
 
-    return if scalar keys $inserts == 0;
+    return if scalar keys %$inserts == 0;
 
     my $top_count = $$inserts{$top_ins};
     my $total_ins_counts = sum values $inserts;
@@ -190,7 +190,7 @@ sub output_insert {
 
         my ($ins_base)
             = sort { $ins_counts{$ins_pos}{$b} <=> $ins_counts{$ins_pos}{$a} }
-            keys $ins_counts{$ins_pos};
+            keys %{ $ins_counts{$ins_pos} };
 
         say $out_fh join ",", $seqid, "$pos.$ins_pos", "INS",
             $ins_counts{$ins_pos}{A} // 0, $ins_counts{$ins_pos}{C} // 0,
