@@ -27,6 +27,7 @@ $0
                 (By default, this list is generated from the bam file header.)
   --out_dir     Output directory [current]
   --threads     Number of threads [1]
+  --no_nr       Use if noise reduction has not been performed
   --verbose
   --help
 
