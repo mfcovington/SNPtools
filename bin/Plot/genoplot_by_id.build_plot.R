@@ -29,7 +29,8 @@ geno.plot <- ggplot(geno_df, aes(pos, cov.plot)) +
   ) +
   theme(
     panel.grid.minor = element_blank(),
-    panel.grid.major = element_blank()
+    panel.grid.major = element_blank(),
+    strip.text.y = element_text(size = chr.text.size)
   ) +
   ggtitle(id) +
   scale_x_continuous(

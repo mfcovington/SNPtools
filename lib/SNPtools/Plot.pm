@@ -74,6 +74,13 @@ has 'plot_width' => (
     lazy    => 1,
 );
 
+has 'chr_size' => (
+    is      => 'rw',
+    isa     => 'Int',
+    default => 12,
+    lazy    => 1,
+);
+
 has 'chr_pat' => (
     is  => 'rw',
     isa => 'Str',
@@ -143,6 +150,7 @@ sub genoplot_by_id {
     my $plot_width  = $self->plot_width;
     my $plot_height = $self->plot_height;
     my $plot_dir    = $self->_plot_dir;
+    my $chr_size    = $self->chr_size;
     my $chr_pat     = $self->chr_pat;
     my $chr_sub     = $self->chr_sub;
     make_path($plot_dir);
@@ -156,13 +164,14 @@ sub genoplot_by_id {
 
     my $R = Statistics::R->new();
 
-    $R->set( 'filenames', \@filenames );
-    $R->set( 'id',        $id );
-    $R->set( 'par1',      $par1 );
-    $R->set( 'par2',      $par2 );
-    $R->set( 'col_par1',  $col_par1 );
-    $R->set( 'col_par2',  $col_par2 );
-    $R->set( 'col_het',   $col_het );
+    $R->set( 'filenames',     \@filenames );
+    $R->set( 'id',            $id );
+    $R->set( 'par1',          $par1 );
+    $R->set( 'par2',          $par2 );
+    $R->set( 'col_par1',      $col_par1 );
+    $R->set( 'col_par2',      $col_par2 );
+    $R->set( 'col_het',       $col_het );
+    $R->set( 'chr.text.size', $chr_size );
 
     if ( defined $self->region ) {
         my @seq_lengths = $self->get_seq_lengths unless $self->_region_end;

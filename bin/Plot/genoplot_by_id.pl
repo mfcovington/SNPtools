@@ -24,6 +24,7 @@ $0
   --col_par1    Color for Parent 1 [Magenta]
   --col_par2    Color for Parent 2 [Green]
   --col_het     Color for Heterzygous [Black]
+  --chr_size    Chromosome ID Text Size [12]
   --width       Plot width in inches [10]
   --height      Plot height in inches [8]
   --format      Plot format (ps, pictex, pdf, tiff, [png], or bmp)
@@ -49,10 +50,10 @@ $0
 
 USAGE_END
 
-my ($id,       $par1,    $par2,    $col_par1, $col_par2,
-    $col_het,  $width,   $height,  $format,   $bam_file,
-    $seq_list, $chr_pat, $chr_sub, $region,   $out_dir,
-    $threads,  $no_nr,   $verbose, $help,
+my ($id,       $par1,     $par2,    $col_par1, $col_par2,
+    $col_het,  $chr_size, $width,   $height,   $format,
+    $bam_file, $seq_list, $chr_pat, $chr_sub,  $region,
+    $out_dir,  $threads,  $no_nr,   $verbose,  $help,
 );
 my $options = GetOptions(
     "id=s"       => \$id,
@@ -61,6 +62,7 @@ my $options = GetOptions(
     "col_par1=s" => \$col_par1,
     "col_par2=s" => \$col_par2,
     "col_het=s"  => \$col_het,
+    "chr_size=i" => \$chr_size,
     "width=i"    => \$width,
     "height=i"   => \$height,
     "format=s"   => \$format,
@@ -94,6 +96,7 @@ my $genoplot = SNPtools::Plot->new(
     col_par1    => $col_par1,
     col_par2    => $col_par2,
     col_het     => $col_het,
+    chr_size    => $chr_size,
     plot_width  => $width,
     plot_height => $height,
     plot_height => $height,
