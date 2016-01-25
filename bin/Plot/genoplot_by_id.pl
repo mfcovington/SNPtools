@@ -30,6 +30,15 @@ $0
   --bam         Sample alignment file (.bam)
   --seq_list    OPTIONAL: Comma-delimted list of sequence IDs to analyze
                 (By default, this list is generated from the bam file header.)
+  --chr_pat     OPTIONAL: Used with '--chr_sub' to change the way chromosome
+                IDs are displayed. This should be followed by a regular
+                expression pattern to match the portion of the chromosome ID
+                to change. Depending on the pattern, it may be necessary to
+                enclose it within quotes.
+  --chr_sub     OPTIONAL: Used with '--chr_pat' to change the way chromosome
+                IDs are displayed. This should be followed by the text that
+                will replace the regular expression specified by '--chr_pat'.
+                Capture groups can be represented as '\\\\1', '\\\\2', etc.
   --region      OPTIONAL: Used for plotting a region of a chromosome
                 FORMAT:   CHR_NAME:START-END
   --out_dir     Output directory [current]
@@ -40,10 +49,10 @@ $0
 
 USAGE_END
 
-my (
-    $id,      $par1,    $par2,   $col_par1, $col_par2, $col_het,
-    $width,   $height,  $format, $bam_file, $seq_list, $region,
-    $out_dir, $threads, $no_nr,  $verbose,  $help
+my ($id,       $par1,    $par2,    $col_par1, $col_par2,
+    $col_het,  $width,   $height,  $format,   $bam_file,
+    $seq_list, $chr_pat, $chr_sub, $region,   $out_dir,
+    $threads,  $no_nr,   $verbose, $help,
 );
 my $options = GetOptions(
     "id=s"       => \$id,
@@ -57,6 +66,8 @@ my $options = GetOptions(
     "format=s"   => \$format,
     "bam=s"      => \$bam_file,
     "seq_list=s" => \$seq_list,
+    "chr_pat=s"  => \$chr_pat,
+    "chr_sub=s"  => \$chr_sub,
     "region=s"   => \$region,
     "out_dir=s"  => \$out_dir,
     "threads=i"  => \$threads,
@@ -72,6 +83,9 @@ die $usage
   && defined $par1
   && defined $par2
   && defined $bam_file;
+die $usage
+    if ( defined $chr_pat && !defined $chr_sub )
+    || ( !defined $chr_pat && defined $chr_sub );
 
 my $genoplot = SNPtools::Plot->new(
     id          => $id,
@@ -85,6 +99,8 @@ my $genoplot = SNPtools::Plot->new(
     plot_height => $height,
     bam         => $bam_file,
     seq_list    => $seq_list,
+    chr_pat     => $chr_pat,
+    chr_sub     => $chr_sub,
     region      => $region,
     out_dir     => $out_dir,
     threads     => $threads,

@@ -74,6 +74,16 @@ has 'plot_width' => (
     lazy    => 1,
 );
 
+has 'chr_pat' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+has 'chr_sub' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
 has 'region' => (
     is  => 'rw',
     isa => 'Str',
@@ -133,6 +143,8 @@ sub genoplot_by_id {
     my $plot_width  = $self->plot_width;
     my $plot_height = $self->plot_height;
     my $plot_dir    = $self->_plot_dir;
+    my $chr_pat     = $self->chr_pat;
+    my $chr_sub     = $self->chr_sub;
     make_path($plot_dir);
 
     my @chromosomes = $self->get_seq_names;
@@ -162,15 +174,22 @@ sub genoplot_by_id {
         my $region = $self->region;
         say "  Building data frame for $id plot ($region)." if $self->verbose;
         $R->run_from_file("$bin_dir/Plot/genoplot_by_id.region.build_df.R");
-        say "  Generating plot for $id ($region)." if $self->verbose;
-        $R->run_from_file("$bin_dir/Plot/genoplot_by_id.build_plot.R");
     }
     else {
         say "  Building data frame for $id plot." if $self->verbose;
         $R->run_from_file("$bin_dir/Plot/genoplot_by_id.build_df.R");
-        say "  Generating plot for $id." if $self->verbose;
-        $R->run_from_file("$bin_dir/Plot/genoplot_by_id.build_plot.R");
     }
+
+    if ( defined $chr_pat && defined $chr_sub ) {
+        say "  Renaming chromosomes." if $self->verbose;
+        my $chr_ids = 'geno_df$chr';
+        my $chromosome_renaming_command
+            = "$chr_ids <- sub('$chr_pat', '$chr_sub', $chr_ids)";
+        $R->run(qq`$chromosome_renaming_command`);
+    }
+
+    say "  Generating plot for $id." if $self->verbose;
+    $R->run_from_file("$bin_dir/Plot/genoplot_by_id.build_plot.R");
 
     my $plot_path = $self->_plot_path;
 
